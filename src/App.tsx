@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import Leads from "./pages/Leads";
 import Auth from "./pages/Auth";
 import Landing from "./pages/Landing";
+import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Clients from "./pages/Clients";
 import Cases from "./pages/Cases";
@@ -35,13 +36,7 @@ const App = () => (
             <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route path="/landing" element={<Landing />} />
-              <Route path="/" element={
-                <ProtectedRoute>
-                  <Layout>
-                    <Dashboard />
-                  </Layout>
-                </ProtectedRoute>
-              } />
+              <Route path="/" element={<Index />} />
               <Route path="/dashboard" element={
                 <ProtectedRoute>
                   <Layout>
