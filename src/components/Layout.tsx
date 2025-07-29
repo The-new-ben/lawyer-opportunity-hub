@@ -3,7 +3,7 @@ import { AppSidebar } from "@/components/AppSidebar"
 import { Button } from "@/components/ui/button"
 import { Bell, Settings, User, LogOut } from "lucide-react"
 import { ThemeToggle } from "@/components/ThemeToggle"
-import { useAuth } from "@/contexts/AuthContext"
+import { useAuth } from "@/hooks/useAuth"
 
 interface LayoutProps {
   children: React.ReactNode
