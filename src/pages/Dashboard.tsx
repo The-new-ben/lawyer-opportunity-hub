@@ -113,9 +113,13 @@ export default function Dashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            {/* Wrap list with overflow-x-auto to allow horizontal scroll on small screens */}
+            <div className="space-y-4 overflow-x-auto">
               {recentLeads.map((lead) => (
-                <div key={lead.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                <div
+                  key={lead.id}
+                  className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors min-w-[16rem]"
+                >
                   <div className="space-y-1">
                     <div className="font-medium">{lead.name}</div>
                     <div className="text-sm text-muted-foreground">{lead.type}</div>
@@ -146,9 +150,13 @@ export default function Dashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            {/* Wrap schedule items with overflow-x-auto for mobile */}
+            <div className="space-y-4 overflow-x-auto">
               {upcomingMeetings.map((meeting, index) => (
-                <div key={index} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                <div
+                  key={index}
+                  className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors min-w-[16rem]"
+                >
                   <div className="flex items-center gap-2 text-primary font-medium">
                     <Clock className="h-4 w-4" />
                     {meeting.time}

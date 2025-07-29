@@ -174,8 +174,10 @@ export default function Leads() {
       {/* Filters */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex gap-4 flex-wrap">
-            <div className="flex-1 min-w-64">
+          {/* Use flex-col on mobile and flex-row on larger screens */}
+          <div className="flex flex-col md:flex-row gap-4 flex-wrap">
+            {/* Expand input to full width on mobile */}
+            <div className="flex-1 min-w-full md:min-w-64">
               <div className="relative">
                 <Search className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -187,7 +189,7 @@ export default function Leads() {
               </div>
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-full md:w-48">
                 <SelectValue placeholder="סטטוס" />
               </SelectTrigger>
               <SelectContent>
@@ -200,7 +202,7 @@ export default function Leads() {
               </SelectContent>
             </Select>
             <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-full md:w-48">
                 <SelectValue placeholder="עדיפות" />
               </SelectTrigger>
               <SelectContent>
