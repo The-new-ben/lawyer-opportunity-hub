@@ -107,24 +107,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error: { message: errorMessage } };
       }
 
-      // Auto-confirm user for development (bypass email verification)
-      if (data.user && !data.user.email_confirmed_at) {
-        const { error: confirmError } = await supabase.auth.admin.updateUserById(
-          data.user.id,
-          { email_confirm: true }
-        );
-        
-        if (!confirmError) {
-          // Auto sign in after confirmation
-          const { error: signInError } = await supabase.auth.signInWithPassword({
-            email,
-            password
-          });
-          
-          if (!signInError) {
-            return { error: null };
-          }
-        }
+      // User registered successfully
+      if (data.user) {
+        toast({
+          title: "נרשמת בהצלחה!",
+          description: data.user.email_confirmed_at 
+            ? "ברוך הבא למערכת" 
+            : "בדוק את האימייל שלך לאימות החשבון",
+        });
       }
 
       return { error: null };
