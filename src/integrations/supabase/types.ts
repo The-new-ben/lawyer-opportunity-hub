@@ -54,9 +54,68 @@ export type Database = {
           supplier_signed_at?: string | null
           updated_at?: string
         }
+        Relationships: []
+      }
+      deposits: {
+        Row: {
+          amount: number
+          created_at: string | null
+          deposit_type: string
+          id: string
+          lawyer_id: string
+          lead_id: string
+          paid_at: string | null
+          payment_method: string | null
+          quote_id: string | null
+          status: string | null
+          transaction_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          deposit_type: string
+          id?: string
+          lawyer_id: string
+          lead_id: string
+          paid_at?: string | null
+          payment_method?: string | null
+          quote_id?: string | null
+          status?: string | null
+          transaction_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          deposit_type?: string
+          id?: string
+          lawyer_id?: string
+          lead_id?: string
+          paid_at?: string | null
+          payment_method?: string | null
+          quote_id?: string | null
+          status?: string | null
+          transaction_id?: string | null
+          updated_at?: string | null
+        }
         Relationships: [
           {
-            foreignKeyName: "contracts_quote_id_fkey"
+            foreignKeyName: "deposits_lawyer_id_fkey"
+            columns: ["lawyer_id"]
+            isOneToOne: false
+            referencedRelation: "lawyers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deposits_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deposits_quote_id_fkey"
             columns: ["quote_id"]
             isOneToOne: false
             referencedRelation: "quotes"
@@ -105,67 +164,256 @@ export type Database = {
           },
         ]
       }
-      leads: {
+      lawyers: {
         Row: {
-          assigned_supplier_id: string | null
-          category: string
-          created_at: string
-          customer_email: string | null
-          customer_name: string
-          customer_phone: string
-          description: string | null
-          estimated_budget: number | null
+          availability_status: string | null
+          bio: string | null
+          created_at: string | null
+          hourly_rate: number | null
           id: string
+          is_active: boolean | null
+          law_firm: string | null
+          license_number: string | null
           location: string | null
-          preferred_contact_method: string | null
-          source: string | null
-          status: string | null
-          updated_at: string
-          urgency: string | null
-          whatsapp_message: string | null
+          profile_id: string
+          rating: number | null
+          specializations: string[]
+          total_cases: number | null
+          updated_at: string | null
+          verification_status: string | null
+          years_experience: number | null
         }
         Insert: {
-          assigned_supplier_id?: string | null
-          category: string
-          created_at?: string
-          customer_email?: string | null
-          customer_name: string
-          customer_phone: string
-          description?: string | null
-          estimated_budget?: number | null
+          availability_status?: string | null
+          bio?: string | null
+          created_at?: string | null
+          hourly_rate?: number | null
           id?: string
+          is_active?: boolean | null
+          law_firm?: string | null
+          license_number?: string | null
           location?: string | null
-          preferred_contact_method?: string | null
-          source?: string | null
-          status?: string | null
-          updated_at?: string
-          urgency?: string | null
-          whatsapp_message?: string | null
+          profile_id: string
+          rating?: number | null
+          specializations?: string[]
+          total_cases?: number | null
+          updated_at?: string | null
+          verification_status?: string | null
+          years_experience?: number | null
         }
         Update: {
-          assigned_supplier_id?: string | null
-          category?: string
-          created_at?: string
-          customer_email?: string | null
-          customer_name?: string
-          customer_phone?: string
-          description?: string | null
-          estimated_budget?: number | null
+          availability_status?: string | null
+          bio?: string | null
+          created_at?: string | null
+          hourly_rate?: number | null
           id?: string
+          is_active?: boolean | null
+          law_firm?: string | null
+          license_number?: string | null
           location?: string | null
-          preferred_contact_method?: string | null
-          source?: string | null
-          status?: string | null
-          updated_at?: string
-          urgency?: string | null
-          whatsapp_message?: string | null
+          profile_id?: string
+          rating?: number | null
+          specializations?: string[]
+          total_cases?: number | null
+          updated_at?: string | null
+          verification_status?: string | null
+          years_experience?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "leads_assigned_supplier_id_fkey"
-            columns: ["assigned_supplier_id"]
+            foreignKeyName: "lawyers_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
-            referencedRelation: "suppliers"
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_access: {
+        Row: {
+          access_level: string
+          created_at: string | null
+          deposit_id: string
+          expires_at: string | null
+          id: string
+          lawyer_id: string
+          lead_id: string
+        }
+        Insert: {
+          access_level: string
+          created_at?: string | null
+          deposit_id: string
+          expires_at?: string | null
+          id?: string
+          lawyer_id: string
+          lead_id: string
+        }
+        Update: {
+          access_level?: string
+          created_at?: string | null
+          deposit_id?: string
+          expires_at?: string | null
+          id?: string
+          lawyer_id?: string
+          lead_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_access_deposit_id_fkey"
+            columns: ["deposit_id"]
+            isOneToOne: false
+            referencedRelation: "deposits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_access_lawyer_id_fkey"
+            columns: ["lawyer_id"]
+            isOneToOne: false
+            referencedRelation: "lawyers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_access_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_assignments: {
+        Row: {
+          assigned_at: string | null
+          assignment_type: string
+          id: string
+          lawyer_id: string
+          lead_id: string
+          notes: string | null
+          responded_at: string | null
+          response_deadline: string | null
+          status: string | null
+        }
+        Insert: {
+          assigned_at?: string | null
+          assignment_type: string
+          id?: string
+          lawyer_id: string
+          lead_id: string
+          notes?: string | null
+          responded_at?: string | null
+          response_deadline?: string | null
+          status?: string | null
+        }
+        Update: {
+          assigned_at?: string | null
+          assignment_type?: string
+          id?: string
+          lawyer_id?: string
+          lead_id?: string
+          notes?: string | null
+          responded_at?: string | null
+          response_deadline?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_assignments_lawyer_id_fkey"
+            columns: ["lawyer_id"]
+            isOneToOne: false
+            referencedRelation: "lawyers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_assignments_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_categories: {
+        Row: {
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+        }
+        Insert: {
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+        }
+        Update: {
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+        }
+        Relationships: []
+      }
+      leads: {
+        Row: {
+          assigned_lawyer_id: string | null
+          case_description: string
+          case_details: Json | null
+          created_at: string | null
+          customer_email: string | null
+          customer_name: string
+          customer_phone: string
+          estimated_budget: number | null
+          id: string
+          legal_category: string
+          preferred_location: string | null
+          source: string | null
+          status: string | null
+          updated_at: string | null
+          urgency_level: string | null
+          visibility_level: string | null
+        }
+        Insert: {
+          assigned_lawyer_id?: string | null
+          case_description: string
+          case_details?: Json | null
+          created_at?: string | null
+          customer_email?: string | null
+          customer_name: string
+          customer_phone: string
+          estimated_budget?: number | null
+          id?: string
+          legal_category: string
+          preferred_location?: string | null
+          source?: string | null
+          status?: string | null
+          updated_at?: string | null
+          urgency_level?: string | null
+          visibility_level?: string | null
+        }
+        Update: {
+          assigned_lawyer_id?: string | null
+          case_description?: string
+          case_details?: Json | null
+          created_at?: string | null
+          customer_email?: string | null
+          customer_name?: string
+          customer_phone?: string
+          estimated_budget?: number | null
+          id?: string
+          legal_category?: string
+          preferred_location?: string | null
+          source?: string | null
+          status?: string | null
+          updated_at?: string | null
+          urgency_level?: string | null
+          visibility_level?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_assigned_lawyer_id_fkey"
+            columns: ["assigned_lawyer_id"]
+            isOneToOne: false
+            referencedRelation: "lawyers"
             referencedColumns: ["id"]
           },
         ]
@@ -258,57 +506,60 @@ export type Database = {
       }
       quotes: {
         Row: {
-          created_at: string
-          description: string
-          estimated_completion_days: number | null
+          created_at: string | null
+          estimated_duration_days: number | null
           id: string
+          lawyer_id: string
           lead_id: string
+          payment_terms: string | null
           quote_amount: number
+          service_description: string
           status: string | null
-          supplier_id: string
           terms_and_conditions: string | null
-          updated_at: string
+          updated_at: string | null
           valid_until: string | null
         }
         Insert: {
-          created_at?: string
-          description: string
-          estimated_completion_days?: number | null
+          created_at?: string | null
+          estimated_duration_days?: number | null
           id?: string
+          lawyer_id: string
           lead_id: string
+          payment_terms?: string | null
           quote_amount: number
+          service_description: string
           status?: string | null
-          supplier_id: string
           terms_and_conditions?: string | null
-          updated_at?: string
+          updated_at?: string | null
           valid_until?: string | null
         }
         Update: {
-          created_at?: string
-          description?: string
-          estimated_completion_days?: number | null
+          created_at?: string | null
+          estimated_duration_days?: number | null
           id?: string
+          lawyer_id?: string
           lead_id?: string
+          payment_terms?: string | null
           quote_amount?: number
+          service_description?: string
           status?: string | null
-          supplier_id?: string
           terms_and_conditions?: string | null
-          updated_at?: string
+          updated_at?: string | null
           valid_until?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "quotes_lawyer_id_fkey"
+            columns: ["lawyer_id"]
+            isOneToOne: false
+            referencedRelation: "lawyers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "quotes_lead_id_fkey"
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "quotes_supplier_id_fkey"
-            columns: ["supplier_id"]
-            isOneToOne: false
-            referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
         ]
@@ -371,7 +622,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_current_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
