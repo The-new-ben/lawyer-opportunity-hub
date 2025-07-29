@@ -164,6 +164,97 @@ export type Database = {
           },
         ]
       }
+      lawyer_scores: {
+        Row: {
+          acceptance_rate: number | null
+          created_at: string
+          id: string
+          lawyer_id: string
+          monthly_score: number | null
+          nps_average: number | null
+          pro_bono_hours: number | null
+          refund_ratio: number | null
+          sla_hit_rate: number | null
+          updated_at: string
+        }
+        Insert: {
+          acceptance_rate?: number | null
+          created_at?: string
+          id?: string
+          lawyer_id: string
+          monthly_score?: number | null
+          nps_average?: number | null
+          pro_bono_hours?: number | null
+          refund_ratio?: number | null
+          sla_hit_rate?: number | null
+          updated_at?: string
+        }
+        Update: {
+          acceptance_rate?: number | null
+          created_at?: string
+          id?: string
+          lawyer_id?: string
+          monthly_score?: number | null
+          nps_average?: number | null
+          pro_bono_hours?: number | null
+          refund_ratio?: number | null
+          sla_hit_rate?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lawyer_scores_lawyer_id_fkey"
+            columns: ["lawyer_id"]
+            isOneToOne: false
+            referencedRelation: "lawyers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lawyer_tiers: {
+        Row: {
+          created_at: string
+          early_access_hours: number | null
+          financial_bonus_multiplier: number | null
+          id: string
+          lawyer_id: string
+          platform_fee_reduction: number | null
+          tier: string
+          tier_score: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          early_access_hours?: number | null
+          financial_bonus_multiplier?: number | null
+          id?: string
+          lawyer_id: string
+          platform_fee_reduction?: number | null
+          tier?: string
+          tier_score?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          early_access_hours?: number | null
+          financial_bonus_multiplier?: number | null
+          id?: string
+          lawyer_id?: string
+          platform_fee_reduction?: number | null
+          tier?: string
+          tier_score?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lawyer_tiers_lawyer_id_fkey"
+            columns: ["lawyer_id"]
+            isOneToOne: false
+            referencedRelation: "lawyers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lawyers: {
         Row: {
           availability_status: string | null
@@ -622,6 +713,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_monthly_score: {
+        Args: {
+          p_lawyer_id: string
+          p_leads_accepted?: number
+          p_sla_met?: boolean
+          p_nps_score?: number
+          p_pro_bono_hours?: number
+          p_refunds?: number
+          p_sla_critical_miss?: boolean
+        }
+        Returns: number
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
