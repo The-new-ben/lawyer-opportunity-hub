@@ -1,14 +1,21 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/AppSidebar"
 import { Button } from "@/components/ui/button"
-import { Bell, Settings, User } from "lucide-react"
+import { Bell, Settings, User, LogOut } from "lucide-react"
 import { ThemeToggle } from "@/components/ThemeToggle"
+import { useAuth } from "@/contexts/AuthContext"
 
 interface LayoutProps {
   children: React.ReactNode
 }
 
 export function Layout({ children }: LayoutProps) {
+  const { signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
   return (
     <SidebarProvider>
       {/* Header */}
@@ -32,6 +39,9 @@ export function Layout({ children }: LayoutProps) {
           </Button>
           <Button variant="ghost" size="icon">
             <User className="h-5 w-5" />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={handleSignOut}>
+            <LogOut className="h-5 w-5" />
           </Button>
           <ThemeToggle />
         </div>
