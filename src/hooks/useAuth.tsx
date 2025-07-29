@@ -66,35 +66,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, fullName?: string) => {
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          full_name: fullName || ''
+    try {
+      const redirectUrl = `${window.location.origin}/`;
+      
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            full_name: fullName || ''
+          }
+        }
+      });
+
+      if (error) {
+        let errorMessage = "אירעה שגיאה ברישום. אנא נסה שוב.";
+        
+        if (error.message === 'User already registered') {
+          errorMessage = "המשתמש כבר רשום במערכת";
+        } else if (error.message.includes('Password')) {
+          errorMessage = "הסיסמה חייבת להכיל לפחות 6 תווים";
+        } else if (error.message.includes('Email')) {
+          errorMessage = "כתובת האימייל לא תקינה";
+        }
+        
+        return { error: { message: errorMessage } };
+      }
+
+      // Auto-confirm user for development (bypass email verification)
+      if (data.user && !data.user.email_confirmed_at) {
+        const { error: confirmError } = await supabase.auth.admin.updateUserById(
+          data.user.id,
+          { email_confirm: true }
+        );
+        
+        if (!confirmError) {
+          // Auto sign in after confirmation
+          const { error: signInError } = await supabase.auth.signInWithPassword({
+            email,
+            password
+          });
+          
+          if (!signInError) {
+            return { error: null };
+          }
         }
       }
-    });
 
-    if (error) {
-      toast({
-        title: "שגיאה ברישום",
-        description: error.message === 'User already registered' 
-          ? "המשתמש כבר רשום במערכת" 
-          : "אירעה שגיאה ברישום. אנא נסה שוב.",
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "רישום הושלם בהצלחה",
-        description: "אנא בדוק את האימייל שלך לאימות החשבון",
-      });
+      return { error: null };
+    } catch (err) {
+      console.error('Signup error:', err);
+      return { error: { message: "אירעה שגיאה לא צפויה. אנא נסה שוב." } };
     }
-
-    return { error };
   };
 
   const signIn = async (email: string, password: string) => {

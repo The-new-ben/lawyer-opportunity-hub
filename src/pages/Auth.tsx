@@ -44,6 +44,25 @@ export default function Auth() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!email || !password || !fullName) {
+      toast({
+        title: "שגיאה ברישום",
+        description: "אנא מלא את כל השדות הנדרשים",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (password.length < 6) {
+      toast({
+        title: "שגיאה ברישום",
+        description: "הסיסמה חייבת להכיל לפחות 6 תווים",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     const { error } = await signUp(email, password, fullName);
@@ -56,9 +75,11 @@ export default function Auth() {
       });
     } else {
       toast({
-        title: "נרשמת בהצלחה",
-        description: "אנא בדוק את האימייל שלך לאישור החשבון",
+        title: "נרשמת בהצלחה!",
+        description: "ברוך הבא למערכת. מתחבר...",
       });
+      // Auto-redirect after successful signup
+      setTimeout(() => navigate('/'), 1500);
     }
     
     setLoading(false);

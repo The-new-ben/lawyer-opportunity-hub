@@ -1,4 +1,6 @@
 import { StatsCard } from "@/components/StatsCard"
+import { WorkflowInfographic } from "@/components/WorkflowInfographic"
+import { SystemStatus } from "@/components/SystemStatus"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -98,7 +100,7 @@ export default function Dashboard() {
         ))}
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {/* Recent Leads */}
         <Card>
           <CardHeader>
@@ -160,28 +162,13 @@ export default function Dashboard() {
             </div>
           </CardContent>
         </Card>
+
+        {/* System Status */}
+        <SystemStatus />
       </div>
 
-      {/* Revenue Chart Placeholder */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" />
-            מגמת הכנסות
-          </CardTitle>
-          <CardDescription>
-            הכנסות חודשיות ב-6 החודשים האחרונים
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-64 flex items-center justify-center border-2 border-dashed rounded-lg">
-            <div className="text-center text-muted-foreground">
-              <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>גרף הכנסות יתווסף בקרוב</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Workflow Infographic */}
+      <WorkflowInfographic />
     </div>
   )
 }
