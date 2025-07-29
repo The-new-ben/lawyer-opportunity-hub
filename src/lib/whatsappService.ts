@@ -3,7 +3,7 @@
 // It expects environment variables to contain the WhatsApp Business Phone Number ID
 // and an access token. These values must be configured in a .env file and passed
 // through Vite (prefix `VITE_`). See WhatsApp Cloud API docs for details on
-// available message types and required consent windows【354563931535146†L159-L170】.
+// available message types and required consent windows.
 
 import axios from "axios";
 
@@ -19,7 +19,7 @@ if (!PHONE_NUMBER_ID || !ACCESS_TOKEN) {
 
 // Send a simple text message to a recipient phone number. You must ensure that the
 // recipient has opted-in to receive messages, and that the message is sent within
-// a valid customer service window【354563931535146†L159-L170】.
+// a valid customer service window.
 export async function sendWhatsAppTextMessage(
   to: string,
   text: string
@@ -50,7 +50,7 @@ export async function sendWhatsAppTextMessage(
 
 // Example function to send a templated message. Templates must be pre-approved on
 // the WhatsApp Business Manager. See WhatsApp documentation for usage and
-// restrictions【354563931535146†L159-L170】.
+// restrictions.
 export async function sendWhatsAppTemplateMessage(
   to: string,
   templateName: string,

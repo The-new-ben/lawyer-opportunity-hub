@@ -57,8 +57,8 @@ export async function classifyLead(description: string): Promise<string> {
   }
 }
 
-// Generate a response to a client’s question. This can be used for a chatbot or
-// FAQ assistant. Always ensure the AI’s output is reviewed by a lawyer before
+// Generate a response to a client's question. This can be used for a chatbot or
+// FAQ assistant. Always ensure the AI's output is reviewed by a lawyer before
 // providing legal advice.
 export async function generateClientResponse(
   conversation: { role: string; content: string }[]
