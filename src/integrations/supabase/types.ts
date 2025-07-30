@@ -354,6 +354,44 @@ export type Database = {
           },
         ]
       }
+      incoming_messages: {
+        Row: {
+          content: string
+          created_at: string
+          from_number: string
+          id: string
+          lead_id: string | null
+          processed: boolean
+          received_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          from_number: string
+          id?: string
+          lead_id?: string | null
+          processed?: boolean
+          received_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          from_number?: string
+          id?: string
+          lead_id?: string | null
+          processed?: boolean
+          received_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incoming_messages_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lawyer_scores: {
         Row: {
           acceptance_rate: number | null
@@ -726,6 +764,66 @@ export type Database = {
           },
         ]
       }
+      meetings: {
+        Row: {
+          case_id: string | null
+          client_id: string | null
+          created_at: string
+          id: string
+          lawyer_id: string
+          lead_id: string | null
+          location: string | null
+          meeting_type: string
+          notes: string | null
+          scheduled_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          case_id?: string | null
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          lawyer_id: string
+          lead_id?: string | null
+          location?: string | null
+          meeting_type?: string
+          notes?: string | null
+          scheduled_at: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          case_id?: string | null
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          lawyer_id?: string
+          lead_id?: string | null
+          location?: string | null
+          meeting_type?: string
+          notes?: string | null
+          scheduled_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meetings_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meetings_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           amount: number
@@ -872,6 +970,44 @@ export type Database = {
           },
         ]
       }
+      ratings: {
+        Row: {
+          case_id: string
+          client_id: string | null
+          comment: string | null
+          created_at: string
+          id: string
+          lawyer_id: string
+          score: number
+        }
+        Insert: {
+          case_id: string
+          client_id?: string | null
+          comment?: string | null
+          created_at?: string
+          id?: string
+          lawyer_id: string
+          score: number
+        }
+        Update: {
+          case_id?: string
+          client_id?: string | null
+          comment?: string | null
+          created_at?: string
+          id?: string
+          lawyer_id?: string
+          score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ratings_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       role_permissions: {
         Row: {
           created_at: string | null
@@ -1010,6 +1146,10 @@ export type Database = {
       get_user_role: {
         Args: { user_uuid: string }
         Returns: Database["public"]["Enums"]["app_role"]
+      }
+      process_incoming_lead: {
+        Args: { p_from_number: string; p_content: string }
+        Returns: string
       }
     }
     Enums: {
