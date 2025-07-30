@@ -8,7 +8,8 @@ import {
   Settings,
   Home,
   Target,
-  CreditCard
+  CreditCard,
+  Search
 } from "lucide-react"
 import { NavLink, useLocation } from "react-router-dom"
 
@@ -29,6 +30,7 @@ const mainItems = [
   { title: "לידים", url: "/leads", icon: Target },
   { title: "לקוחות", url: "/clients", icon: Users },
   { title: "תיקים", url: "/cases", icon: FileText },
+  { title: "התאמות", url: "/matching", icon: Search },
   { title: "לוח זמנים", url: "/calendar", icon: Calendar },
 ]
 
