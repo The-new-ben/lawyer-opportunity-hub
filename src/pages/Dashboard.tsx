@@ -61,21 +61,21 @@ export default function Dashboard() {
     { time: "16:30", client: "יוסף מרקוביץ", type: "פגישת סיכום" }
   ]
 
-  const getPriorityColor = (priority: string) => {
+  const getPriorityVariant = (priority: string) => {
     switch (priority) {
-      case "גבוה": return "bg-destructive"
-      case "בינוני": return "bg-warning"
-      case "נמוך": return "bg-success"
-      default: return "bg-muted"
+      case "גבוה": return "destructive"
+      case "בינוני": return "warning"
+      case "נמוך": return "success"
+      default: return "secondary"
     }
   }
 
-  const getStatusColor = (status: string) => {
+  const getStatusVariant = (status: string) => {
     switch (status) {
-      case "חדש": return "bg-accent text-accent-foreground"
-      case "פניה ראשונית": return "bg-primary text-primary-foreground"
-      case "ממתין לפגישה": return "bg-warning text-warning-foreground"
-      default: return "bg-muted text-muted-foreground"
+      case "חדש": return "default"
+      case "פניה ראשונית": return "secondary"
+      case "ממתין לפגישה": return "warning"
+      default: return "outline"
     }
   }
 
@@ -125,10 +125,10 @@ export default function Dashboard() {
                     <div className="text-sm text-muted-foreground">{lead.type}</div>
                   </div>
                   <div className="flex gap-2">
-                    <Badge className={getPriorityColor(lead.priority)}>
+                    <Badge variant={getPriorityVariant(lead.priority) as any}>
                       {lead.priority}
                     </Badge>
-                    <Badge variant="outline" className={getStatusColor(lead.status)}>
+                    <Badge variant={getStatusVariant(lead.status) as any}>
                       {lead.status}
                     </Badge>
                   </div>

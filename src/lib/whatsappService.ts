@@ -8,8 +8,8 @@
 import axios from "axios";
 
 const WHATSAPP_BASE_URL = "https://graph.facebook.com/v19.0";
-const PHONE_NUMBER_ID = import.meta.env.VITE_WHATSAPP_PHONE_ID;
-const ACCESS_TOKEN = import.meta.env.VITE_WHATSAPP_TOKEN;
+const PHONE_NUMBER_ID = ""; // Configure in edge function
+const ACCESS_TOKEN = ""; // Configure in edge function
 
 if (!PHONE_NUMBER_ID || !ACCESS_TOKEN) {
   console.log("WhatsApp not configured - messaging disabled");

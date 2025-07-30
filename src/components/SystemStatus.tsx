@@ -36,16 +36,16 @@ export function SystemStatus() {
     }
   ]
 
-  const getStatusColor = (status: string) => {
+  const getStatusVariant = (status: string) => {
     switch (status) {
       case 'operational':
-        return 'bg-success text-success-foreground'
+        return 'success'
       case 'degraded':
-        return 'bg-warning text-warning-foreground'
+        return 'warning'
       case 'down':
-        return 'bg-destructive text-destructive-foreground'
+        return 'destructive'
       default:
-        return 'bg-muted text-muted-foreground'
+        return 'secondary'
     }
   }
 
@@ -79,7 +79,7 @@ export function SystemStatus() {
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between">
           <span className="font-medium">סטטוס כללי</span>
-          <Badge className={getStatusColor(overallStatus)}>
+          <Badge variant={getStatusVariant(overallStatus) as any}>
             {getStatusText(overallStatus)}
           </Badge>
         </div>
@@ -97,7 +97,7 @@ export function SystemStatus() {
                   <span className="text-xs text-muted-foreground">
                     {service.lastCheck}
                   </span>
-                  <Badge variant="outline" className={getStatusColor(service.status)}>
+                  <Badge variant={getStatusVariant(service.status) as any}>
                     {getStatusText(service.status)}
                   </Badge>
                 </div>

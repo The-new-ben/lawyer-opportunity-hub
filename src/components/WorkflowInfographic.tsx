@@ -9,7 +9,7 @@ export function WorkflowInfographic() {
       title: "קליטת ליד",
       subtitle: "WhatsApp / אתר",
       icon: MessageSquare,
-      color: "bg-blue-50 border-blue-200 text-blue-700",
+      color: "bg-primary/10 border-primary/20 text-primary",
       description: "הליד נקלט דרך WhatsApp או טופס באתר"
     },
     {
@@ -17,7 +17,7 @@ export function WorkflowInfographic() {
       title: "עיבוד AI",
       subtitle: "ניקוד ומיון",
       icon: TrendingUp,
-      color: "bg-purple-50 border-purple-200 text-purple-700",
+      color: "bg-accent/10 border-accent/20 text-accent-foreground",
       description: "מערכת AI מנתחת ומנקדת את הליד"
     },
     {
@@ -25,7 +25,7 @@ export function WorkflowInfographic() {
       title: "התאמה",
       subtitle: "מנוע התאמות",
       icon: Users,
-      color: "bg-green-50 border-green-200 text-green-700",
+      color: "bg-success/10 border-success/20 text-success",
       description: "מיון עורכי דין מתאימים לפי התמחות ויכולת"
     },
     {
@@ -33,7 +33,7 @@ export function WorkflowInfographic() {
       title: "הצעה",
       subtitle: "עורך דין מגיב",
       icon: FileText,
-      color: "bg-orange-50 border-orange-200 text-orange-700",
+      color: "bg-warning/10 border-warning/20 text-warning",
       description: "עורך דין שולח הצעת מחיר ותנאים"
     },
     {
@@ -41,7 +41,7 @@ export function WorkflowInfographic() {
       title: "חוזה",
       subtitle: "חתימה דיגיטלית",
       icon: CheckCircle,
-      color: "bg-indigo-50 border-indigo-200 text-indigo-700",
+      color: "bg-secondary/10 border-secondary/20 text-secondary-foreground",
       description: "חתימה על חוזה דיגיטלי"
     },
     {
@@ -49,7 +49,7 @@ export function WorkflowInfographic() {
       title: "תשלום",
       subtitle: "WooCommerce",
       icon: CreditCard,
-      color: "bg-red-50 border-red-200 text-red-700",
+      color: "bg-destructive/10 border-destructive/20 text-destructive",
       description: "עמלה ותשלום דרך המערכת"
     },
     {
@@ -57,7 +57,7 @@ export function WorkflowInfographic() {
       title: "ביצוע",
       subtitle: "ניהול פרויקט",
       icon: Award,
-      color: "bg-yellow-50 border-yellow-200 text-yellow-700",
+      color: "bg-primary-muted/10 border-primary-muted/20 text-primary-muted",
       description: "מעקב SLA, NPS וביצוע העבודה"
     }
   ]
