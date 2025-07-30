@@ -23,9 +23,13 @@ export const useCases = () => {
   const queryClient = useQueryClient();
 
   const fetchCases = async (): Promise<Case[]> => {
-    // Note: We'll need to create a cases table in Supabase
-    // For now, we'll return mock data structure
-    return [];
+    const { data, error } = await supabase
+      .from('cases')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return data || [];
   };
 
   const { data: cases = [], isLoading, error } = useQuery({
@@ -34,16 +38,19 @@ export const useCases = () => {
   });
 
   const addCase = useMutation({
-    mutationFn: async (newCase: Partial<NewCase>) => {
-      // This will need to be implemented once cases table exists
-      const caseData = {
-        ...newCase,
-        status: 'open',
-        opened_at: new Date().toISOString()
-      };
-
-      // Placeholder - replace with actual Supabase call
-      return caseData;
+    mutationFn: async (newCase: NewCase) => {
+      const { data, error } = await supabase
+        .from('cases')
+        .insert({
+          ...newCase,
+          status: 'open',
+          opened_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cases'] });
@@ -57,8 +64,15 @@ export const useCases = () => {
 
   const updateCase = useMutation({
     mutationFn: async ({ id, values }: { id: string; values: Partial<Case> }) => {
-      // Placeholder - replace with actual Supabase call
-      return { id, ...values };
+      const { data, error } = await supabase
+        .from('cases')
+        .update(values)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cases'] });
@@ -71,8 +85,15 @@ export const useCases = () => {
 
   const closeCase = useMutation({
     mutationFn: async (id: string) => {
-      // Update case status to closed
-      return { id, status: 'closed' };
+      const { data, error } = await supabase
+        .from('cases')
+        .update({ status: 'closed' })
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cases'] });

@@ -1,117 +1,36 @@
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Calendar as CalendarIcon, Clock, MapPin, Plus, Users, Video } from "lucide-react"
-
-const mockEvents = [
-  {
-    id: "1",
-    title: "פגישה עם יוסף כהן",
-    type: "פגישת לקוח",
-    date: "29/01/2025",
-    time: "10:00",
-    duration: "60 דקות",
-    location: "המשרד",
-    status: "מתוכנן",
-    priority: "גבוה"
-  },
-  {
-    id: "2",
-    title: "דיון בבית משפט",
-    type: "בית משפט",
-    date: "29/01/2025",
-    time: "14:00",
-    duration: "120 דקות",
-    location: "בית משפט שלום תל אביב",
-    status: "מתוכנן",
-    priority: "גבוה"
-  },
-  {
-    id: "3",
-    title: "הכנת מסמכים - תיק אברהם",
-    type: "עבודה פנימית",
-    date: "30/01/2025",
-    time: "09:00",
-    duration: "180 דקות",
-    location: "המשרד",
-    status: "מתוכנן",
-    priority: "בינוני"
-  },
-  {
-    id: "4",
-    title: "פגישת זום עם שרה לוי",
-    type: "פגישת לקוח",
-    date: "30/01/2025",
-    time: "16:00",
-    duration: "45 דקות",
-    location: "זום",
-    status: "מתוכנן",
-    priority: "בינוני"
-  }
-]
+import { useState } from "react";
+import { useCalendar } from "@/hooks/useCalendar";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Clock, Users, Calendar as CalendarIcon, MapPin } from "lucide-react";
 
 const Calendar = () => {
-  const [selectedDate, setSelectedDate] = useState("29/01/2025")
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const { events, isLoading, error } = useCalendar();
   
-  const todayEvents = mockEvents.filter(event => event.date === selectedDate)
-  
-  const getEventTypeIcon = (type: string) => {
-    switch (type) {
-      case "פגישת לקוח":
-        return <Users className="h-4 w-4" />
-      case "בית משפט":
-        return <CalendarIcon className="h-4 w-4" />
-      case "עבודה פנימית":
-        return <Clock className="h-4 w-4" />
-      default:
-        return <CalendarIcon className="h-4 w-4" />
-    }
-  }
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "מתוכנן":
-        return <Badge variant="default">מתוכנן</Badge>
-      case "בביצוע":
-        return <Badge variant="secondary">בביצוע</Badge>
-      case "הושלם":
-        return <Badge variant="outline">הושלם</Badge>
-      default:
-        return <Badge>{status}</Badge>
-    }
-  }
-
-  const getPriorityBadge = (priority: string) => {
-    switch (priority) {
-      case "גבוה":
-        return <Badge variant="destructive">גבוה</Badge>
-      case "בינוני":
-        return <Badge variant="secondary">בינוני</Badge>
-      case "נמוך":
-        return <Badge variant="outline">נמוך</Badge>
-      default:
-        return <Badge>{priority}</Badge>
-    }
-  }
+  // Filter events for today
+  const todayEvents = events.filter(event => 
+    new Date(event.start_time).toDateString() === selectedDate.toDateString()
+  );
 
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">לוח זמנים</h1>
-          <p className="text-muted-foreground">ניהול פגישות ואירועים</p>
+          <p className="text-muted-foreground">ניהול ומעקב אחר כל האירועים והפגישות</p>
         </div>
         <Button>
           <Plus className="h-4 w-4 mr-2" />
-          הוסף אירוע
+          אירוע חדש
         </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">אירועים היום</CardTitle>
+            <CardTitle className="text-sm font-medium">אירועי היום</CardTitle>
             <CalendarIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -120,120 +39,157 @@ const Calendar = () => {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">פגישות לקוחות</CardTitle>
+            <CardTitle className="text-sm font-medium">סך כל אירועים</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {mockEvents.filter(e => e.type === "פגישת לקוח").length}
-            </div>
+            <div className="text-2xl font-bold">{events.length}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">דיונים בבית משפט</CardTitle>
-            <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {mockEvents.filter(e => e.type === "בית משפט").length}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">שעות עבודה השבוע</CardTitle>
+            <CardTitle className="text-sm font-medium">השבוע הקרוב</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">32</div>
+            <div className="text-2xl font-bold">
+              {events.filter(e => {
+                const eventDate = new Date(e.start_time);
+                const nextWeek = new Date();
+                nextWeek.setDate(nextWeek.getDate() + 7);
+                return eventDate <= nextWeek && eventDate >= new Date();
+              }).length}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">שעות עבודה</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">8.5</div>
           </CardContent>
         </Card>
       </div>
 
+      <Card>
+        <CardHeader>
+          <CardTitle>אירועי היום - {selectedDate.toLocaleDateString('he-IL')}</CardTitle>
+          <CardDescription>רשימת האירועים המתוכננים להיום</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {isLoading ? (
+            <p className="text-center py-8">טוען אירועים...</p>
+          ) : error ? (
+            <p className="text-center py-8 text-destructive">שגיאה בטעינת אירועים</p>
+          ) : todayEvents.length === 0 ? (
+            <p className="text-muted-foreground text-center py-8">
+              אין אירועים מתוכננים להיום
+            </p>
+          ) : (
+            todayEvents.map((event) => (
+              <div key={event.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className="text-2xl">
+                    📅
+                  </div>
+                  <div>
+                    <h4 className="font-semibold">{event.title}</h4>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {new Date(event.start_time).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                      {event.description && (
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          {event.description}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2 items-end">
+                  <Badge variant="outline">אירוע</Badge>
+                </div>
+              </div>
+            ))
+          )}
+        </CardContent>
+      </Card>
+
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>היום - {selectedDate}</CardTitle>
-            <CardDescription>האירועים שלך להיום</CardDescription>
+            <CardTitle>השבוע הקרוב</CardTitle>
+            <CardDescription>לוח זמנים שבועי</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {todayEvents.map((event) => (
-                <div key={event.id} className="flex items-start gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                  <div className="flex items-center justify-center w-10 h-10 bg-primary/10 rounded-lg">
-                    {getEventTypeIcon(event.type)}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-medium">{event.title}</h3>
-                      {getPriorityBadge(event.priority)}
-                    </div>
-                    <div className="text-sm text-muted-foreground space-y-1">
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-3 w-3" />
-                        {event.time} ({event.duration})
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-3 w-3" />
-                        {event.location}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-end gap-2">
-                    {getStatusBadge(event.status)}
-                    <Badge variant="outline">{event.type}</Badge>
-                  </div>
+            <div className="grid grid-cols-7 gap-2 mb-4">
+              {["א", "ב", "ג", "ד", "ה", "ו", "ש"].map((day) => (
+                <div key={day} className="text-center text-sm font-medium text-muted-foreground p-2">
+                  {day}
                 </div>
               ))}
+              
+              {Array.from({ length: 7 }, (_, i) => {
+                const date = new Date();
+                date.setDate(date.getDate() + i);
+                const dayEvents = events.filter(e => 
+                  new Date(e.start_time).toDateString() === date.toDateString()
+                );
+                
+                return (
+                  <div 
+                    key={i} 
+                    className={`p-2 text-center rounded cursor-pointer hover:bg-accent ${
+                      date.toDateString() === selectedDate.toDateString() ? 'bg-primary text-primary-foreground' : ''
+                    }`}
+                    onClick={() => setSelectedDate(date)}
+                  >
+                    <div className="text-sm">{date.getDate()}</div>
+                    {dayEvents.length > 0 && (
+                      <div className="text-xs text-muted-foreground">
+                        {dayEvents.length} אירועים
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>השבוע הקרוב</CardTitle>
-            <CardDescription>סקירה כללית של האירועים</CardDescription>
+            <CardTitle>אירועים קרובים</CardTitle>
+            <CardDescription>האירועים הקרובים בתוכנית</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="grid grid-cols-7 gap-2 text-center text-sm">
-                <div className="font-medium">א'</div>
-                <div className="font-medium">ב'</div>
-                <div className="font-medium">ג'</div>
-                <div className="font-medium">ד'</div>
-                <div className="font-medium">ה'</div>
-                <div className="font-medium">ו'</div>
-                <div className="font-medium">ש'</div>
-                
-                <div className="p-2 bg-primary text-primary-foreground rounded text-xs">
-                  29
-                  <div className="mt-1 text-xs opacity-80">{todayEvents.length} אירועים</div>
+          <CardContent className="space-y-3">
+            {events
+              .filter(e => new Date(e.start_time) >= new Date())
+              .slice(0, 5)
+              .map((event) => (
+                <div key={event.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                  <div>
+                    <h5 className="font-medium">{event.title}</h5>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(event.start_time).toLocaleDateString('he-IL')} ב-
+                      {new Date(event.start_time).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                  <Badge variant="outline">
+                    {Math.ceil((new Date(event.start_time).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} ימים
+                  </Badge>
                 </div>
-                <div className="p-2 border rounded text-xs">
-                  30
-                  <div className="mt-1 text-xs opacity-60">2 אירועים</div>
-                </div>
-                <div className="p-2 border rounded text-xs">31</div>
-                <div className="p-2 border rounded text-xs">1</div>
-                <div className="p-2 border rounded text-xs">2</div>
-                <div className="p-2 border rounded text-xs">3</div>
-                <div className="p-2 border rounded text-xs">4</div>
-              </div>
-
-              <div className="pt-4 border-t">
-                <h4 className="font-medium mb-3">פגישות קרובות</h4>
-                <div className="space-y-2">
-                  {mockEvents.slice(0, 3).map((event) => (
-                    <div key={event.id} className="flex items-center gap-3 text-sm">
-                      <div className="w-2 h-2 bg-primary rounded-full"></div>
-                      <span className="flex-1">{event.title}</span>
-                      <span className="text-muted-foreground">{event.date}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+              ))}
+            
+            {events.filter(e => new Date(e.start_time) >= new Date()).length === 0 && (
+              <p className="text-muted-foreground text-center py-4">
+                אין אירועים קרובים
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>

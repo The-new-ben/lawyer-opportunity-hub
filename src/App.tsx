@@ -21,6 +21,8 @@ import Payments from "./pages/Payments";
 import Commissions from "./pages/Commissions";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
+import ResetPassword from "./pages/ResetPassword";
+import UpdatePassword from "./pages/UpdatePassword";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +37,8 @@ const App = () => (
             <BrowserRouter>
             <Routes>
               <Route path="/auth" element={<Auth />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/update-password" element={<UpdatePassword />} />
               <Route path="/landing" element={<Landing />} />
               <Route path="/" element={<Index />} />
               <Route path="/dashboard" element={

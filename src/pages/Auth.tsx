@@ -129,6 +129,17 @@ export default function Auth() {
                   {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   התחבר
                 </Button>
+                <div className="text-center">
+                  <Button 
+                    type="button"
+                    variant="link" 
+                    onClick={() => navigate('/reset-password')}
+                    disabled={loading}
+                    className="text-sm"
+                  >
+                    שכחת סיסמה?
+                  </Button>
+                </div>
               </form>
             </TabsContent>
             
