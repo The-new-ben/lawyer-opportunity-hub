@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
-import { User, Bell, Shield, Globe, CreditCard, Database } from "lucide-react"
+import { User, Bell, Shield, Globe, CreditCard, Database, MessageSquare, Bot } from "lucide-react"
 
 const Settings = () => {
   return (
@@ -109,6 +109,84 @@ const Settings = () => {
               </div>
               <Switch id="weeklyReport" />
             </div>
+          </CardContent>
+        </Card>
+
+        {/* WhatsApp Integration */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5" />
+              <CardTitle>אינטגרציית WhatsApp</CardTitle>
+            </div>
+            <CardDescription>הגדרת חיבור לשירות WhatsApp Business</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="whatsappToken">WhatsApp API Token</Label>
+                <Input id="whatsappToken" type="password" placeholder="הכנס את ה-token שלך" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="whatsappPhoneId">Phone Number ID</Label>
+                <Input id="whatsappPhoneId" placeholder="הכנס את ה-Phone ID" />
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label htmlFor="whatsappEnabled">הפעל WhatsApp</Label>
+                <p className="text-sm text-muted-foreground">שלח הודעות אוטומטיות ללקוחות</p>
+              </div>
+              <Switch id="whatsappEnabled" />
+            </div>
+            <Button>שמור הגדרות WhatsApp</Button>
+          </CardContent>
+        </Card>
+
+        {/* AI Integration */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Bot className="h-5 w-5" />
+              <CardTitle>אינטגרציית AI</CardTitle>
+            </div>
+            <CardDescription>הגדרת חיבור לשירותי בינה מלאכותית</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="openaiToken">OpenAI API Key</Label>
+                <Input id="openaiToken" type="password" placeholder="הכנס את ה-API Key שלך" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="aiModel">מודל AI</Label>
+                <Select defaultValue="gpt-4">
+                  <SelectTrigger>
+                    <SelectValue placeholder="בחר מודל" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="gpt-4">GPT-4</SelectItem>
+                    <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
+                    <SelectItem value="claude-3">Claude 3</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label htmlFor="aiEnabled">הפעל AI</Label>
+                <p className="text-sm text-muted-foreground">ניתוח אוטומטי של לידים וחיזוי המרות</p>
+              </div>
+              <Switch id="aiEnabled" />
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label htmlFor="autoClassify">סיווג אוטומטי</Label>
+                <p className="text-sm text-muted-foreground">סווג לידים חדשים באופן אוטומטי</p>
+              </div>
+              <Switch id="autoClassify" defaultChecked />
+            </div>
+            <Button>שמור הגדרות AI</Button>
           </CardContent>
         </Card>
 
