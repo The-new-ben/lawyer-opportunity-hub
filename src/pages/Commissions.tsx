@@ -44,7 +44,7 @@ const Commissions = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "שולם":
-        return <Badge variant="default" className="bg-green-500">שולם</Badge>
+        return <Badge variant="default" className="bg-success text-success-foreground">שולם</Badge>
       case "ממתין":
         return <Badge variant="secondary">ממתין לתשלום</Badge>
       case "מעובד":
@@ -178,7 +178,7 @@ const Commissions = () => {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-sm">צמיחה חודשית</span>
-                    <span className="text-sm font-medium text-green-600">+15%</span>
+                    <span className="text-sm font-medium text-success">+15%</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm">שותפים חדשים</span>
