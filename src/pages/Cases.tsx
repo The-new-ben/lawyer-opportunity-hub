@@ -3,55 +3,61 @@ import { useCases } from "@/hooks/useCases"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, Search, Calendar, FileText, Clock, DollarSign } from "lucide-react"
-
-const mockCases = [
-  {
-    id: "C001",
-    title: "תביעת נזיקין - תאונת דרכים",
-    client: "יוסף כהן",
-    status: "פתוח",
-    priority: "גבוה",
-    startDate: "15/03/2024",
-    lastUpdate: "22/01/2025",
-    amount: "₪50,000",
-    progress: 65
-  },
-  {
-    id: "C002",
-    title: "ייעוץ משפטי - הקמת חברה",
-    client: "שרה לוי",
-    status: "בתהליך",
-    priority: "בינוני",
-    startDate: "02/01/2025",
-    lastUpdate: "20/01/2025",
-    amount: "₪15,000",
-    progress: 30
-  },
-  {
-    id: "C003",
-    title: "גירושין - חלוקת רכוש",
-    client: "דוד אברהם",
-    status: "סגור",
-    priority: "נמוך",
-    startDate: "10/12/2023",
-    lastUpdate: "05/01/2025",
-    amount: "₪25,000",
-    progress: 100
-  }
-]
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog"
+import { Plus, Search, Calendar, FileText, Clock, DollarSign, UserPlus } from "lucide-react"
 
 const Cases = () => {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("הכל")
   const [priorityFilter, setPriorityFilter] = useState("הכל")
+  const [isOpen, setIsOpen] = useState(false)
+  const [formData, setFormData] = useState({
+    title: "",
+    client_id: "",
+    legal_category: "",
+    priority: "medium",
+    notes: "",
+    estimated_budget: ""
+  })
   
-  const { cases, isLoading, error, getCaseStats } = useCases();
+  const { cases, isLoading, error, addCase, getCaseStats } = useCases();
   const stats = getCaseStats();
   
+  const handleSaveCase = async () => {
+    if (!formData.title || !formData.legal_category) {
+      alert("אנא מלא את כל השדות הנדרשים")
+      return
+    }
+
+    try {
+      await addCase.mutateAsync({
+        title: formData.title,
+        client_id: formData.client_id || null,
+        legal_category: formData.legal_category,
+        priority: formData.priority,
+        notes: formData.notes || null,
+        estimated_budget: formData.estimated_budget ? parseFloat(formData.estimated_budget) : null,
+        status: 'open',
+        opened_at: new Date().toISOString()
+      })
+      setFormData({
+        title: "",
+        client_id: "",
+        legal_category: "",
+        priority: "medium",
+        notes: "",
+        estimated_budget: ""
+      })
+      setIsOpen(false)
+    } catch (error) {
+      console.error("Error adding case:", error)
+    }
+  }
+
   const filteredCases = cases.filter(case_ => {
     const matchesSearch = case_.title.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === "הכל" || case_.status === statusFilter
@@ -62,11 +68,11 @@ const Cases = () => {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "פתוח":
+      case "open":
         return <Badge variant="default">פתוח</Badge>
-      case "בתהליך":
+      case "in_progress":
         return <Badge variant="secondary">בתהליך</Badge>
-      case "סגור":
+      case "closed":
         return <Badge variant="outline">סגור</Badge>
       default:
         return <Badge>{status}</Badge>
@@ -75,16 +81,19 @@ const Cases = () => {
 
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
-      case "גבוה":
+      case "high":
         return <Badge variant="destructive">גבוה</Badge>
-      case "בינוני":
+      case "medium":
         return <Badge variant="secondary">בינוני</Badge>
-      case "נמוך":
+      case "low":
         return <Badge variant="outline">נמוך</Badge>
       default:
         return <Badge>{priority}</Badge>
     }
   }
+
+  if (isLoading) return <div className="p-6">טוען תיקים...</div>
+  if (error) return <div className="p-6 text-destructive">שגיאה בטעינת תיקים: {error.message}</div>
 
   return (
     <div className="p-6 space-y-6">
@@ -93,10 +102,89 @@ const Cases = () => {
           <h1 className="text-3xl font-bold">תיקים</h1>
           <p className="text-muted-foreground">ניהול ומעקב אחר כל התיקים המשפטיים</p>
         </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          פתח תיק חדש
-        </Button>
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              פתח תיק חדש
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>תיק חדש</DialogTitle>
+              <DialogDescription>
+                פתח תיק משפטי חדש במערכת
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="title">כותרת התיק *</Label>
+                <Input
+                  id="title"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  placeholder="הזן כותרת התיק"
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="legal_category">תחום משפטי *</Label>
+                <Select value={formData.legal_category} onValueChange={(value) => setFormData({ ...formData, legal_category: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="בחר תחום משפטי" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="אזרחי">משפט אזרחי</SelectItem>
+                    <SelectItem value="פלילי">משפט פלילי</SelectItem>
+                    <SelectItem value="משפחה">דיני משפחה</SelectItem>
+                    <SelectItem value="עבודה">דיני עבודה</SelectItem>
+                    <SelectItem value="נדלן">דיני נדלן</SelectItem>
+                    <SelectItem value="מסחרי">משפט מסחרי</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="priority">עדיפות</Label>
+                <Select value={formData.priority} onValueChange={(value) => setFormData({ ...formData, priority: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="בחר עדיפות" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="high">גבוה</SelectItem>
+                    <SelectItem value="medium">בינוני</SelectItem>
+                    <SelectItem value="low">נמוך</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="estimated_budget">תקציב משוער</Label>
+                <Input
+                  id="estimated_budget"
+                  type="number"
+                  value={formData.estimated_budget}
+                  onChange={(e) => setFormData({ ...formData, estimated_budget: e.target.value })}
+                  placeholder="הזן תקציב משוער"
+                />
+              </div>
+              <div>
+                <Label htmlFor="notes">הערות</Label>
+                <Input
+                  id="notes"
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  placeholder="הזן פרטים נוספים"
+                />
+              </div>
+              <Button 
+                onClick={handleSaveCase} 
+                disabled={addCase.isPending}
+                className="w-full"
+              >
+                {addCase.isPending ? 'שומר...' : 'שמור תיק'}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
@@ -159,34 +247,29 @@ const Cases = () => {
                 <SelectTrigger className="w-full md:w-48">
                   <SelectValue placeholder="סטטוס" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="הכל">כל הסטטוסים</SelectItem>
-                  <SelectItem value="פתוח">פתוח</SelectItem>
-                  <SelectItem value="בתהליך">בתהליך</SelectItem>
-                  <SelectItem value="סגור">סגור</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                <SelectTrigger className="w-full md:w-48">
-                  <SelectValue placeholder="עדיפות" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="הכל">כל העדיפויות</SelectItem>
-                  <SelectItem value="גבוה">גבוה</SelectItem>
-                  <SelectItem value="בינוני">בינוני</SelectItem>
-                  <SelectItem value="נמוך">נמוך</SelectItem>
+                  <SelectContent>
+                    <SelectItem value="הכל">כל הסטטוסים</SelectItem>
+                    <SelectItem value="open">פתוח</SelectItem>
+                    <SelectItem value="in_progress">בתהליך</SelectItem>
+                    <SelectItem value="closed">סגור</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                  <SelectTrigger className="w-full md:w-48">
+                    <SelectValue placeholder="עדיפות" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="הכל">כל העדיפויות</SelectItem>
+                    <SelectItem value="high">גבוה</SelectItem>
+                    <SelectItem value="medium">בינוני</SelectItem>
+                    <SelectItem value="low">נמוך</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="text-center py-8">טוען תיקים...</div>
-          ) : error ? (
-            <div className="text-center py-8 text-destructive">שגיאה בטעינת תיקים</div>
-          ) : (
-            <Table>
+          <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead className="text-right">מספר תיק</TableHead>
@@ -210,7 +293,6 @@ const Cases = () => {
                 ))}
               </TableBody>
             </Table>
-          )}
         </CardContent>
       </Card>
     </div>

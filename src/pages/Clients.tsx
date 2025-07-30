@@ -1,59 +1,62 @@
 import { useState } from "react"
+import { useClients } from "@/hooks/useClients"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Plus, Search, Phone, Mail, FileText, Calendar } from "lucide-react"
-
-const mockClients = [
-  {
-    id: "1",
-    name: "יוסף כהן",
-    email: "yosef@example.com",
-    phone: "050-1234567",
-    status: "פעיל",
-    cases: 3,
-    joinDate: "15/03/2024",
-    lastContact: "22/01/2025"
-  },
-  {
-    id: "2", 
-    name: "שרה לוי",
-    email: "sarah@example.com",
-    phone: "052-7654321",
-    status: "פעיל",
-    cases: 1,
-    joinDate: "02/01/2025",
-    lastContact: "20/01/2025"
-  },
-  {
-    id: "3",
-    name: "דוד אברהם",
-    email: "david@example.com",
-    phone: "053-9876543",
-    status: "לא פעיל",
-    cases: 5,
-    joinDate: "10/12/2023",
-    lastContact: "05/01/2025"
-  }
-]
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog"
+import { Plus, Search, Phone, Mail, FileText, Calendar, UserPlus } from "lucide-react"
 
 const Clients = () => {
   const [searchTerm, setSearchTerm] = useState("")
+  const [isOpen, setIsOpen] = useState(false)
+  const [formData, setFormData] = useState({
+    full_name: "",
+    phone: "",
+    email: "",
+    company_name: "",
+    whatsapp_number: ""
+  })
+
+  const { clients, isLoading, error, addClient, getClientStats } = useClients()
+  const stats = getClientStats()
   
-  const filteredClients = mockClients.filter(client =>
-    client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.email.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredClients = clients.filter(client =>
+    client.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (client.phone || '').toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  const getStatusBadge = (status: string) => {
-    return status === "פעיל" ? (
-      <Badge variant="default">פעיל</Badge>
-    ) : (
-      <Badge variant="secondary">לא פעיל</Badge>
-    )
+  const handleSaveClient = async () => {
+    if (!formData.full_name || !formData.phone) {
+      alert("אנא מלא את כל השדות הנדרשים")
+      return
+    }
+
+    try {
+      await addClient.mutateAsync(formData)
+      setFormData({
+        full_name: "",
+        phone: "",
+        email: "",
+        company_name: "",
+        whatsapp_number: ""
+      })
+      setIsOpen(false)
+    } catch (error) {
+      console.error("Error adding client:", error)
+    }
   }
+
+  const isActiveClient = (client: any) => {
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+    return new Date(client.updated_at) > thirtyDaysAgo
+  }
+
+  if (isLoading) return <div className="p-6">טוען לקוחות...</div>
+  if (error) return <div className="p-6 text-destructive">שגיאה בטעינת לקוחות: {error.message}</div>
 
   return (
     <div className="p-6 space-y-6">
@@ -62,10 +65,79 @@ const Clients = () => {
           <h1 className="text-3xl font-bold">לקוחות</h1>
           <p className="text-muted-foreground">ניהול לקוחות ומעקב אחר פרטי קשר</p>
         </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          הוסף לקוח חדש
-        </Button>
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              הוסף לקוח חדש
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>לקוח חדש</DialogTitle>
+              <DialogDescription>
+                הוסף לקוח חדש למערכת
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="full_name">שם מלא *</Label>
+                <Input
+                  id="full_name"
+                  value={formData.full_name}
+                  onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                  placeholder="הזן שם מלא"
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="phone">טלפון *</Label>
+                <Input
+                  id="phone"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  placeholder="הזן מספר טלפון"
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="email">אימייל</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="הזן כתובת אימייל"
+                />
+              </div>
+              <div>
+                <Label htmlFor="company_name">שם החברה</Label>
+                <Input
+                  id="company_name"
+                  value={formData.company_name}
+                  onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
+                  placeholder="הזן שם החברה"
+                />
+              </div>
+              <div>
+                <Label htmlFor="whatsapp_number">WhatsApp</Label>
+                <Input
+                  id="whatsapp_number"
+                  value={formData.whatsapp_number}
+                  onChange={(e) => setFormData({ ...formData, whatsapp_number: e.target.value })}
+                  placeholder="הזן מספר WhatsApp"
+                />
+              </div>
+              <Button 
+                onClick={handleSaveClient} 
+                disabled={addClient.isPending}
+                className="w-full"
+              >
+                {addClient.isPending ? 'שומר...' : 'שמור לקוח'}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
@@ -74,7 +146,7 @@ const Clients = () => {
             <CardTitle className="text-sm font-medium">סך הכל לקוחות</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{mockClients.length}</div>
+            <div className="text-2xl font-bold">{stats.totalClients}</div>
           </CardContent>
         </Card>
         <Card>
@@ -82,15 +154,7 @@ const Clients = () => {
             <CardTitle className="text-sm font-medium">לקוחות פעילים</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{mockClients.filter(c => c.status === "פעיל").length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">תיקים פתוחים</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{mockClients.reduce((sum, c) => sum + c.cases, 0)}</div>
+            <div className="text-2xl font-bold">{stats.activeClients}</div>
           </CardContent>
         </Card>
         <Card>
@@ -98,7 +162,7 @@ const Clients = () => {
             <CardTitle className="text-sm font-medium">לקוחות חדשים החודש</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1</div>
+            <div className="text-2xl font-bold">{stats.newThisMonth}</div>
           </CardContent>
         </Card>
       </div>
@@ -128,7 +192,7 @@ const Clients = () => {
                 <TableHead className="text-right">שם הלקוח</TableHead>
                 <TableHead className="text-right">פרטי קשר</TableHead>
                 <TableHead className="text-right">סטטוס</TableHead>
-                <TableHead className="text-right">תיקים</TableHead>
+                <TableHead className="text-right">חברה</TableHead>
                 <TableHead className="text-right">תאריך הצטרפות</TableHead>
                 <TableHead className="text-right">קשר אחרון</TableHead>
                 <TableHead className="text-right">פעולות</TableHead>
@@ -137,23 +201,33 @@ const Clients = () => {
             <TableBody>
               {filteredClients.map((client) => (
                 <TableRow key={client.id}>
-                  <TableCell className="font-medium">{client.name}</TableCell>
+                  <TableCell className="font-medium">{client.full_name}</TableCell>
                   <TableCell>
                     <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <Mail className="h-4 w-4" />
-                        <span className="text-sm">{client.email}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Phone className="h-4 w-4" />
-                        <span className="text-sm">{client.phone}</span>
-                      </div>
+                      {client.phone && (
+                        <div className="flex items-center gap-2">
+                          <Phone className="h-4 w-4" />
+                          <span className="text-sm">{client.phone}</span>
+                        </div>
+                      )}
+                      {client.whatsapp_number && (
+                        <div className="flex items-center gap-2">
+                          <Mail className="h-4 w-4" />
+                          <span className="text-sm">{client.whatsapp_number}</span>
+                        </div>
+                      )}
                     </div>
                   </TableCell>
-                  <TableCell>{getStatusBadge(client.status)}</TableCell>
-                  <TableCell>{client.cases}</TableCell>
-                  <TableCell>{client.joinDate}</TableCell>
-                  <TableCell>{client.lastContact}</TableCell>
+                  <TableCell>
+                    <Badge variant={isActiveClient(client) ? "default" : "secondary"}>
+                      {isActiveClient(client) ? "פעיל" : "לא פעיל"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {client.company_name || "ללא חברה"}
+                  </TableCell>
+                  <TableCell>{new Date(client.created_at).toLocaleDateString('he-IL')}</TableCell>
+                  <TableCell>{new Date(client.updated_at).toLocaleDateString('he-IL')}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm">

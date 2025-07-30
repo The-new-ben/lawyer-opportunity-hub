@@ -1,26 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
 
-export type CalendarEvent = {
-  id: string;
-  title: string;
-  start_time: string;
-  end_time: string;
-  client_id?: string;
-  case_id?: string;
-  lawyer_id?: string;
-  description?: string;
-  created_at: string;
-  updated_at: string;
-};
-
-export type NewCalendarEvent = Omit<CalendarEvent, 'id' | 'created_at' | 'updated_at'>;
+export type Event = Database['public']['Tables']['events']['Row'];
+export type NewEvent = Database['public']['Tables']['events']['Insert'];
 
 export const useCalendar = () => {
   const queryClient = useQueryClient();
 
-  const fetchEvents = async (): Promise<CalendarEvent[]> => {
+  const fetchEvents = async (): Promise<Event[]> => {
     const { data, error } = await supabase
       .from('events')
       .select('*')
@@ -36,10 +25,20 @@ export const useCalendar = () => {
   });
 
   const addEvent = useMutation({
-    mutationFn: async (newEvent: NewCalendarEvent) => {
+    mutationFn: async (newEvent: Partial<NewEvent>) => {
+      const eventData = {
+        title: newEvent.title,
+        description: newEvent.description,
+        start_time: newEvent.start_time,
+        end_time: newEvent.end_time,
+        client_id: newEvent.client_id,
+        case_id: newEvent.case_id,
+        lawyer_id: newEvent.lawyer_id,
+      };
+
       const { data, error } = await supabase
         .from('events')
-        .insert(newEvent)
+        .insert(eventData)
         .select()
         .single();
       
@@ -48,7 +47,7 @@ export const useCalendar = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
-      toast.success('אירוע נוצר בהצלחה');
+      toast.success('אירוע חדש נוצר בהצלחה');
     },
     onError: (error) => {
       toast.error('שגיאה ביצירת אירוע');
@@ -57,7 +56,7 @@ export const useCalendar = () => {
   });
 
   const updateEvent = useMutation({
-    mutationFn: async ({ id, values }: { id: string; values: Partial<CalendarEvent> }) => {
+    mutationFn: async ({ id, values }: { id: string; values: Partial<Event> }) => {
       const { data, error } = await supabase
         .from('events')
         .update(values)
@@ -85,7 +84,6 @@ export const useCalendar = () => {
         .eq('id', id);
       
       if (error) throw error;
-      return { id };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
@@ -96,12 +94,35 @@ export const useCalendar = () => {
     }
   });
 
+  // Get event statistics
+  const getEventStats = () => {
+    const today = new Date();
+    const todayEvents = events.filter(event => 
+      new Date(event.start_time).toDateString() === today.toDateString()
+    );
+    
+    const nextWeek = new Date();
+    nextWeek.setDate(nextWeek.getDate() + 7);
+    const weekEvents = events.filter(e => {
+      const eventDate = new Date(e.start_time);
+      return eventDate <= nextWeek && eventDate >= today;
+    });
+
+    return {
+      totalEvents: events.length,
+      todayEvents: todayEvents.length,
+      weekEvents: weekEvents.length,
+      upcomingEvents: events.filter(e => new Date(e.start_time) >= today).length
+    };
+  };
+
   return {
     events,
     isLoading,
     error,
     addEvent,
     updateEvent,
-    deleteEvent
+    deleteEvent,
+    getEventStats
   };
 };
