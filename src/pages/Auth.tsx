@@ -129,6 +129,11 @@ export default function Auth() {
                   {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   התחבר
                 </Button>
+                <div className="text-center pt-2">
+                  <a href="#/reset-password" className="text-sm text-primary underline">
+                    שכחת סיסמה?
+                  </a>
+                </div>
               </form>
             </TabsContent>
             

@@ -7,12 +7,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { 
-  Plus, 
-  Search, 
-  Filter, 
-  Phone, 
-  Mail, 
+import { useLeads } from "@/hooks/useLeads"
+import { useToast } from "@/hooks/use-toast"
+import {
+  Plus,
+  Search,
+  Phone,
+  Mail,
   Calendar,
   Eye,
   Edit,
@@ -24,74 +25,81 @@ export default function Leads() {
   const [statusFilter, setStatusFilter] = useState("all")
   const [priorityFilter, setPriorityFilter] = useState("all")
 
-  const leads = [
-    {
-      id: 1,
-      name: "רחל כהן",
-      email: "rachel.cohen@email.com",
-      phone: "050-1234567",
-      legalArea: "דיני משפחה",
-      status: "חדש",
-      priority: "גבוה",
-      source: "אתר אינטרנט",
-      createdAt: "2024-01-15",
-      notes: "מעוניינת בהליכי גירושין"
-    },
-    {
-      id: 2,
-      name: "דוד לוי",
-      email: "david.levi@email.com",
-      phone: "052-2345678",
-      legalArea: "דיני עבודה",
-      status: "פניה ראשונית",
-      priority: "בינוני",
-      source: "המלצה",
-      createdAt: "2024-01-14",
-      notes: "בעיה עם המעסיק"
-    },
-    {
-      id: 3,
-      name: "שרה אברהם",
-      email: "sarah.abraham@email.com",
-      phone: "053-3456789",
-      legalArea: "דיני נזיקין",
-      status: "ממתין לפגישה",
-      priority: "נמוך",
-      source: "פייסבוק",
-      createdAt: "2024-01-13",
-      notes: "תאונת דרכים"
+  const { leads, isLoading, addLead, convertLeadToClient } = useLeads()
+  const { toast } = useToast()
+  const [newName, setNewName] = useState("")
+  const [newEmail, setNewEmail] = useState("")
+  const [newPhone, setNewPhone] = useState("")
+  const [newDescription, setNewDescription] = useState("")
+
+  const handleSaveLead = async () => {
+    try {
+      await addLead.mutateAsync({
+        customer_name: newName,
+        customer_email: newEmail,
+        customer_phone: newPhone,
+        case_description: newDescription,
+        status: "new",
+      })
+      toast({ title: "ליד נוסף בהצלחה" })
+      setNewName("")
+      setNewEmail("")
+      setNewPhone("")
+      setNewDescription("")
+    } catch (e: unknown) {
+      const err = e as Error
+      toast({
+        title: "שגיאה בשמירת ליד",
+        description: err.message,
+        variant: "destructive",
+      })
     }
-  ]
+  }
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case "גבוה": return "bg-destructive text-destructive-foreground"
-      case "בינוני": return "bg-warning text-warning-foreground"
-      case "נמוך": return "bg-success text-success-foreground"
-      default: return "bg-muted text-muted-foreground"
+      case "high":
+        return "bg-destructive text-destructive-foreground"
+      case "medium":
+        return "bg-warning text-warning-foreground"
+      case "low":
+        return "bg-success text-success-foreground"
+      default:
+        return "bg-muted text-muted-foreground"
     }
   }
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "חדש": return "bg-accent text-accent-foreground"
-      case "פניה ראשונית": return "bg-primary text-primary-foreground"
-      case "ממתין לפגישה": return "bg-warning text-warning-foreground"
-      case "הפך ללקוח": return "bg-success text-success-foreground"
-      case "לא רלוונטי": return "bg-muted text-muted-foreground"
-      default: return "bg-muted text-muted-foreground"
+      case "new":
+        return "bg-accent text-accent-foreground"
+      case "contacted":
+        return "bg-primary text-primary-foreground"
+      case "meeting":
+        return "bg-warning text-warning-foreground"
+      case "converted":
+        return "bg-success text-success-foreground"
+      default:
+        return "bg-muted text-muted-foreground"
     }
   }
 
-  const filteredLeads = leads.filter(lead => {
-    const matchesSearch = lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         lead.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         lead.legalArea.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredLeads = (leads || []).filter((lead) => {
+    const matchesSearch =
+      lead.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (lead.customer_email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      lead.legal_category.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === "all" || lead.status === statusFilter
-    const matchesPriority = priorityFilter === "all" || lead.priority === priorityFilter
+    const matchesPriority =
+      priorityFilter === "all" ||
+      (lead.urgency_level || '') === priorityFilter
     
     return matchesSearch && matchesStatus && matchesPriority
   })
+
+  if (isLoading) {
+    return <div className="p-6">טוען נתונים...</div>
+  }
 
   return (
     <div className="p-6 space-y-6" dir="rtl">
@@ -119,15 +127,31 @@ export default function Leads() {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">שם מלא *</Label>
-                <Input id="name" placeholder="הזן שם מלא" />
+                <Input
+                  id="name"
+                  placeholder="הזן שם מלא"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">אימייל</Label>
-                <Input id="email" type="email" placeholder="example@email.com" />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="example@email.com"
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">טלפון *</Label>
-                <Input id="phone" placeholder="050-1234567" />
+                <Input
+                  id="phone"
+                  placeholder="050-1234567"
+                  value={newPhone}
+                  onChange={(e) => setNewPhone(e.target.value)}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="legalArea">תחום משפטי</Label>
@@ -160,11 +184,29 @@ export default function Leads() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="notes">הערות</Label>
-                <Textarea id="notes" placeholder="הערות נוספות על הליד" />
+                <Textarea
+                  id="notes"
+                  placeholder="הערות נוספות על הליד"
+                  value={newDescription}
+                  onChange={(e) => setNewDescription(e.target.value)}
+                />
               </div>
               <div className="flex gap-2">
-                <Button className="flex-1">שמור ליד</Button>
-                <Button variant="outline" className="flex-1">ביטול</Button>
+                <Button className="flex-1" onClick={handleSaveLead} disabled={addLead.isPending}>
+                  שמור ליד
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    setNewName('');
+                    setNewEmail('');
+                    setNewPhone('');
+                    setNewDescription('');
+                  }}
+                >
+                  ביטול
+                </Button>
               </div>
             </div>
           </DialogContent>
@@ -223,12 +265,12 @@ export default function Leads() {
             <CardHeader className="pb-3">
               <div className="flex justify-between items-start">
                 <div>
-                  <CardTitle className="text-lg">{lead.name}</CardTitle>
-                  <CardDescription>{lead.legalArea}</CardDescription>
+                  <CardTitle className="text-lg">{lead.customer_name}</CardTitle>
+                  <CardDescription>{lead.legal_category}</CardDescription>
                 </div>
                 <div className="flex gap-1">
-                  <Badge className={getPriorityColor(lead.priority)} variant="secondary">
-                    {lead.priority}
+                  <Badge className={getPriorityColor(lead.urgency_level || '')} variant="secondary">
+                    {lead.urgency_level}
                   </Badge>
                   <Badge className={getStatusColor(lead.status)} variant="outline">
                     {lead.status}
@@ -241,21 +283,21 @@ export default function Leads() {
               <div className="space-y-2 text-sm">
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Mail className="h-4 w-4" />
-                  {lead.email}
+                  {lead.customer_email}
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Phone className="h-4 w-4" />
-                  {lead.phone}
+                  {lead.customer_phone}
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Calendar className="h-4 w-4" />
-                  נוצר: {lead.createdAt}
+                  נוצר: {lead.created_at?.slice(0, 10)}
                 </div>
               </div>
-              
-              {lead.notes && (
+
+              {lead.case_description && (
                 <div className="text-sm text-muted-foreground bg-muted p-2 rounded">
-                  {lead.notes}
+                  {lead.case_description}
                 </div>
               )}
               
@@ -268,7 +310,11 @@ export default function Leads() {
                   <Edit className="h-4 w-4" />
                   עריכה
                 </Button>
-                <Button size="sm" className="flex-1 gap-1">
+                <Button
+                  size="sm"
+                  className="flex-1 gap-1"
+                  onClick={() => convertLeadToClient.mutate(lead)}
+                >
                   <UserPlus className="h-4 w-4" />
                   הפוך ללקוח
                 </Button>

@@ -36,6 +36,7 @@ const businessItems = [
   { title: "תשלומים", url: "/payments", icon: CreditCard },
   { title: "עמלות", url: "/commissions", icon: DollarSign },
   { title: "דוחות", url: "/reports", icon: BarChart3 },
+  { title: "פיצ'רים", url: "/features", icon: FileText },
 ]
 
 export function AppSidebar() {
