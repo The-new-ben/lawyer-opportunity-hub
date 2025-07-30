@@ -9,6 +9,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog"
 import { Plus, Search, Calendar, FileText, Clock, DollarSign, UserPlus } from "lucide-react"
+import { MeetingScheduler } from "@/components/MeetingScheduler"
+import { RatingDialog } from "@/components/RatingDialog"
 
 const Cases = () => {
   const [searchTerm, setSearchTerm] = useState("")
@@ -278,6 +280,7 @@ const Cases = () => {
                   <TableHead className="text-right">עדיפות</TableHead>
                   <TableHead className="text-right">תאריך פתיחה</TableHead>
                   <TableHead className="text-right">סכום</TableHead>
+                  <TableHead className="text-right">פעולות</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -289,6 +292,22 @@ const Cases = () => {
                     <TableCell>{getPriorityBadge(case_.priority)}</TableCell>
                     <TableCell>{new Date(case_.opened_at).toLocaleDateString('he-IL')}</TableCell>
                     <TableCell>₪{case_.estimated_budget ? case_.estimated_budget.toLocaleString() : 'לא צוין'}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-2 animate-fade-in">
+                        <MeetingScheduler 
+                          caseId={case_.id}
+                          lawyerId={case_.assigned_lawyer_id || "default-lawyer"}
+                          clientId={case_.client_id}
+                        />
+                        {case_.status === 'closed' && (
+                          <RatingDialog 
+                            caseId={case_.id}
+                            lawyerId={case_.assigned_lawyer_id || "default-lawyer"}
+                            clientId={case_.client_id}
+                          />
+                        )}
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

@@ -53,18 +53,11 @@ serve(async (req) => {
         const contacts = value?.contacts?.[0];
         const customerName = contacts?.profile?.name || 'לקוח חדש';
 
-        // Create a new lead from WhatsApp message
-        const { data, error } = await supabase
-          .from('leads')
-          .insert({
-            customer_name: customerName,
-            customer_phone: from,
-            case_description: text,
-            legal_category: 'כללי', // Default category
-            source: 'whatsapp',
-            status: 'new',
-            urgency_level: 'medium'
-          });
+        // Process incoming lead using the database function
+        const { data, error } = await supabase.rpc('process_incoming_lead', {
+          p_from_number: from,
+          p_content: text
+        });
 
         if (error) {
           console.error('Error creating lead from WhatsApp:', error);
