@@ -22,6 +22,7 @@ import Commissions from "./pages/Commissions";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Features from "./pages/Features";
+import Matching from "./pages/Matching";
 import ResetPassword from "./pages/ResetPassword";
 import UpdatePassword from "./pages/UpdatePassword";
 
@@ -75,13 +76,20 @@ const App = () => (
                     </Layout>
                   </ProtectedRoute>
                 } />
-                <Route path="/payments" element={
-                  <ProtectedRoute>
-                    <Layout>
-                      <Payments />
-                    </Layout>
-                  </ProtectedRoute>
-                } />
+            <Route path="/payments" element={
+              <ProtectedRoute>
+                <Layout>
+                  <Payments />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/matching" element={
+              <ProtectedRoute>
+                <Layout>
+                  <Matching />
+                </Layout>
+              </ProtectedRoute>
+            } />
                 <Route path="/commissions" element={
                   <ProtectedRoute>
                     <Layout>
