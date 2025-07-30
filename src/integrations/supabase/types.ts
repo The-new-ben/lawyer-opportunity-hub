@@ -74,6 +74,36 @@ export type Database = {
           },
         ]
       }
+      commissions: {
+        Row: {
+          amount: number
+          commission_rate: number
+          contract_id: string
+          created_at: string
+          id: string
+          paid_at: string | null
+          status: string | null
+        }
+        Insert: {
+          amount: number
+          commission_rate: number
+          contract_id: string
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          amount?: number
+          commission_rate?: number
+          contract_id?: string
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
       contracts: {
         Row: {
           contract_text: string
@@ -182,6 +212,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      digital_contracts: {
+        Row: {
+          client_signature: string | null
+          client_signed_at: string | null
+          contract_content: string
+          created_at: string
+          id: string
+          lawyer_signature: string | null
+          lawyer_signed_at: string | null
+          quote_id: string
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_signature?: string | null
+          client_signed_at?: string | null
+          contract_content: string
+          created_at?: string
+          id?: string
+          lawyer_signature?: string | null
+          lawyer_signed_at?: string | null
+          quote_id: string
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_signature?: string | null
+          client_signed_at?: string | null
+          contract_content?: string
+          created_at?: string
+          id?: string
+          lawyer_signature?: string | null
+          lawyer_signed_at?: string | null
+          quote_id?: string
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       escrow: {
         Row: {
@@ -331,6 +400,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      lawyer_specializations: {
+        Row: {
+          created_at: string
+          experience_years: number | null
+          id: string
+          lawyer_id: string
+          specialization: string
+          success_rate: number | null
+        }
+        Insert: {
+          created_at?: string
+          experience_years?: number | null
+          id?: string
+          lawyer_id: string
+          specialization: string
+          success_rate?: number | null
+        }
+        Update: {
+          created_at?: string
+          experience_years?: number | null
+          id?: string
+          lawyer_id?: string
+          specialization?: string
+          success_rate?: number | null
+        }
+        Relationships: []
       }
       lawyer_tiers: {
         Row: {
@@ -876,6 +972,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_matching_score: {
+        Args: {
+          p_lawyer_id: string
+          p_legal_category: string
+          p_estimated_budget?: number
+        }
+        Returns: number
+      }
       calculate_monthly_score: {
         Args: {
           p_lawyer_id: string
@@ -891,6 +995,17 @@ export type Database = {
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_matched_lawyers: {
+        Args: { p_lead_id: string; p_limit?: number }
+        Returns: {
+          lawyer_id: string
+          lawyer_name: string
+          specializations: string[]
+          rating: number
+          hourly_rate: number
+          matching_score: number
+        }[]
       }
       get_user_role: {
         Args: { user_uuid: string }
