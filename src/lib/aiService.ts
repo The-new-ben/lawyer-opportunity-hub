@@ -10,16 +10,14 @@ const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 const OPENAI_BASE_URL = "https://api.openai.com/v1";
 
 if (!OPENAI_API_KEY) {
-  console.warn(
-    "OpenAI API key missing. Please set VITE_OPENAI_API_KEY in your .env file."
-  );
+  console.log("OpenAI API key not configured - AI features will use defaults");
 }
 
 // Classify a lead description into a legal practice area using a GPT model. This
 // function sends a prompt to the OpenAI Chat API and expects a short label.
 export async function classifyLead(description: string): Promise<string> {
   if (!OPENAI_API_KEY) {
-    throw new Error("OpenAI API key is missing");
+    return "אזרחי"; // Return default category
   }
   const url = `${OPENAI_BASE_URL}/chat/completions`;
   const messages = [

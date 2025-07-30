@@ -14,6 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
+      cases: {
+        Row: {
+          assigned_lawyer_id: string | null
+          client_id: string | null
+          created_at: string | null
+          estimated_budget: number | null
+          id: string
+          legal_category: string
+          notes: string | null
+          opened_at: string | null
+          priority: string
+          status: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_lawyer_id?: string | null
+          client_id?: string | null
+          created_at?: string | null
+          estimated_budget?: number | null
+          id?: string
+          legal_category: string
+          notes?: string | null
+          opened_at?: string | null
+          priority?: string
+          status?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_lawyer_id?: string | null
+          client_id?: string | null
+          created_at?: string | null
+          estimated_budget?: number | null
+          id?: string
+          legal_category?: string
+          notes?: string | null
+          opened_at?: string | null
+          priority?: string
+          status?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cases_assigned_lawyer_id_fkey"
+            columns: ["assigned_lawyer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cases_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contracts: {
         Row: {
           contract_text: string
@@ -160,6 +220,67 @@ export type Database = {
             columns: ["payment_id"]
             isOneToOne: false
             referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          case_id: string | null
+          client_id: string | null
+          created_at: string | null
+          description: string | null
+          end_time: string
+          id: string
+          lawyer_id: string | null
+          start_time: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          case_id?: string | null
+          client_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          end_time: string
+          id?: string
+          lawyer_id?: string | null
+          start_time: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          case_id?: string | null
+          client_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          end_time?: string
+          id?: string
+          lawyer_id?: string | null
+          start_time?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_lawyer_id_fkey"
+            columns: ["lawyer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -655,6 +776,27 @@ export type Database = {
           },
         ]
       }
+      role_permissions: {
+        Row: {
+          created_at: string | null
+          id: string
+          permission: Database["public"]["Enums"]["app_permission"]
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          permission: Database["public"]["Enums"]["app_permission"]
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          permission?: Database["public"]["Enums"]["app_permission"]
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: []
+      }
       suppliers: {
         Row: {
           availability_hours: Json | null
@@ -708,6 +850,27 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -729,9 +892,22 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_user_role: {
+        Args: { user_uuid: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_permission:
+        | "leads.read"
+        | "leads.create"
+        | "leads.assign"
+        | "cases.read"
+        | "cases.create"
+        | "cases.update"
+        | "payments.manage"
+        | "users.manage"
+      app_role: "admin" | "lawyer" | "client" | "supplier"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -858,6 +1034,18 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_permission: [
+        "leads.read",
+        "leads.create",
+        "leads.assign",
+        "cases.read",
+        "cases.create",
+        "cases.update",
+        "payments.manage",
+        "users.manage",
+      ],
+      app_role: ["admin", "lawyer", "client", "supplier"],
+    },
   },
 } as const

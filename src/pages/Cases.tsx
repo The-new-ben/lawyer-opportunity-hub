@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useCases } from "@/hooks/useCases"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -48,9 +49,11 @@ const Cases = () => {
   const [statusFilter, setStatusFilter] = useState("הכל")
   const [priorityFilter, setPriorityFilter] = useState("הכל")
   
-  const filteredCases = mockCases.filter(case_ => {
-    const matchesSearch = case_.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         case_.client.toLowerCase().includes(searchTerm.toLowerCase())
+  const { cases, isLoading, error, getCaseStats } = useCases();
+  const stats = getCaseStats();
+  
+  const filteredCases = cases.filter(case_ => {
+    const matchesSearch = case_.title.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === "הכל" || case_.status === statusFilter
     const matchesPriority = priorityFilter === "הכל" || case_.priority === priorityFilter
     
@@ -103,7 +106,7 @@ const Cases = () => {
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{mockCases.length}</div>
+            <div className="text-2xl font-bold">{stats.totalCases}</div>
           </CardContent>
         </Card>
         <Card>
@@ -112,7 +115,7 @@ const Cases = () => {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{mockCases.filter(c => c.status !== "סגור").length}</div>
+            <div className="text-2xl font-bold">{stats.openCases}</div>
           </CardContent>
         </Card>
         <Card>
@@ -121,7 +124,7 @@ const Cases = () => {
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{mockCases.filter(c => c.priority === "גבוה").length}</div>
+            <div className="text-2xl font-bold">{stats.highPriorityCases}</div>
           </CardContent>
         </Card>
         <Card>
@@ -130,7 +133,7 @@ const Cases = () => {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">₪90,000</div>
+            <div className="text-2xl font-bold">₪{stats.totalAmount.toLocaleString()}</div>
           </CardContent>
         </Card>
       </div>
@@ -178,46 +181,36 @@ const Cases = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-right">מספר תיק</TableHead>
-                <TableHead className="text-right">כותרת</TableHead>
-                <TableHead className="text-right">לקוח</TableHead>
-                <TableHead className="text-right">סטטוס</TableHead>
-                <TableHead className="text-right">עדיפות</TableHead>
-                <TableHead className="text-right">תאריך פתיחה</TableHead>
-                <TableHead className="text-right">עדכון אחרון</TableHead>
-                <TableHead className="text-right">סכום</TableHead>
-                <TableHead className="text-right">התקדמות</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredCases.map((case_) => (
-                <TableRow key={case_.id}>
-                  <TableCell className="font-medium">{case_.id}</TableCell>
-                  <TableCell>{case_.title}</TableCell>
-                  <TableCell>{case_.client}</TableCell>
-                  <TableCell>{getStatusBadge(case_.status)}</TableCell>
-                  <TableCell>{getPriorityBadge(case_.priority)}</TableCell>
-                  <TableCell>{case_.startDate}</TableCell>
-                  <TableCell>{case_.lastUpdate}</TableCell>
-                  <TableCell>{case_.amount}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <div className="w-16 bg-secondary rounded-full h-2">
-                        <div 
-                          className="bg-primary h-2 rounded-full" 
-                          style={{ width: `${case_.progress}%` }}
-                        />
-                      </div>
-                      <span className="text-sm">{case_.progress}%</span>
-                    </div>
-                  </TableCell>
+          {isLoading ? (
+            <div className="text-center py-8">טוען תיקים...</div>
+          ) : error ? (
+            <div className="text-center py-8 text-destructive">שגיאה בטעינת תיקים</div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-right">מספר תיק</TableHead>
+                  <TableHead className="text-right">כותרת</TableHead>
+                  <TableHead className="text-right">סטטוס</TableHead>
+                  <TableHead className="text-right">עדיפות</TableHead>
+                  <TableHead className="text-right">תאריך פתיחה</TableHead>
+                  <TableHead className="text-right">סכום</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredCases.map((case_) => (
+                  <TableRow key={case_.id}>
+                    <TableCell className="font-medium">{case_.id.slice(0, 8)}</TableCell>
+                    <TableCell>{case_.title}</TableCell>
+                    <TableCell>{getStatusBadge(case_.status)}</TableCell>
+                    <TableCell>{getPriorityBadge(case_.priority)}</TableCell>
+                    <TableCell>{new Date(case_.opened_at).toLocaleDateString('he-IL')}</TableCell>
+                    <TableCell>₪{case_.estimated_budget ? case_.estimated_budget.toLocaleString() : 'לא צוין'}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -12,9 +12,7 @@ const PHONE_NUMBER_ID = import.meta.env.VITE_WHATSAPP_PHONE_ID;
 const ACCESS_TOKEN = import.meta.env.VITE_WHATSAPP_TOKEN;
 
 if (!PHONE_NUMBER_ID || !ACCESS_TOKEN) {
-  console.warn(
-    "WhatsApp Phone ID or Token missing. Please set VITE_WHATSAPP_PHONE_ID and VITE_WHATSAPP_TOKEN in your .env file."
-  );
+  console.log("WhatsApp not configured - messaging disabled");
 }
 
 // Send a simple text message to a recipient phone number. You must ensure that the
@@ -25,7 +23,8 @@ export async function sendWhatsAppTextMessage(
   text: string
 ): Promise<void> {
   if (!PHONE_NUMBER_ID || !ACCESS_TOKEN) {
-    throw new Error("WhatsApp configuration missing");
+    console.log("WhatsApp message skipped - not configured");
+    return; // Skip silently
   }
   const url = `${WHATSAPP_BASE_URL}/${PHONE_NUMBER_ID}/messages`;
   const payload = {

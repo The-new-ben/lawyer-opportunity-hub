@@ -1,18 +1,27 @@
 import { useState, useEffect, createContext, useContext } from 'react';
-import { User, Session } from '@supabase/supabase-js';
+import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+ e43qts-codex/fix-404-pages-and-functionality-issues
 interface AuthResult {
   error: { message: string } | null
 }
+
+type SignResponse = { error: { message: string } | AuthError | null }
+ main
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+ e43qts-codex/fix-404-pages-and-functionality-issues
   signUp: (email: string, password: string, fullName?: string) => Promise<AuthResult>;
   signIn: (email: string, password: string) => Promise<AuthResult>;
+
+  signUp: (email: string, password: string, fullName?: string) => Promise<SignResponse>;
+  signIn: (email: string, password: string) => Promise<SignResponse>;
+ main
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<AuthResult>;
   updatePassword: (newPassword: string) => Promise<AuthResult>;

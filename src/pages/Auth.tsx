@@ -129,10 +129,23 @@ export default function Auth() {
                   {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   התחבר
                 </Button>
+ e43qts-codex/fix-404-pages-and-functionality-issues
                 <div className="text-center pt-2">
                   <a href="#/reset-password" className="text-sm text-primary underline">
                     שכחת סיסמה?
                   </a>
+
+                <div className="text-center">
+                  <Button 
+                    type="button"
+                    variant="link" 
+                    onClick={() => navigate('/reset-password')}
+                    disabled={loading}
+                    className="text-sm"
+                  >
+                    שכחת סיסמה?
+                  </Button>
+ main
                 </div>
               </form>
             </TabsContent>
