@@ -25,6 +25,7 @@ import Features from "./pages/Features";
 import Matching from "./pages/Matching";
 import ResetPassword from "./pages/ResetPassword";
 import UpdatePassword from "./pages/UpdatePassword";
+import LeadsPortal from "./pages/LeadsPortal";
 
 const App = () => (
   <ErrorBoundary>
@@ -40,6 +41,7 @@ const App = () => (
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/update-password" element={<UpdatePassword />} />
                 <Route path="/landing" element={<Landing />} />
+                <Route path="/portal" element={<LeadsPortal />} />
                 <Route path="/" element={<Index />} />
                 <Route path="/dashboard" element={
                   <ProtectedRoute>
