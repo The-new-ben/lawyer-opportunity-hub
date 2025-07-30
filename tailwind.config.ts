@@ -1,5 +1,9 @@
 import type { Config } from "tailwindcss";
+ e43qts-codex/fix-404-pages-and-functionality-issues
+import animate from "tailwindcss-animate";
+
 import animatePlugin from "tailwindcss-animate";
+ main
 
 export default {
 	darkMode: ["class"],
@@ -102,5 +106,9 @@ export default {
 			}
 		}
 	},
+ e43qts-codex/fix-404-pages-and-functionality-issues
+       plugins: [animate],
+
        plugins: [animatePlugin],
+ main
 } satisfies Config;

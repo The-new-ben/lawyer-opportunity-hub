@@ -1,7 +1,11 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+ e43qts-codex/fix-404-pages-and-functionality-issues
+
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+ main
 import { HashRouter as Router, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/hooks/useAuth";
@@ -21,22 +25,31 @@ import Payments from "./pages/Payments";
 import Commissions from "./pages/Commissions";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
+ e43qts-codex/fix-404-pages-and-functionality-issues
+import Features from "./pages/Features";
+import ResetPassword from "./pages/ResetPassword";
+import UpdatePassword from "./pages/UpdatePassword";
+
 import ResetPassword from "./pages/ResetPassword";
 import UpdatePassword from "./pages/UpdatePassword";
 
 const queryClient = new QueryClient();
+ main
 
 const App = () => (
   <ErrorBoundary>
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
         <AuthProvider>
           <TooltipProvider>
             <Toaster />
             <Sonner />
             <Router>
             <Routes>
+ e43qts-codex/fix-404-pages-and-functionality-issues
+             <Route path="/auth" element={<Auth />} />
+
               <Route path="/auth" element={<Auth />} />
+ main
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/update-password" element={<UpdatePassword />} />
               <Route path="/landing" element={<Landing />} />
@@ -97,6 +110,13 @@ const App = () => (
                   </Layout>
                 </ProtectedRoute>
               } />
+              <Route path="/features" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Features />
+                  </Layout>
+                </ProtectedRoute>
+              } />
               <Route path="/settings" element={
                 <ProtectedRoute>
                   <Layout>
@@ -111,7 +131,6 @@ const App = () => (
           </TooltipProvider>
         </AuthProvider>
       </ThemeProvider>
-    </QueryClientProvider>
   </ErrorBoundary>
 );
 

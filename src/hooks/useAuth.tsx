@@ -3,15 +3,28 @@ import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+ e43qts-codex/fix-404-pages-and-functionality-issues
+interface AuthResult {
+  error: { message: string } | null
+}
+
 type SignResponse = { error: { message: string } | AuthError | null }
+ main
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+ e43qts-codex/fix-404-pages-and-functionality-issues
+  signUp: (email: string, password: string, fullName?: string) => Promise<AuthResult>;
+  signIn: (email: string, password: string) => Promise<AuthResult>;
+
   signUp: (email: string, password: string, fullName?: string) => Promise<SignResponse>;
   signIn: (email: string, password: string) => Promise<SignResponse>;
+ main
   signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<AuthResult>;
+  updatePassword: (newPassword: string) => Promise<AuthResult>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -47,7 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [user]);
 
   const createUserProfile = async (user: User) => {
     try {
@@ -147,7 +160,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
     }
 
-    return { error };
+    return { error: error ? { message: error.message } : null };
   };
 
   const signOut = async () => {
@@ -160,6 +173,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const resetPassword = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/update-password`,
+    });
+    return { error: error ? { message: error.message } : null };
+  };
+
+  const updatePassword = async (newPassword: string) => {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    return { error: error ? { message: error.message } : null };
+  };
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -168,6 +193,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signUp,
       signIn,
       signOut
+      ,resetPassword
+      ,updatePassword
     }}>
       {children}
     </AuthContext.Provider>
@@ -181,3 +208,4 @@ export const useAuth = () => {
   }
   return context;
 };
+

@@ -2,8 +2,12 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+ e43qts-codex/fix-404-pages-and-functionality-issues
+export type TextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement>
+
 export type TextareaProps =
   React.TextareaHTMLAttributes<HTMLTextAreaElement>
+ main
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
   ({ className, ...props }, ref) => {

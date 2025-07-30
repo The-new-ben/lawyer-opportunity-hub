@@ -1,3 +1,26 @@
+ e43qts-codex/fix-404-pages-and-functionality-issues
+import { useState } from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { useLeads } from "@/hooks/useLeads"
+import { useToast } from "@/hooks/use-toast"
+import {
+  Plus,
+  Search,
+  Phone,
+  Mail,
+  Calendar,
+  Eye,
+  Edit,
+  UserPlus
+} from "lucide-react"
+=======
 import { useState } from "react";
 import { useLeads } from "@/hooks/useLeads";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +31,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Search, Users, Clock, TrendingUp, Phone, UserPlus } from "lucide-react";
+ main
 
 export default function Leads() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -23,6 +47,49 @@ export default function Leads() {
     priority: "",
     notes: "",
   });
+
+ e43qts-codex/fix-404-pages-and-functionality-issues
+  const { leads, isLoading, addLead, convertLeadToClient } = useLeads()
+  const { toast } = useToast()
+  const [newName, setNewName] = useState("")
+  const [newEmail, setNewEmail] = useState("")
+  const [newPhone, setNewPhone] = useState("")
+  const [newDescription, setNewDescription] = useState("")
+
+  const handleSaveLead = async () => {
+    try {
+      await addLead.mutateAsync({
+        customer_name: newName,
+        customer_email: newEmail,
+        customer_phone: newPhone,
+        case_description: newDescription,
+        status: "new",
+      })
+      toast({ title: "ליד נוסף בהצלחה" })
+      setNewName("")
+      setNewEmail("")
+      setNewPhone("")
+      setNewDescription("")
+    } catch (e: unknown) {
+      const err = e as Error
+      toast({
+        title: "שגיאה בשמירת ליד",
+        description: err.message,
+        variant: "destructive",
+      })
+    }
+  }
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case "high":
+        return "bg-destructive text-destructive-foreground"
+      case "medium":
+        return "bg-warning text-warning-foreground"
+      case "low":
+        return "bg-success text-success-foreground"
+      default:
+        return "bg-muted text-muted-foreground"
 
   const { leads, isLoading, error, addLead, convertLeadToClient, getLeadStats } = useLeads();
 
@@ -75,19 +142,44 @@ export default function Leads() {
       case "medium": return "bg-warning text-warning-foreground";
       case "low": return "bg-success text-success-foreground";
       default: return "bg-muted text-muted-foreground";
+ main
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
+ e43qts-codex/fix-404-pages-and-functionality-issues
+      case "new":
+        return "bg-accent text-accent-foreground"
+      case "contacted":
+        return "bg-primary text-primary-foreground"
+      case "meeting":
+        return "bg-warning text-warning-foreground"
+      case "converted":
+        return "bg-success text-success-foreground"
+      default:
+        return "bg-muted text-muted-foreground"
+
       case "new": return "bg-accent text-accent-foreground";
       case "contacted": return "bg-primary text-primary-foreground";
       case "meeting": return "bg-warning text-warning-foreground";
       case "converted": return "bg-success text-success-foreground";
       case "rejected": return "bg-muted text-muted-foreground";
       default: return "bg-muted text-muted-foreground";
+ main
     }
   };
+
+ e43qts-codex/fix-404-pages-and-functionality-issues
+  const filteredLeads = (leads || []).filter((lead) => {
+    const matchesSearch =
+      lead.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (lead.customer_email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      lead.legal_category.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesStatus = statusFilter === "all" || lead.status === statusFilter
+    const matchesPriority =
+      priorityFilter === "all" ||
+      (lead.urgency_level || '') === priorityFilter
 
   const filteredLeads = leads.filter(lead => {
     const matchesSearch = lead.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -95,9 +187,14 @@ export default function Leads() {
                          lead.legal_category.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || lead.status === statusFilter;
     const matchesPriority = priorityFilter === "all" || lead.urgency_level === priorityFilter;
+ main
     
     return matchesSearch && matchesStatus && matchesPriority;
   });
+
+  if (isLoading) {
+    return <div className="p-6">טוען נתונים...</div>
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -125,16 +222,37 @@ export default function Leads() {
                 <Label htmlFor="name">שם מלא *</Label>
                 <Input
                   id="name"
+ e43qts-codex/fix-404-pages-and-functionality-issues
+                  placeholder="הזן שם מלא"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">אימייל</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="example@email.com"
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="הזן שם מלא"
                   required
+ main
                 />
               </div>
               <div>
                 <Label htmlFor="phone">טלפון *</Label>
                 <Input
                   id="phone"
+ e43qts-codex/fix-404-pages-and-functionality-issues
+                  placeholder="050-1234567"
+                  value={newPhone}
+                  onChange={(e) => setNewPhone(e.target.value)}
+
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   placeholder="הזן מספר טלפון"
@@ -149,6 +267,7 @@ export default function Leads() {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="הזן כתובת אימייל"
+ main
                 />
               </div>
               <div>
@@ -182,12 +301,38 @@ export default function Leads() {
               </div>
               <div>
                 <Label htmlFor="notes">הערות</Label>
+ e43qts-codex/fix-404-pages-and-functionality-issues
+                <Textarea
+                  id="notes"
+                  placeholder="הערות נוספות על הליד"
+                  value={newDescription}
+                  onChange={(e) => setNewDescription(e.target.value)}
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button className="flex-1" onClick={handleSaveLead} disabled={addLead.isPending}>
+                  שמור ליד
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    setNewName('');
+                    setNewEmail('');
+                    setNewPhone('');
+                    setNewDescription('');
+                  }}
+                >
+                  ביטול
+                </Button>
+
                 <Input
                   id="notes"
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   placeholder="הזן פרטים נוספים"
                 />
+ main
               </div>
               <Button 
                 onClick={handleSaveLead} 
@@ -288,6 +433,64 @@ export default function Leads() {
       <div className="grid gap-4">
         {filteredLeads.map((lead) => (
           <Card key={lead.id} className="hover:shadow-md transition-shadow">
+ e43qts-codex/fix-404-pages-and-functionality-issues
+            <CardHeader className="pb-3">
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle className="text-lg">{lead.customer_name}</CardTitle>
+                  <CardDescription>{lead.legal_category}</CardDescription>
+                </div>
+                <div className="flex gap-1">
+                  <Badge className={getPriorityColor(lead.urgency_level || '')} variant="secondary">
+                    {lead.urgency_level}
+                  </Badge>
+                  <Badge className={getStatusColor(lead.status)} variant="outline">
+                    {lead.status}
+                  </Badge>
+                </div>
+              </div>
+            </CardHeader>
+            
+            <CardContent className="space-y-3">
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Mail className="h-4 w-4" />
+                  {lead.customer_email}
+                </div>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Phone className="h-4 w-4" />
+                  {lead.customer_phone}
+                </div>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Calendar className="h-4 w-4" />
+                  נוצר: {lead.created_at?.slice(0, 10)}
+                </div>
+              </div>
+
+              {lead.case_description && (
+                <div className="text-sm text-muted-foreground bg-muted p-2 rounded">
+                  {lead.case_description}
+                </div>
+              )}
+              
+              <div className="flex gap-2 pt-2">
+                <Button size="sm" variant="outline" className="flex-1 gap-1">
+                  <Eye className="h-4 w-4" />
+                  צפייה
+                </Button>
+                <Button size="sm" variant="outline" className="flex-1 gap-1">
+                  <Edit className="h-4 w-4" />
+                  עריכה
+                </Button>
+                <Button
+                  size="sm"
+                  className="flex-1 gap-1"
+                  onClick={() => convertLeadToClient.mutate(lead)}
+                >
+                  <UserPlus className="h-4 w-4" />
+                  הפוך ללקוח
+                </Button>
+
             <CardContent className="pt-6">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex-1">
@@ -326,6 +529,7 @@ export default function Leads() {
                     נוצר: {new Date(lead.created_at).toLocaleDateString('he-IL')}
                   </div>
                 </div>
+ main
               </div>
             </CardContent>
           </Card>
