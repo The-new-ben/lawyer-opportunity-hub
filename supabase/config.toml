@@ -24,3 +24,6 @@ enable_confirmations = false
 
 [functions.whatsapp-webhook]
 verify_jwt = false
+
+[functions.ai-summary]
+verify_jwt = true

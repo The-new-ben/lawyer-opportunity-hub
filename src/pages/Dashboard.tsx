@@ -4,6 +4,10 @@ import { SystemStatus } from "@/components/SystemStatus"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { useQuery } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useState } from "react"
+import { toast } from "sonner"
 import { 
   Users, 
   UserPlus, 
@@ -12,10 +16,37 @@ import {
   TrendingUp,
   Plus,
   Calendar,
-  Clock
+  Clock,
+  Brain,
+  RefreshCw
 } from "lucide-react"
 
 export default function Dashboard() {
+  const [isLoadingSummary, setIsLoadingSummary] = useState(false);
+
+  // AI Summary Query
+  const { data: aiSummary, refetch: refetchSummary } = useQuery({
+    queryKey: ['ai-summary'],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke('ai-summary');
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  const handleRefreshSummary = async () => {
+    setIsLoadingSummary(true);
+    try {
+      await refetchSummary();
+      toast.success("סיכום עודכן בהצלחה");
+    } catch (error) {
+      toast.error("שגיאה בעדכון הסיכום");
+    } finally {
+      setIsLoadingSummary(false);
+    }
+  };
+
   const stats = [
     {
       title: "לידים חדשים החודש",
@@ -99,6 +130,52 @@ export default function Dashboard() {
           <StatsCard key={index} {...stat} />
         ))}
       </div>
+
+      {/* AI Summary Card */}
+      <Card className="md:col-span-2 lg:col-span-3">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Brain className="h-5 w-5" />
+              סיכום AI של המשרד
+            </CardTitle>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleRefreshSummary}
+              disabled={isLoadingSummary}
+              className="gap-2"
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoadingSummary ? 'animate-spin' : ''}`} />
+              רענן
+            </Button>
+          </div>
+          <CardDescription>
+            ניתוח אוטומטי של נתוני המשרד עם תובנות והמלצות
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {aiSummary ? (
+            <div className="space-y-4">
+              <div className="p-4 bg-muted/50 rounded-lg">
+                <p className="text-sm whitespace-pre-wrap">{aiSummary.summary}</p>
+              </div>
+              {aiSummary.timestamp && (
+                <p className="text-xs text-muted-foreground">
+                  עודכן לאחרונה: {new Date(aiSummary.timestamp).toLocaleString('he-IL')}
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center p-8 text-muted-foreground">
+              <div className="text-center space-y-2">
+                <Brain className="h-8 w-8 mx-auto opacity-50" />
+                <p>לחץ על "רענן" לקבלת סיכום AI</p>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {/* Recent Leads */}
