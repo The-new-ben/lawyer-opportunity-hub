@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useLeads } from "@/hooks/useLeads"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -23,45 +24,11 @@ export default function Leads() {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [priorityFilter, setPriorityFilter] = useState("all")
+  
+  const { leads, isLoading, error, addLead, convertLeadToClient } = useLeads()
 
-  const leads = [
-    {
-      id: 1,
-      name: "רחל כהן",
-      email: "rachel.cohen@email.com",
-      phone: "050-1234567",
-      legalArea: "דיני משפחה",
-      status: "חדש",
-      priority: "גבוה",
-      source: "אתר אינטרנט",
-      createdAt: "2024-01-15",
-      notes: "מעוניינת בהליכי גירושין"
-    },
-    {
-      id: 2,
-      name: "דוד לוי",
-      email: "david.levi@email.com",
-      phone: "052-2345678",
-      legalArea: "דיני עבודה",
-      status: "פניה ראשונית",
-      priority: "בינוני",
-      source: "המלצה",
-      createdAt: "2024-01-14",
-      notes: "בעיה עם המעסיק"
-    },
-    {
-      id: 3,
-      name: "שרה אברהם",
-      email: "sarah.abraham@email.com",
-      phone: "053-3456789",
-      legalArea: "דיני נזיקין",
-      status: "ממתין לפגישה",
-      priority: "נמוך",
-      source: "פייסבוק",
-      createdAt: "2024-01-13",
-      notes: "תאונת דרכים"
-    }
-  ]
+  if (isLoading) return <div className="p-6">טוען לידים...</div>
+  if (error) return <div className="p-6 text-destructive">שגיאה בטעינת לידים: {error.message}</div>
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -84,11 +51,11 @@ export default function Leads() {
   }
 
   const filteredLeads = leads.filter(lead => {
-    const matchesSearch = lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         lead.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         lead.legalArea.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = lead.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (lead.customer_email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         lead.legal_category.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === "all" || lead.status === statusFilter
-    const matchesPriority = priorityFilter === "all" || lead.priority === priorityFilter
+    const matchesPriority = priorityFilter === "all" || lead.urgency_level === priorityFilter
     
     return matchesSearch && matchesStatus && matchesPriority
   })
@@ -223,12 +190,12 @@ export default function Leads() {
             <CardHeader className="pb-3">
               <div className="flex justify-between items-start">
                 <div>
-                  <CardTitle className="text-lg">{lead.name}</CardTitle>
-                  <CardDescription>{lead.legalArea}</CardDescription>
+                  <CardTitle className="text-lg">{lead.customer_name}</CardTitle>
+                  <CardDescription>{lead.legal_category}</CardDescription>
                 </div>
                 <div className="flex gap-1">
-                  <Badge className={getPriorityColor(lead.priority)} variant="secondary">
-                    {lead.priority}
+                  <Badge className={getPriorityColor(lead.urgency_level)} variant="secondary">
+                    {lead.urgency_level}
                   </Badge>
                   <Badge className={getStatusColor(lead.status)} variant="outline">
                     {lead.status}
@@ -241,21 +208,21 @@ export default function Leads() {
               <div className="space-y-2 text-sm">
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Mail className="h-4 w-4" />
-                  {lead.email}
+                  {lead.customer_email || 'אין אימייל'}
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Phone className="h-4 w-4" />
-                  {lead.phone}
+                  {lead.customer_phone}
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Calendar className="h-4 w-4" />
-                  נוצר: {lead.createdAt}
+                  נוצר: {new Date(lead.created_at).toLocaleDateString('he-IL')}
                 </div>
               </div>
               
-              {lead.notes && (
+              {lead.case_description && (
                 <div className="text-sm text-muted-foreground bg-muted p-2 rounded">
-                  {lead.notes}
+                  {lead.case_description}
                 </div>
               )}
               
@@ -268,7 +235,12 @@ export default function Leads() {
                   <Edit className="h-4 w-4" />
                   עריכה
                 </Button>
-                <Button size="sm" className="flex-1 gap-1">
+                <Button 
+                  size="sm" 
+                  className="flex-1 gap-1"
+                  onClick={() => convertLeadToClient.mutate(lead)}
+                  disabled={convertLeadToClient.isPending}
+                >
                   <UserPlus className="h-4 w-4" />
                   הפוך ללקוח
                 </Button>
