@@ -285,7 +285,11 @@ const Cases = () => {
               </TableHeader>
               <TableBody>
                 {filteredCases.map((case_) => (
-                  <TableRow key={case_.id}>
+                  <TableRow 
+                    key={case_.id} 
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => window.location.hash = `/cases/${case_.id}`}
+                  >
                     <TableCell className="font-medium">{case_.id.slice(0, 8)}</TableCell>
                     <TableCell>{case_.title}</TableCell>
                     <TableCell>{getStatusBadge(case_.status)}</TableCell>
@@ -293,7 +297,7 @@ const Cases = () => {
                     <TableCell>{new Date(case_.opened_at).toLocaleDateString('he-IL')}</TableCell>
                     <TableCell>₪{case_.estimated_budget ? case_.estimated_budget.toLocaleString() : 'לא צוין'}</TableCell>
                     <TableCell>
-                      <div className="flex gap-2 animate-fade-in">
+                      <div className="flex gap-2 animate-fade-in" onClick={(e) => e.stopPropagation()}>
                         <MeetingScheduler 
                           caseId={case_.id}
                           lawyerId={case_.assigned_lawyer_id || "default-lawyer"}

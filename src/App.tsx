@@ -16,6 +16,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Clients from "./pages/Clients";
 import Cases from "./pages/Cases";
+import CaseDetails from "./pages/CaseDetails";
 import Calendar from "./pages/Calendar";
 import Payments from "./pages/Payments";
 import Commissions from "./pages/Commissions";
@@ -68,6 +69,13 @@ const App = () => (
                   <ProtectedRoute>
                     <Layout>
                       <Cases />
+                    </Layout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/cases/:id" element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <CaseDetails />
                     </Layout>
                   </ProtectedRoute>
                 } />

@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Clock, Users, Calendar as CalendarIcon, MapPin } from "lucide-react";
+import { CreateEventDialog } from "@/components/CreateEventDialog";
 
 const Calendar = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -21,10 +22,7 @@ const Calendar = () => {
           <h1 className="text-3xl font-bold">לוח זמנים</h1>
           <p className="text-muted-foreground">ניהול ומעקב אחר כל האירועים והפגישות</p>
         </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          אירוע חדש
-        </Button>
+        <CreateEventDialog />
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">

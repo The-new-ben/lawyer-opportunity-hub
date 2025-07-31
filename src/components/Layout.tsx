@@ -3,6 +3,7 @@ import { AppSidebar } from "@/components/AppSidebar"
 import { Button } from "@/components/ui/button"
 import { Bell, Settings, User, LogOut } from "lucide-react"
 import { ThemeToggle } from "@/components/ThemeToggle"
+import { UserMenu } from "@/components/UserMenu"
 import { useAuth } from "@/hooks/useAuth"
 import { useIsMobile } from "@/hooks/use-mobile"
 
@@ -48,14 +49,9 @@ export function Layout({ children }: LayoutProps) {
                   <Button variant="ghost" size="icon" className="hover-scale">
                     <Settings className="h-4 w-4 md:h-5 md:w-5" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="hover-scale">
-                    <User className="h-4 w-4 md:h-5 md:w-5" />
-                  </Button>
                 </>
               )}
-              <Button variant="ghost" size="icon" onClick={handleSignOut} className="hover-scale">
-                <LogOut className="h-4 w-4 md:h-5 md:w-5" />
-              </Button>
+              <UserMenu />
               <ThemeToggle />
             </div>
           </header>

@@ -8,6 +8,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Plus, Search, CreditCard, DollarSign, TrendingUp, Clock } from "lucide-react"
+import { CreatePaymentDialog } from "@/components/CreatePaymentDialog"
+import { CreateDepositDialog } from "@/components/CreateDepositDialog"
 
 const Payments = () => {
   const [searchTerm, setSearchTerm] = useState("")
@@ -62,10 +64,10 @@ const Payments = () => {
           <h1 className="text-3xl font-bold">תשלומים</h1>
           <p className="text-muted-foreground">ניהול ומעקב אחר תשלומים ופיקדונות</p>
         </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          הוסף תשלום
-        </Button>
+        <div className="flex gap-2">
+          <CreatePaymentDialog />
+          <CreateDepositDialog />
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
