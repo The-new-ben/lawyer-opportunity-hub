@@ -39,3 +39,6 @@ verify_jwt = false
 
 [functions.full-demo]
 verify_jwt = false
+
+[functions.automated-lead-pipeline]
+verify_jwt = false

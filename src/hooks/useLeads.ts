@@ -78,15 +78,25 @@ export const useLeads = () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });
       toast.success('ליד חדש נוצר בהצלחה');
       
-      // Send WhatsApp confirmation message
-      if (data.customer_phone) {
-        try {
-          await sendWhatsAppTextMessage(
-            data.customer_phone,
-            `שלום ${data.customer_name}, בקשתך התקבלה במערכת ואנו נחזור אליך בהקדם. תחום: ${data.legal_category}`
-          );
-        } catch (error) {
-          console.warn('WhatsApp message failed to send', error);
+      // Trigger automated pipeline
+      try {
+        await supabase.functions.invoke('automated-lead-pipeline', {
+          body: { leadId: data.id }
+        });
+        console.log('Pipeline אוטומטי הופעל עבור ליד:', data.id);
+      } catch (error) {
+        console.warn('Pipeline אוטומטי נכשל:', error);
+        
+        // Fallback: Send basic WhatsApp confirmation
+        if (data.customer_phone) {
+          try {
+            await sendWhatsAppTextMessage(
+              data.customer_phone,
+              `שלום ${data.customer_name}, בקשתך התקבלה במערכת ואנו נחזור אליך בהקדם. תחום: ${data.legal_category}`
+            );
+          } catch (error) {
+            console.warn('WhatsApp message failed to send', error);
+          }
         }
       }
     },
