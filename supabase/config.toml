@@ -36,3 +36,6 @@ verify_jwt = false
 
 [functions.simple-test]
 verify_jwt = false
+
+[functions.full-demo]
+verify_jwt = false
