@@ -11,7 +11,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, fullName?: string) => Promise<AuthResult>;
+  signUp: (email: string, password: string, metadata?: { full_name: string; phone?: string; role?: string }) => Promise<AuthResult>;
   signIn: (email: string, password: string) => Promise<AuthResult>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<AuthResult>;
@@ -73,7 +73,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .insert({
           user_id: user.id,
           full_name: user.user_metadata?.full_name || '',
-          role: 'customer'
+          phone: user.user_metadata?.phone || '',
+          role: user.user_metadata?.role || 'customer'
         });
 
       if (error && error.code !== '23505') { // Ignore duplicate key errors
@@ -84,7 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signUp = async (email: string, password: string, fullName?: string) => {
+  const signUp = async (email: string, password: string, metadata?: { full_name: string; phone?: string; role?: string }) => {
     try {
       const redirectUrl = `${window.location.origin}/`;
       
@@ -94,7 +95,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         options: {
           emailRedirectTo: redirectUrl,
           data: {
-            full_name: fullName || ''
+            full_name: metadata?.full_name || '',
+            phone: metadata?.phone || '',
+            role: metadata?.role || 'customer'
           }
         }
       });

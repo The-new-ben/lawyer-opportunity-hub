@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
@@ -14,6 +15,7 @@ export default function Auth() {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
+  const [role, setRole] = useState<string>('customer');
   const [loading, setLoading] = useState(false);
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
@@ -45,7 +47,7 @@ export default function Auth() {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email || !password || !fullName) {
+    if (!email || !password || !fullName || !role) {
       toast({
         title: "שגיאה ברישום",
         description: "אנא מלא את כל השדות הנדרשים",
@@ -65,7 +67,11 @@ export default function Auth() {
 
     setLoading(true);
 
-    const { error } = await signUp(email, password, fullName);
+    const { error } = await signUp(email, password, {
+      full_name: fullName,
+      phone: phone,
+      role: role
+    });
     
     if (error) {
       toast({
@@ -188,6 +194,20 @@ export default function Auth() {
                     disabled={loading}
                     minLength={6}
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="role">תפקיד במערכת</Label>
+                  <Select value={role} onValueChange={setRole} disabled={loading}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="בחר תפקיד" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="customer">לקוח</SelectItem>
+                      <SelectItem value="lawyer">עורך דין</SelectItem>
+                      <SelectItem value="lead_provider">ספק לידים</SelectItem>
+                      <SelectItem value="admin">מנהל</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
