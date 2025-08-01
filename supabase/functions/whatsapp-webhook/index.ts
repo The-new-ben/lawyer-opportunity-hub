@@ -25,7 +25,8 @@ serve(async (req) => {
       const token = url.searchParams.get('hub.verify_token');
       const challenge = url.searchParams.get('hub.challenge');
 
-      if (mode === 'subscribe' && token === Deno.env.get('WHATSAPP_VERIFY_TOKEN')) {
+      const verifyToken = Deno.env.get('WHATSAPP_TOKEN'); // Use same token for verification
+      if (mode === 'subscribe' && token === verifyToken) {
         console.log('WhatsApp webhook verified successfully');
         return new Response(challenge, { 
           status: 200,

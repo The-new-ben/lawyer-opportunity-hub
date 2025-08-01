@@ -27,3 +27,6 @@ verify_jwt = false
 
 [functions.ai-summary]
 verify_jwt = true
+
+[functions.test-integrations]
+verify_jwt = false
