@@ -27,6 +27,9 @@ import Matching from "./pages/Matching";
 import ResetPassword from "./pages/ResetPassword";
 import UpdatePassword from "./pages/UpdatePassword";
 import LeadsPortal from "./pages/LeadsPortal";
+import MeetingScheduler from "./pages/MeetingScheduler";
+import RoleDashboard from "./pages/RoleDashboard";
+import { RoleBasedRoute } from "./components/RoleBasedRoute";
 
 const App = () => (
   <ErrorBoundary>
@@ -38,98 +41,68 @@ const App = () => (
             <Sonner />
             <Router>
               <Routes>
+                {/* Public Routes */}
+                <Route path="/landing" element={<Landing />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/update-password" element={<UpdatePassword />} />
-                <Route path="/landing" element={<Landing />} />
-                <Route path="/portal" element={<LeadsPortal />} />
-                <Route path="/" element={<Index />} />
-                <Route path="/dashboard" element={
-                  <ProtectedRoute>
-                    <Layout>
-                      <Dashboard />
-                    </Layout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/leads" element={
-                  <ProtectedRoute>
-                    <Layout>
-                      <Leads />
-                    </Layout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/clients" element={
-                  <ProtectedRoute>
-                    <Layout>
-                      <Clients />
-                    </Layout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/cases" element={
-                  <ProtectedRoute>
-                    <Layout>
-                      <Cases />
-                    </Layout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/cases/:id" element={
-                  <ProtectedRoute>
-                    <Layout>
-                      <CaseDetails />
-                    </Layout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/calendar" element={
-                  <ProtectedRoute>
-                    <Layout>
-                      <Calendar />
-                    </Layout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/payments" element={
-                  <ProtectedRoute>
-                    <Layout>
-                      <Payments />
-                    </Layout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/matching" element={
-                  <ProtectedRoute>
-                    <Layout>
-                      <Matching />
-                    </Layout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/commissions" element={
-                  <ProtectedRoute>
-                    <Layout>
-                      <Commissions />
-                    </Layout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/reports" element={
-                  <ProtectedRoute>
-                    <Layout>
-                      <Reports />
-                    </Layout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/features" element={
-                  <ProtectedRoute>
-                    <Layout>
-                      <Features />
-                    </Layout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/settings" element={
-                  <ProtectedRoute>
-                    <Layout>
-                      <Settings />
-                    </Layout>
-                  </ProtectedRoute>
-                } />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
+                
+                {/* Protected Routes */}
+                <Route
+                  path="/*"
+                  element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <Routes>
+                          <Route path="/" element={<Index />} />
+                          <Route path="/dashboard" element={<RoleDashboard />} />
+                          <Route path="/leads" element={
+                            <RoleBasedRoute allowedRoles={['lawyer', 'admin', 'lead_provider']}>
+                              <Leads />
+                            </RoleBasedRoute>
+                          } />
+                          <Route path="/leads-portal" element={
+                            <RoleBasedRoute allowedRoles={['lead_provider', 'admin']}>
+                              <LeadsPortal />
+                            </RoleBasedRoute>
+                          } />
+                          <Route path="/clients" element={
+                            <RoleBasedRoute allowedRoles={['lawyer', 'admin']}>
+                              <Clients />
+                            </RoleBasedRoute>
+                          } />
+                          <Route path="/cases" element={<Cases />} />
+                          <Route path="/cases/:id" element={<CaseDetails />} />
+                          <Route path="/calendar" element={<Calendar />} />
+                          <Route path="/payments" element={<Payments />} />
+                          <Route path="/commissions" element={
+                            <RoleBasedRoute allowedRoles={['lawyer', 'admin']}>
+                              <Commissions />
+                            </RoleBasedRoute>
+                          } />
+                          <Route path="/reports" element={
+                            <RoleBasedRoute allowedRoles={['lawyer', 'admin']}>
+                              <Reports />
+                            </RoleBasedRoute>
+                          } />
+                          <Route path="/settings" element={<Settings />} />
+                          <Route path="/features" element={
+                            <RoleBasedRoute allowedRoles={['admin']}>
+                              <Features />
+                            </RoleBasedRoute>
+                          } />
+                          <Route path="/matching" element={
+                            <RoleBasedRoute allowedRoles={['lawyer', 'admin']}>
+                              <Matching />
+                            </RoleBasedRoute>
+                          } />
+                          <Route path="/meeting-scheduler" element={<MeetingScheduler />} />
+                          <Route path="*" element={<NotFound />} />
+                        </Routes>
+                      </Layout>
+                    </ProtectedRoute>
+                  }
+                />
               </Routes>
             </Router>
           </TooltipProvider>

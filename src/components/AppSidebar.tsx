@@ -9,10 +9,13 @@ import {
   Home,
   Target,
   CreditCard,
-  Search
+  Search,
+  Shield,
+  Package
 } from "lucide-react"
 import { NavLink, useLocation } from "react-router-dom"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { useRole } from "@/hooks/useRole"
 
 import {
   Sidebar,
@@ -26,28 +29,65 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 
-const mainItems = [
-  { title: "דשבורד", url: "/dashboard", icon: Home },
-  { title: "לידים", url: "/leads", icon: Target },
-  { title: "לקוחות", url: "/clients", icon: Users },
-  { title: "תיקים", url: "/cases", icon: FileText },
-  { title: "התאמות", url: "/matching", icon: Search },
-  { title: "לוח זמנים", url: "/calendar", icon: Calendar },
-]
+// Define menu items by role
+const getMenuItems = (role: string | null) => {
+  const baseItems = [
+    { title: "דשבורד", url: "/dashboard", icon: Home, roles: ['admin', 'lawyer', 'customer', 'lead_provider'] },
+  ];
 
-const businessItems = [
-  { title: "תשלומים", url: "/payments", icon: CreditCard },
-  { title: "עמלות", url: "/commissions", icon: DollarSign },
-  { title: "דוחות", url: "/reports", icon: BarChart3 },
-  { title: "פיצ'רים", url: "/features", icon: FileText },
-]
+  const customerItems = [
+    { title: "התיקים שלי", url: "/cases", icon: FileText, roles: ['customer'] },
+    { title: "לוח זמנים", url: "/calendar", icon: Calendar, roles: ['customer'] },
+  ];
+
+  const lawyerItems = [
+    { title: "לידים", url: "/leads", icon: Target, roles: ['lawyer', 'admin'] },
+    { title: "לקוחות", url: "/clients", icon: Users, roles: ['lawyer', 'admin'] },
+    { title: "תיקים", url: "/cases", icon: FileText, roles: ['lawyer', 'admin'] },
+    { title: "התאמות", url: "/matching", icon: Search, roles: ['lawyer', 'admin'] },
+    { title: "לוח זמנים", url: "/calendar", icon: Calendar, roles: ['lawyer', 'admin'] },
+  ];
+
+  const leadProviderItems = [
+    { title: "לידים", url: "/leads", icon: Target, roles: ['lead_provider', 'admin'] },
+    { title: "פורטל לידים", url: "/leads-portal", icon: Package, roles: ['lead_provider', 'admin'] },
+  ];
+
+  const adminItems = [
+    { title: "לידים", url: "/leads", icon: Target, roles: ['admin'] },
+    { title: "לקוחות", url: "/clients", icon: Users, roles: ['admin'] },
+    { title: "תיקים", url: "/cases", icon: FileText, roles: ['admin'] },
+    { title: "התאמות", url: "/matching", icon: Search, roles: ['admin'] },
+    { title: "לוח זמנים", url: "/calendar", icon: Calendar, roles: ['admin'] },
+    { title: "ניהול מערכת", url: "/admin", icon: Shield, roles: ['admin'] },
+  ];
+
+  const businessItems = [
+    { title: "תשלומים", url: "/payments", icon: CreditCard, roles: ['lawyer', 'admin', 'customer'] },
+    { title: "עמלות", url: "/commissions", icon: DollarSign, roles: ['lawyer', 'admin'] },
+    { title: "דוחות", url: "/reports", icon: BarChart3, roles: ['lawyer', 'admin'] },
+    { title: "פיצ'רים", url: "/features", icon: FileText, roles: ['admin'] },
+  ];
+
+  // Filter items based on user role
+  const filteredItems = [...baseItems, ...customerItems, ...lawyerItems, ...leadProviderItems, ...adminItems]
+    .filter(item => !role || item.roles.includes(role));
+
+  const filteredBusinessItems = businessItems
+    .filter(item => !role || item.roles.includes(role));
+
+  return { mainItems: filteredItems, businessItems: filteredBusinessItems };
+};
 
 export function AppSidebar() {
   const { state } = useSidebar()
   const isMobile = useIsMobile()
   const location = useLocation()
+  const { role } = useRole()
   const currentPath = location.pathname
   const isCollapsed = state === "collapsed"
+  
+  const { mainItems, businessItems } = getMenuItems(role);
 
   const isActive = (path: string) => currentPath === path
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
