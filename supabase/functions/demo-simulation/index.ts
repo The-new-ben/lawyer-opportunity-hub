@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,63 +10,94 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  console.log('🟢 התחלת בדיקת הדמיה');
+  console.log('🟢 בדיקת מפתחות API');
 
   try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
-
-    // הדמיית הודעה נכנסת
-    const demoMessage = {
-      from: "+972501234567",
-      content: "שלום, אני צריך עורך דין לטיפול בתיק גירושין דחוף!",
-      name: "יוסי דמו"
+    // בדיקת מפתחות סביבה
+    const checks = {
+      supabase_url: !!Deno.env.get('SUPABASE_URL'),
+      supabase_anon_key: !!Deno.env.get('SUPABASE_ANON_KEY'),
+      supabase_service_key: !!Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'),
+      openai_key: !!Deno.env.get('OPENAI_API_KEY'),
+      whatsapp_token: !!Deno.env.get('WHATSAPP_TOKEN'),
+      whatsapp_phone_id: !!Deno.env.get('WHATSAPP_PHONE_ID'),
     };
 
-    console.log('📱 הדמיית הודעה:', demoMessage);
+    console.log('📊 בדיקת מפתחות:', checks);
 
-    // יצירת ליד
-    const { data: leadId, error: leadError } = await supabase.rpc('process_incoming_lead', {
-      p_from_number: demoMessage.from,
-      p_content: demoMessage.content
-    });
-
-    console.log('📝 תוצאת יצירת ליד:', { leadId, error: leadError?.message });
-
-    // בדיקת AI
+    // בדיקת חיבור OpenAI
+    let openaiTest = false;
     const openaiKey = Deno.env.get('OPENAI_API_KEY');
-    let aiStatus = openaiKey ? '✅ מפתח OpenAI קיים' : '❌ מפתח OpenAI חסר';
+    if (openaiKey) {
+      try {
+        const response = await fetch('https://api.openai.com/v1/models', {
+          headers: {
+            'Authorization': `Bearer ${openaiKey}`,
+          },
+        });
+        openaiTest = response.ok;
+        console.log('🤖 בדיקת OpenAI:', openaiTest ? 'הצלחה' : 'כשל');
+      } catch (error) {
+        console.error('❌ שגיאה ב-OpenAI:', error.message);
+      }
+    }
 
-    // בדיקת WhatsApp
+    // בדיקת חיבור WhatsApp
+    let whatsappTest = false;
     const whatsappToken = Deno.env.get('WHATSAPP_TOKEN');
-    const whatsappPhone = Deno.env.get('WHATSAPP_PHONE_ID');
-    let whatsappStatus = (whatsappToken && whatsappPhone) ? '✅ מפתחות WhatsApp קיימים' : '❌ מפתחות WhatsApp חסרים';
+    const phoneId = Deno.env.get('WHATSAPP_PHONE_ID');
+    if (whatsappToken && phoneId) {
+      try {
+        const response = await fetch(`https://graph.facebook.com/v19.0/${phoneId}`, {
+          headers: {
+            'Authorization': `Bearer ${whatsappToken}`,
+          },
+        });
+        whatsappTest = response.ok;
+        console.log('📱 בדיקת WhatsApp:', whatsappTest ? 'הצלחה' : 'כשל');
+      } catch (error) {
+        console.error('❌ שגיאה ב-WhatsApp:', error.message);
+      }
+    }
 
     const results = {
       timestamp: new Date().toISOString(),
-      demo_message: demoMessage,
-      lead_creation: {
-        success: !leadError,
-        lead_id: leadId,
-        error: leadError?.message
+      environment_keys: checks,
+      api_tests: {
+        openai_connection: openaiTest,
+        whatsapp_connection: whatsappTest
       },
-      integrations: {
-        ai: aiStatus,
-        whatsapp: whatsappStatus
+      summary: {
+        keys_configured: Object.values(checks).filter(Boolean).length,
+        total_keys: Object.keys(checks).length,
+        apis_working: [openaiTest, whatsappTest].filter(Boolean).length
       },
-      status: leadError ? 'נכשל' : 'הושלם בהצלחה'
+      status: 'בדיקה הושלמה',
+      recommendations: []
     };
 
-    console.log('📊 תוצאות סופיות:', results);
+    // המלצות
+    if (!checks.openai_key) {
+      results.recommendations.push('הוסף מפתח OpenAI API');
+    }
+    if (!checks.whatsapp_token || !checks.whatsapp_phone_id) {
+      results.recommendations.push('הוסף מפתחות WhatsApp');
+    }
+    if (!openaiTest && checks.openai_key) {
+      results.recommendations.push('בדוק תקינות מפתח OpenAI');
+    }
+    if (!whatsappTest && checks.whatsapp_token) {
+      results.recommendations.push('בדוק תקינות מפתחות WhatsApp');
+    }
+
+    console.log('✅ בדיקה הושלמה:', results.summary);
 
     return new Response(JSON.stringify(results, null, 2), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
   } catch (error) {
-    console.error('❌ שגיאה:', error);
+    console.error('❌ שגיאה כללית:', error);
     return new Response(JSON.stringify({ 
       error: error.message,
       timestamp: new Date().toISOString()
