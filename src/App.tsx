@@ -86,20 +86,20 @@ const App = () => (
                     </Layout>
                   </ProtectedRoute>
                 } />
-            <Route path="/payments" element={
-              <ProtectedRoute>
-                <Layout>
-                  <Payments />
-                </Layout>
-              </ProtectedRoute>
-            } />
-            <Route path="/matching" element={
-              <ProtectedRoute>
-                <Layout>
-                  <Matching />
-                </Layout>
-              </ProtectedRoute>
-            } />
+                <Route path="/payments" element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <Payments />
+                    </Layout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/matching" element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <Matching />
+                    </Layout>
+                  </ProtectedRoute>
+                } />
                 <Route path="/commissions" element={
                   <ProtectedRoute>
                     <Layout>
