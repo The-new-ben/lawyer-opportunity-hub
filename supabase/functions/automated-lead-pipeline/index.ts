@@ -23,7 +23,15 @@ serve(async (req) => {
     const { leadId } = await req.json();
     console.log(`🚀 התחלת pipeline אוטומטי עבור ליד: ${leadId}`);
 
-    // שלב 1: שליפת נתוני הליד
+    // שלב 1: עדכון שהתחיל התהליך
+    await supabase.from('leads').update({
+      case_details: {
+        pipeline_started: new Date().toISOString(),
+        pipeline_stage: 'started'
+      }
+    }).eq('id', leadId);
+
+    // שליפת נתוני הליד
     const { data: lead, error: leadError } = await supabase
       .from('leads')
       .select('*')
@@ -36,6 +44,15 @@ serve(async (req) => {
 
     console.log(`📄 ליד נמצא: ${lead.customer_name} - ${lead.legal_category}`);
 
+    // עדכון שהליד אומת
+    await supabase.from('leads').update({
+      case_details: {
+        ...lead.case_details,
+        pipeline_stage: 'lead_validated',
+        customer_validated: new Date().toISOString()
+      }
+    }).eq('id', leadId);
+
     // שלב 2: מציאת עורך דין מתאים בצורה אוטומטית
     const { data: matchedLawyers, error: matchError } = await supabase
       .rpc('get_matched_lawyers', { 
@@ -45,6 +62,16 @@ serve(async (req) => {
 
     if (matchError || !matchedLawyers?.length) {
       console.log(`⚠️ לא נמצאו עורכי דין מתאימים`);
+      
+      // עדכון שהתהליך נכשל בחיפוש עורכי דין
+      await supabase.from('leads').update({
+        case_details: {
+          ...lead.case_details,
+          pipeline_stage: 'lawyers_search_failed',
+          error_message: 'לא נמצאו עורכי דין זמינים'
+        }
+      }).eq('id', leadId);
+      
       return new Response(JSON.stringify({ 
         success: false, 
         message: 'לא נמצאו עורכי דין זמינים' 
@@ -56,6 +83,16 @@ serve(async (req) => {
     // בחירת העורך דין הטוב ביותר (הציון הגבוה ביותר)
     const bestLawyer = matchedLawyers[0];
     console.log(`👨‍💼 עורך דין נבחר: ${bestLawyer.lawyer_name} (ציון: ${bestLawyer.matching_score})`);
+
+    // עדכון שנמצא עורך דין
+    await supabase.from('leads').update({
+      case_details: {
+        ...lead.case_details,
+        pipeline_stage: 'lawyer_selected',
+        selected_lawyer: bestLawyer,
+        lawyer_selected_at: new Date().toISOString()
+      }
+    }).eq('id', leadId);
 
     // שלב 3: עדכון הליד עם עורך הדין המשוייך
     const { error: assignError } = await supabase
@@ -69,6 +106,15 @@ serve(async (req) => {
     if (assignError) {
       throw new Error(`שגיאה בשיוך עורך דין: ${assignError.message}`);
     }
+
+    // עדכון שהשיוך הושלם
+    await supabase.from('leads').update({
+      case_details: {
+        ...lead.case_details,
+        pipeline_stage: 'lawyer_assigned',
+        lawyer_assigned_at: new Date().toISOString()
+      }
+    }).eq('id', leadId);
 
     // שלב 4: יצירת quote אוטומטי
     const basePrice = calculateBasePrice(lead.legal_category);
@@ -93,15 +139,53 @@ serve(async (req) => {
 
     console.log(`💰 הצעת מחיר נוצרה: ${quote.quote_amount}₪`);
 
+    // עדכון שהצעת מחיר נוצרה
+    await supabase.from('leads').update({
+      case_details: {
+        ...lead.case_details,
+        pipeline_stage: 'quote_created',
+        quote_created_at: new Date().toISOString(),
+        quote_details: {
+          quote_id: quote.id,
+          amount: quote.quote_amount,
+          duration: quote.estimated_duration_days
+        }
+      }
+    }).eq('id', leadId);
+
     // שלב 5: יצירת לינק תשלום והודעת וואטסאפ
     const meetingLink = `https://mlnwpocuvjnelttvscja.supabase.co/meeting-scheduler?quote_id=${quote.id}&token=${generateSecureToken()}`;
     
     const whatsappMessage = generateWhatsAppMessage(lead, bestLawyer, quote, meetingLink);
     
     // שליחת הודעת וואטסאפ
-    await sendWhatsAppMessage(lead.customer_phone, whatsappMessage);
-    
-    console.log(`📱 הודעת וואטסאפ נשלחה ללקוח`);
+    try {
+      await sendWhatsAppMessage(lead.customer_phone, whatsappMessage);
+      console.log(`📱 הודעת וואטסאפ נשלחה ללקוח`);
+      
+      // עדכון שהודעת וואטסאפ נשלחה
+      await supabase.from('leads').update({
+        case_details: {
+          ...lead.case_details,
+          pipeline_stage: 'whatsapp_sent',
+          whatsapp_sent_at: new Date().toISOString(),
+          meeting_link: meetingLink
+        }
+      }).eq('id', leadId);
+      
+    } catch (whatsappError) {
+      console.error(`❌ שגיאה בשליחת וואטסאפ: ${whatsappError}`);
+      
+      // עדכון ששליחת וואטסאפ נכשלה
+      await supabase.from('leads').update({
+        case_details: {
+          ...lead.case_details,
+          pipeline_stage: 'whatsapp_failed',
+          whatsapp_error: whatsappError.message,
+          meeting_link: meetingLink // עדיין שומר את הלינק למקרה שהלקוח יצטרך אותו
+        }
+      }).eq('id', leadId);
+    }
 
     // שלב 6: רישום הפעילות במערכת
     const { error: logError } = await supabase
@@ -119,6 +203,18 @@ serve(async (req) => {
       console.warn(`שגיאה ברישום הפעילות: ${logError.message}`);
     }
 
+    // עדכון סופי - תהליך הושלם בהצלחה
+    await supabase.from('leads').update({
+      case_details: {
+        ...lead.case_details,
+        pipeline_stage: 'completed',
+        pipeline_completed_at: new Date().toISOString(),
+        pipeline_success: true
+      }
+    }).eq('id', leadId);
+
+    console.log(`✅ Pipeline הושלם בהצלחה עבור ליד: ${leadId}`);
+
     return new Response(JSON.stringify({
       success: true,
       message: 'Pipeline אוטומטי הושלם בהצלחה',
@@ -126,14 +222,31 @@ serve(async (req) => {
         leadId,
         assignedLawyer: bestLawyer.lawyer_name,
         quoteAmount: quote.quote_amount,
-        meetingLink
+        meetingLink,
+        pipelineStage: 'completed'
       }
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
-    console.error('שגיאה ב-pipeline אוטומטי:', error);
+    console.error('❌ שגיאה ב-pipeline אוטומטי:', error);
+    
+    // עדכון שהתהליך נכשל
+    try {
+      const { leadId } = await req.json();
+      await supabase.from('leads').update({
+        case_details: {
+          pipeline_stage: 'failed',
+          pipeline_error: error.message,
+          pipeline_failed_at: new Date().toISOString(),
+          pipeline_success: false
+        }
+      }).eq('id', leadId);
+    } catch (updateError) {
+      console.error('שגיאה בעדכון סטטוס כשל:', updateError);
+    }
+    
     return new Response(JSON.stringify({
       success: false,
       error: error.message
