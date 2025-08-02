@@ -63,7 +63,7 @@ const Commissions = () => {
   const conversionRate = totalLeads > 0 ? Math.round((totalConverted / totalLeads) * 100) : 0
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 flex flex-col overflow-x-hidden">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">עמלות</h1>

@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Badge, type BadgeProps } from "@/components/ui/badge"
 import { CheckCircle, AlertTriangle, Activity, Database, Mail, CreditCard } from "lucide-react"
 
 export function SystemStatus() {
@@ -36,7 +36,7 @@ export function SystemStatus() {
     }
   ]
 
-  const getStatusVariant = (status: string) => {
+  const getStatusVariant = (status: string): BadgeProps["variant"] => {
     switch (status) {
       case 'operational':
         return 'success'
@@ -79,7 +79,7 @@ export function SystemStatus() {
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between">
           <span className="font-medium">סטטוס כללי</span>
-          <Badge variant={getStatusVariant(overallStatus) as any}>
+          <Badge variant={getStatusVariant(overallStatus)}>
             {getStatusText(overallStatus)}
           </Badge>
         </div>
@@ -97,7 +97,7 @@ export function SystemStatus() {
                   <span className="text-xs text-muted-foreground">
                     {service.lastCheck}
                   </span>
-                  <Badge variant={getStatusVariant(service.status) as any}>
+                  <Badge variant={getStatusVariant(service.status)}>
                     {getStatusText(service.status)}
                   </Badge>
                 </div>

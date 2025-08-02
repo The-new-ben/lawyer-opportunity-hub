@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 
 const Landing = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5 flex flex-col overflow-x-hidden" dir="rtl">
       {/* Header */}
       <header className="container mx-auto px-4 py-6">
         <div className="flex justify-between items-center">

@@ -14,7 +14,9 @@ const MeetingScheduler = () => {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [quote, setQuote] = useState<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [lawyer, setLawyer] = useState<any>(null);
   const [step, setStep] = useState(1);
   
@@ -253,7 +255,7 @@ ${meetingData.notes || 'אין הערות נוספות'}
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted p-4">
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted p-4 flex flex-col overflow-x-hidden">
       <div className="max-w-2xl mx-auto">
         
         {/* Header */}

@@ -106,7 +106,7 @@ export default function CaseDetails() {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 flex flex-col overflow-x-hidden">
       <div className="flex justify-between items-start">
         <div>
           <div className="flex items-center gap-2 mb-2">
