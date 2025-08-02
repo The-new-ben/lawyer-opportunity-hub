@@ -6,8 +6,7 @@
 
 import axios from "axios";
 
-const OPENAI_API_KEY =
-  import.meta.env.VITE_OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY;
+const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 const OPENAI_BASE_URL = "https://api.openai.com/v1";
 
 if (!OPENAI_API_KEY) {
