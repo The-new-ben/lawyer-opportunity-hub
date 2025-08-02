@@ -13,7 +13,7 @@ import {
   Shield,
   Package
 } from "lucide-react"
-import { NavLink, useLocation } from "react-router-dom"
+import { NavLink } from "react-router-dom"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useRole } from "@/hooks/useRole"
 
@@ -82,18 +82,15 @@ const getMenuItems = (role: string | null) => {
 export function AppSidebar() {
   const { state } = useSidebar()
   const isMobile = useIsMobile()
-  const location = useLocation()
   const { role } = useRole()
-  const currentPath = location.pathname
   const isCollapsed = state === "collapsed"
   
   const { mainItems, businessItems } = getMenuItems(role);
 
-  const isActive = (path: string) => currentPath === path
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
     `transition-all duration-200 hover-scale ${
-      isActive 
-        ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium animate-scale-in" 
+      isActive
+        ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium animate-scale-in"
         : "hover:bg-sidebar-accent/50"
     }`
 
