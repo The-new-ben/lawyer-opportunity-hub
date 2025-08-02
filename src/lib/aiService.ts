@@ -6,11 +6,12 @@
 
 import axios from "axios";
 
-const OPENAI_API_KEY = ""; // Configure API key in edge function
+const OPENAI_API_KEY =
+  import.meta.env.VITE_OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY;
 const OPENAI_BASE_URL = "https://api.openai.com/v1";
 
 if (!OPENAI_API_KEY) {
-  console.log("OpenAI API key not configured - AI features will use defaults");
+  console.warn("OpenAI API key not configured - AI features will use defaults");
 }
 
 // Classify a lead description into a legal practice area using a GPT model. This

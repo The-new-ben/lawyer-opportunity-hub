@@ -71,6 +71,8 @@ Configure these in [Supabase Dashboard](https://supabase.com/dashboard/project/m
 - `WHATSAPP_TOKEN` - For WhatsApp Cloud API
 - `WHATSAPP_PHONE_ID` - WhatsApp phone number ID
 
+For frontend deployment, set `VITE_OPENAI_API_KEY` in your environment variables.
+
 ### Feature Verification
 
 After deployment, test these key features:

@@ -33,7 +33,7 @@ CLIENT_ORIGIN="https://your-production-domain.com"
 PORT=4000
 WHATSAPP_PHONE_ID="your-whatsapp-phone-id"
 WHATSAPP_TOKEN="your-whatsapp-token"
-OPENAI_API_KEY="your-openai-api-key"
+VITE_OPENAI_API_KEY="your-openai-api-key"
 ```
 
 ### Supabase Secrets Configuration
