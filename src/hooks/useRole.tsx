@@ -27,8 +27,13 @@ export function useRole(): UserRoleData {
       return;
     }
 
-    fetchUserRole();
-  }, [user]);
+    // עיכוב קצר למניעת טעינות מיותרות
+    const timeoutId = setTimeout(() => {
+      fetchUserRole();
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
+  }, [user?.id]); // רק כשה-user id משתנה
 
   const fetchUserRole = async () => {
     if (!user?.id) {

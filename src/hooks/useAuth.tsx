@@ -27,31 +27,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
+    let isMounted = true;
+    
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        if (!isMounted) return;
+        
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
 
-        // Create profile for new users
+        // Create profile for new users - מונע לולאות
         if (event === 'SIGNED_IN' && session?.user && !user) {
           setTimeout(() => {
-            createUserProfile(session.user);
-          }, 0);
+            if (isMounted) {
+              createUserProfile(session.user);
+            }
+          }, 100);
         }
       }
     );
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!isMounted) return;
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
-  }, [user]);
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  }, []); // רק פעם אחת בהתחלה
 
   const createUserProfile = async (user: User) => {
     try {
