@@ -98,7 +98,7 @@ const Cases = () => {
   if (error) return <div className="p-6 text-destructive">שגיאה בטעינת תיקים: {error.message}</div>
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 flex flex-col overflow-x-hidden">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">תיקים</h1>

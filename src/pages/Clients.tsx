@@ -49,7 +49,7 @@ const Clients = () => {
     }
   }
 
-  const isActiveClient = (client: any) => {
+  const isActiveClient = (client: { updated_at: string }) => {
     const thirtyDaysAgo = new Date()
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
     return new Date(client.updated_at) > thirtyDaysAgo
@@ -59,7 +59,7 @@ const Clients = () => {
   if (error) return <div className="p-6 text-destructive">שגיאה בטעינת לקוחות: {error.message}</div>
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 flex flex-col overflow-x-hidden">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">לקוחות</h1>

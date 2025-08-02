@@ -44,7 +44,7 @@ export default function Matching() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 flex flex-col overflow-x-hidden">
       <div>
         <h1 className="text-3xl font-bold">מערכת התאמות ותרמילים</h1>
         <p className="text-muted-foreground">

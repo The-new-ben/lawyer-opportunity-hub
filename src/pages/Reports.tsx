@@ -7,7 +7,7 @@ import { BarChart3, Download, FileText, TrendingUp, Users, DollarSign, Clock, Ta
 
 const Reports = () => {
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 flex flex-col overflow-x-hidden">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">דוחות</h1>

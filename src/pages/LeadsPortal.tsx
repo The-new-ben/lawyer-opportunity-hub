@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { Badge, type BadgeProps } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -208,7 +208,7 @@ export default function LeadsPortal() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex flex-col overflow-x-hidden" dir="rtl">
       {/* Header */}
       <div className="bg-white/80 backdrop-blur-sm border-b sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 py-4">
@@ -339,7 +339,7 @@ export default function LeadsPortal() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 space-y-3">
                     <div className="flex items-center gap-3">
-                      <Badge variant={getUrgencyColor(lead.urgency_level) as any}>
+                      <Badge variant={getUrgencyColor(lead.urgency_level) as BadgeProps["variant"]}>
                         {getUrgencyText(lead.urgency_level)}
                       </Badge>
                       <Badge variant="outline">{lead.legal_category}</Badge>
@@ -414,7 +414,10 @@ export default function LeadsPortal() {
                   </div>
                   <div>
                     <Label className="text-sm font-medium">רמת דחיפות</Label>
-                    <Badge variant={getUrgencyColor(selectedLead.urgency_level) as any} className="mt-1">
+                    <Badge
+                      variant={getUrgencyColor(selectedLead.urgency_level) as BadgeProps["variant"]}
+                      className="mt-1"
+                    >
                       {getUrgencyText(selectedLead.urgency_level)}
                     </Badge>
                   </div>

@@ -292,7 +292,27 @@ function generateSecureToken(): string {
   return crypto.randomUUID().replace(/-/g, '');
 }
 
-function generateWhatsAppMessage(lead: any, lawyer: any, quote: any, meetingLink: string): string {
+interface MessageLead {
+  customer_name: string
+  legal_category: string
+}
+
+interface MessageLawyer {
+  lawyer_name: string
+  rating: number
+}
+
+interface MessageQuote {
+  quote_amount: number
+  estimated_duration_days: number
+}
+
+function generateWhatsAppMessage(
+  lead: MessageLead,
+  lawyer: MessageLawyer,
+  quote: MessageQuote,
+  meetingLink: string
+): string {
   return `שלום ${lead.customer_name}! 👋
 
 קיבלנו את פנייתך בנושא: ${lead.legal_category}

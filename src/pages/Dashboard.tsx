@@ -3,7 +3,7 @@ import { WorkflowInfographic } from "@/components/WorkflowInfographic"
 import { SystemStatus } from "@/components/SystemStatus"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { Badge, type BadgeProps } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
@@ -129,7 +129,11 @@ export default function Dashboard() {
   const todayMeetingsDetailed = todayMeetings.slice(0, 4);
 
   // Pipeline activity status
-  const getActivityStatus = (lead: any) => {
+  const getActivityStatus = (lead: {
+    quotes?: unknown[]
+    meetings?: unknown[]
+    deposits?: unknown[]
+  }) => {
     const hasQuote = lead.quotes && lead.quotes.length > 0;
     const hasMeeting = lead.meetings && lead.meetings.length > 0;
     const hasDeposit = lead.deposits && lead.deposits.length > 0;
@@ -160,7 +164,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-3 sm:p-4 md:p-6 space-y-4 md:space-y-6 animate-fade-in" dir="rtl">
+    <div className="w-full max-w-7xl mx-auto p-3 sm:p-4 md:p-6 space-y-4 md:space-y-6 animate-fade-in flex flex-col overflow-x-hidden" dir="rtl">
       {/* Header */}
       <div className="flex flex-col sm:flex-row gap-4 sm:justify-between sm:items-center animate-slide-in-right">
         <div className="space-y-1">
@@ -272,10 +276,16 @@ export default function Dashboard() {
                     <div className="text-xs sm:text-sm text-muted-foreground">{lead.legal_category}</div>
                   </div>
                   <div className="flex gap-2 flex-wrap items-center">
-                    <Badge variant={getPriorityVariant(lead.urgency_level) as any} className="text-xs">
+                    <Badge
+                      variant={getPriorityVariant(lead.urgency_level) as BadgeProps["variant"]}
+                      className="text-xs"
+                    >
                       {lead.urgency_level}
                     </Badge>
-                    <Badge variant={getStatusVariant(lead.status) as any} className="text-xs">
+                    <Badge
+                      variant={getStatusVariant(lead.status) as BadgeProps["variant"]}
+                      className="text-xs"
+                    >
                       {lead.status}
                     </Badge>
                   </div>
