@@ -8,11 +8,22 @@
 import axios from "axios";
 
 const WHATSAPP_BASE_URL = "https://graph.facebook.com/v19.0";
-const PHONE_NUMBER_ID = ""; // Configure in edge function
-const ACCESS_TOKEN = ""; // Configure in edge function
+// Read configuration from environment variables (Vite or Node)
+const PHONE_NUMBER_ID =
+  (import.meta as { env: Record<string, string | undefined> }).env
+    .VITE_WHATSAPP_PHONE_ID ||
+  process.env.VITE_WHATSAPP_PHONE_ID ||
+  "";
+const ACCESS_TOKEN =
+  (import.meta as { env: Record<string, string | undefined> }).env
+    .VITE_WHATSAPP_TOKEN ||
+  process.env.VITE_WHATSAPP_TOKEN ||
+  "";
 
 if (!PHONE_NUMBER_ID || !ACCESS_TOKEN) {
-  console.log("WhatsApp not configured - messaging disabled");
+  console.warn(
+    "WhatsApp environment variables missing - messaging disabled"
+  );
 }
 
 // Send a simple text message to a recipient phone number. You must ensure that the
@@ -23,7 +34,9 @@ export async function sendWhatsAppTextMessage(
   text: string
 ): Promise<void> {
   if (!PHONE_NUMBER_ID || !ACCESS_TOKEN) {
-    console.log("WhatsApp message skipped - not configured");
+    console.warn(
+      "WhatsApp message skipped - environment variables missing"
+    );
     return; // Skip silently
   }
   const url = `${WHATSAPP_BASE_URL}/${PHONE_NUMBER_ID}/messages`;
@@ -56,7 +69,10 @@ export async function sendWhatsAppTemplateMessage(
   language: string = "he" // default to Hebrew
 ): Promise<void> {
   if (!PHONE_NUMBER_ID || !ACCESS_TOKEN) {
-    throw new Error("WhatsApp configuration missing");
+    console.warn(
+      "WhatsApp template message skipped - environment variables missing"
+    );
+    return;
   }
   const url = `${WHATSAPP_BASE_URL}/${PHONE_NUMBER_ID}/messages`;
   const payload = {
