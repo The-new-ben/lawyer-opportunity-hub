@@ -31,36 +31,17 @@ interface AppSidebarProps {
   onOpenChange: (open: boolean) => void
 }
 
-// הגדרת פריטי תפריט לפי תפקיד
+// הגדרת פריטי תפריט לפי תפקיד - מבטיח מפתחות ייחודיים
 const getMenuItems = (role: string | null) => {
-  const baseItems: MenuItem[] = [
+  // מפתחות ייחודיים עם prefix לכל קטגוריה
+  const allMenuItems: MenuItem[] = [
     { title: "דשבורד", url: "/dashboard", icon: Home, roles: ["admin", "lawyer", "customer", "lead_provider"] },
-  ]
-
-  const customerItems: MenuItem[] = [
-    { title: "התיקים שלי", url: "/cases", icon: FileText, roles: ["customer"] },
-    { title: "לוח זמנים", url: "/calendar", icon: Calendar, roles: ["customer"] },
-  ]
-
-  const lawyerItems: MenuItem[] = [
-    { title: "לידים", url: "/leads", icon: Target, roles: ["lawyer", "admin"] },
+    { title: "לידים", url: "/leads", icon: Target, roles: ["lawyer", "admin", "lead_provider"] },
     { title: "לקוחות", url: "/clients", icon: Users, roles: ["lawyer", "admin"] },
-    { title: "תיקים", url: "/cases", icon: FileText, roles: ["lawyer", "admin"] },
+    { title: "תיקים", url: "/cases", icon: FileText, roles: ["lawyer", "admin", "customer"] },
     { title: "התאמות", url: "/matching", icon: Search, roles: ["lawyer", "admin"] },
-    { title: "לוח זמנים", url: "/calendar", icon: Calendar, roles: ["lawyer", "admin"] },
-  ]
-
-  const leadProviderItems: MenuItem[] = [
-    { title: "לידים", url: "/leads", icon: Target, roles: ["lead_provider", "admin"] },
+    { title: "לוח זמנים", url: "/calendar", icon: Calendar, roles: ["lawyer", "admin", "customer"] },
     { title: "פורטל לידים", url: "/leads-portal", icon: Package, roles: ["lead_provider", "admin"] },
-  ]
-
-  const adminItems: MenuItem[] = [
-    { title: "לידים", url: "/leads", icon: Target, roles: ["admin"] },
-    { title: "לקוחות", url: "/clients", icon: Users, roles: ["admin"] },
-    { title: "תיקים", url: "/cases", icon: FileText, roles: ["admin"] },
-    { title: "התאמות", url: "/matching", icon: Search, roles: ["admin"] },
-    { title: "לוח זמנים", url: "/calendar", icon: Calendar, roles: ["admin"] },
     { title: "ניהול מערכת", url: "/admin", icon: Shield, roles: ["admin"] },
   ]
 
@@ -71,13 +52,10 @@ const getMenuItems = (role: string | null) => {
     { title: "פיצ'רים", url: "/features", icon: FileText, roles: ["admin"] },
   ]
 
-  const main = [...baseItems, ...customerItems, ...lawyerItems, ...leadProviderItems, ...adminItems].filter(
-    (i) => !role || i.roles.includes(role)
-  )
+  const mainItems = allMenuItems.filter((item) => !role || item.roles.includes(role))
+  const filteredBusinessItems = businessItems.filter((item) => !role || item.roles.includes(role))
 
-  const business = businessItems.filter((i) => !role || i.roles.includes(role))
-
-  return { mainItems: main, businessItems: business }
+  return { mainItems, businessItems: filteredBusinessItems }
 }
 
 export const AppSidebar: React.FC<AppSidebarProps> = ({ open, onOpenChange }) => {
@@ -94,7 +72,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ open, onOpenChange }) =>
 
   const renderLinks = (items: MenuItem[]) =>
     items.map(({ title, url, icon: Icon }) => (
-      <NavLink key={title} to={url} end className={({ isActive }) => navCls(isActive)}>
+      <NavLink key={`${url}-${title}`} to={url} end className={({ isActive }) => navCls(isActive)}>
         <Icon className="h-4 w-4 md:h-5 md:w-5 ml-2" />
         <span className="flex-1">{title}</span>
       </NavLink>

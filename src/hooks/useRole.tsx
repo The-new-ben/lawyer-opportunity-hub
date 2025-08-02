@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 
-type UserRole = 'admin' | 'lawyer' | 'client' | 'supplier';
+type UserRole = 'admin' | 'lawyer' | 'client' | 'supplier' | 'customer';
 
 interface UserRoleData {
   role: UserRole | null;
@@ -12,6 +12,7 @@ interface UserRoleData {
   isLawyer: boolean;
   isClient: boolean;
   isSupplier: boolean;
+  isCustomer: boolean;
 }
 
 export function useRole(): UserRoleData {
@@ -30,37 +31,33 @@ export function useRole(): UserRoleData {
   }, [user]);
 
   const fetchUserRole = async () => {
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       
-      // First try to get role from profiles table
-      const { data: profile } = await supabase
+      // יעיל יותר - רק בקשה אחת לprofiles
+      const { data: profile, error } = await supabase
         .from('profiles')
         .select('role')
-        .eq('user_id', user?.id)
-        .single();
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-      if (profile?.role) {
-        setRole(profile.role as UserRole);
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching user role:', error);
+        setRole('customer');
         return;
       }
 
-      // If no profile role, check user_roles table
-      const { data: userRole } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user?.id)
-        .single();
-
-      if (userRole?.role) {
-        setRole(userRole.role as UserRole);
-      } else {
-        // Default role
-        setRole('client');
-      }
+      const userRole = profile?.role as UserRole;
+      setRole(userRole || 'customer');
+      
     } catch (error) {
       console.error('Error fetching user role:', error);
-      setRole('client'); // Default fallback
+      setRole('customer'); // Default fallback
     } finally {
       setLoading(false);
     }
@@ -84,6 +81,7 @@ export function useRole(): UserRoleData {
     isAdmin: role === 'admin',
     isLawyer: role === 'lawyer',
     isClient: role === 'client',
-    isSupplier: role === 'supplier'
+    isSupplier: role === 'supplier',
+    isCustomer: role === 'customer'
   };
 }
