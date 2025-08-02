@@ -6,13 +6,24 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const openaiApiKey = Deno.env.get('OPENAI_API_KEY')!;
-const whatsappToken = Deno.env.get('WHATSAPP_TOKEN')!;
-const whatsappPhoneId = Deno.env.get('WHATSAPP_PHONE_ID')!;
+function getEnvVar(key: string): string {
+  const value = Deno.env.get(key);
+  if (!value) {
+    throw new Error(`Missing environment variable: ${key}`);
+  }
+  return value;
+}
+
+const supabaseUrl = getEnvVar('SUPABASE_URL');
+const supabaseServiceKey = getEnvVar('SUPABASE_SERVICE_ROLE_KEY');
+const openaiApiKey = getEnvVar('OPENAI_API_KEY');
+const whatsappToken = getEnvVar('WHATSAPP_TOKEN');
+const whatsappPhoneId = getEnvVar('WHATSAPP_PHONE_ID');
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+// TODO: Consider moving update logic to a single RPC or wrapping in a
+// database transaction to prevent partial pipeline states.
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
