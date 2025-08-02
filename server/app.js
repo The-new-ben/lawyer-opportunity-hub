@@ -3,6 +3,7 @@ const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
 const { z } = require('zod');
 require('dotenv').config();
+const { syncLead } = require('./hubspot');
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -79,6 +80,7 @@ app.post('/api/leads', async (req, res) => {
   const lead = result.data;
   const { data, error } = await supabase.from('leads').insert(lead).select().single();
   if (error) return res.status(400).json({ error: error.message });
+  await syncLead(data);
   res.json(data);
 });
 
