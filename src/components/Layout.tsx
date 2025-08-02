@@ -45,9 +45,11 @@ export function Layout({ children }: LayoutProps) {
                 <>
                   <Button variant="ghost" size="icon" className="hover-scale">
                     <Bell className="h-4 w-4 md:h-5 md:w-5" />
+                    <span className="sr-only">Notifications</span>
                   </Button>
                   <Button variant="ghost" size="icon" className="hover-scale">
                     <Settings className="h-4 w-4 md:h-5 md:w-5" />
+                    <span className="sr-only">Settings</span>
                   </Button>
                 </>
               )}
