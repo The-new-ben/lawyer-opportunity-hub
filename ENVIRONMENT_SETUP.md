@@ -29,8 +29,10 @@ All sensitive API keys are stored as Supabase Secrets:
 
 #### Required Secrets:
 - `OPENAI_API_KEY` - For AI classification and responses
-- `WHATSAPP_TOKEN` - For WhatsApp Cloud API integration  
+- `WHATSAPP_TOKEN` - For WhatsApp Cloud API integration
 - `WHATSAPP_PHONE_ID` - WhatsApp phone number ID
+
+For local development, set `VITE_OPENAI_API_KEY` in your `.env` file.
 
 #### Configure Secrets:
 1. Go to [Supabase Dashboard > Secrets](https://supabase.com/dashboard/project/mlnwpocuvjnelttvscja/settings/functions)
