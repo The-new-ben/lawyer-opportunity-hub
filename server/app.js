@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
+const { z } = require('zod');
 require('dotenv').config();
 
 const app = express();
@@ -10,6 +11,21 @@ const supabase = createClient(
   process.env.SUPABASE_URL || '',
   process.env.SUPABASE_SERVICE_ROLE || ''
 );
+
+const leadSchema = z
+  .object({
+    customer_name: z.string().min(1),
+    customer_phone: z.string().min(1),
+    legal_category: z.string().min(1),
+    customer_email: z.string().email().optional(),
+    case_description: z.string().optional(),
+    urgency_level: z.string().optional(),
+    status: z.string().optional(),
+    preferred_location: z.string().optional(),
+    source: z.string().optional(),
+    estimated_budget: z.coerce.number().optional(),
+  })
+  .passthrough();
 
 app.use(express.json());
 app.use(
@@ -56,7 +72,11 @@ app.post('/auth/reset-password', async (req, res) => {
 
 // Leads CRUD
 app.post('/api/leads', async (req, res) => {
-  const lead = req.body;
+  const result = leadSchema.safeParse(req.body);
+  if (!result.success) {
+    return res.status(400).json({ error: result.error.errors });
+  }
+  const lead = result.data;
   const { data, error } = await supabase.from('leads').insert(lead).select().single();
   if (error) return res.status(400).json({ error: error.message });
   res.json(data);
@@ -70,7 +90,11 @@ app.get('/api/leads', async (req, res) => {
 
 app.patch('/api/leads/:id', async (req, res) => {
   const { id } = req.params;
-  const updates = req.body;
+  const result = leadSchema.partial().safeParse(req.body);
+  if (!result.success) {
+    return res.status(400).json({ error: result.error.errors });
+  }
+  const updates = result.data;
   const { data, error } = await supabase
     .from('leads')
     .update(updates)
