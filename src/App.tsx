@@ -55,7 +55,7 @@ const App = () => (
                       <Layout>
                         <Routes>
                           <Route path="/" element={<Index />} />
-                          <Route path="/dashboard" element={<RoleDashboard />} />
+                          <Route path="/dashboard" element={<Dashboard />} />
                           <Route path="/leads" element={
                             <RoleBasedRoute allowedRoles={['lawyer', 'admin', 'lead_provider']}>
                               <Leads />
