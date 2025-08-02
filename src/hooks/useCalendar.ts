@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
+import { syncEventToGoogle } from '@/integrations/googleCalendar';
+import { createCalendlyEvent } from '@/integrations/calendly';
 
 export type Event = Database['public']['Tables']['events']['Row'];
 export type NewEvent = Database['public']['Tables']['events']['Insert'];
@@ -41,8 +43,27 @@ export const useCalendar = () => {
         .insert(eventData)
         .select()
         .single();
-      
+
       if (error) throw error;
+
+      const googleToken = import.meta.env.VITE_GOOGLE_API_TOKEN;
+      if (googleToken) {
+        try {
+          await syncEventToGoogle(data, googleToken);
+        } catch (e) {
+          console.error('google sync error', e);
+        }
+      }
+
+      const calendlyToken = import.meta.env.VITE_CALENDLY_TOKEN;
+      if (calendlyToken) {
+        try {
+          await createCalendlyEvent(data, calendlyToken);
+        } catch (e) {
+          console.error('calendly sync error', e);
+        }
+      }
+
       return data;
     },
     onSuccess: () => {

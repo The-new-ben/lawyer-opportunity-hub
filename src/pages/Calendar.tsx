@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Clock, Users, Calendar as CalendarIcon, MapPin } from "lucide-react";
 import { CreateEventDialog } from "@/components/CreateEventDialog";
+import { CalendlyEmbed } from "@/components/CalendlyEmbed";
 
 const Calendar = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -188,6 +189,15 @@ const Calendar = () => {
                 אין אירועים קרובים
               </p>
             )}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>זימון פגישה</CardTitle>
+            <CardDescription>קביעת פגישות דרך Calendly</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <CalendlyEmbed />
           </CardContent>
         </Card>
       </div>
