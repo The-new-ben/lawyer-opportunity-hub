@@ -11,14 +11,10 @@ const WHATSAPP_BASE_URL = "https://graph.facebook.com/v19.0";
 // Read configuration from environment variables (Vite or Node)
 const PHONE_NUMBER_ID =
   (import.meta as { env: Record<string, string | undefined> }).env
-    .VITE_WHATSAPP_PHONE_ID ||
-  process.env.VITE_WHATSAPP_PHONE_ID ||
-  "";
+    .VITE_WHATSAPP_PHONE_ID || "";
 const ACCESS_TOKEN =
   (import.meta as { env: Record<string, string | undefined> }).env
-    .VITE_WHATSAPP_TOKEN ||
-  process.env.VITE_WHATSAPP_TOKEN ||
-  "";
+    .VITE_WHATSAPP_TOKEN || "";
 
 if (!PHONE_NUMBER_ID || !ACCESS_TOKEN) {
   console.warn(
