@@ -15,7 +15,7 @@ export default function Auth() {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
-  const [role, setRole] = useState<string>('customer');
+  const [role, setRole] = useState<string>('client');
   const [loading, setLoading] = useState(false);
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
@@ -202,10 +202,9 @@ export default function Auth() {
                       <SelectValue placeholder="בחר תפקיד" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="customer">לקוח</SelectItem>
+                      <SelectItem value="client">לקוח</SelectItem>
                       <SelectItem value="lawyer">עורך דין</SelectItem>
-                      <SelectItem value="lead_provider">ספק לידים</SelectItem>
-                      <SelectItem value="admin">מנהל</SelectItem>
+                      <SelectItem value="supplier">ספק</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

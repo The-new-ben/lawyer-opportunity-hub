@@ -4,14 +4,14 @@ import { Badge } from "@/components/ui/badge";
 import { Users, FileText, Target, DollarSign, Shield, Package } from "lucide-react";
 
 export default function RoleDashboard() {
-  const { role, isAdmin, isLawyer, isCustomer, isLeadProvider } = useRole();
+  const { role, isAdmin, isLawyer, isClient, isSupplier } = useRole();
 
   const getRoleBadgeColor = (role: string | null) => {
     switch (role) {
       case 'admin': return 'destructive';
       case 'lawyer': return 'default';
-      case 'customer': return 'secondary';
-      case 'lead_provider': return 'outline';
+      case 'client': return 'secondary';
+      case 'supplier': return 'outline';
       default: return 'secondary';
     }
   };
@@ -20,8 +20,8 @@ export default function RoleDashboard() {
     switch (role) {
       case 'admin': return 'מנהל';
       case 'lawyer': return 'עורך דין';
-      case 'customer': return 'לקוח';
-      case 'lead_provider': return 'ספק לידים';
+      case 'client': return 'לקוח';
+      case 'supplier': return 'ספק';
       default: return 'לא מוגדר';
     }
   };
@@ -123,7 +123,7 @@ export default function RoleDashboard() {
           </>
         )}
 
-        {isCustomer && (
+        {isClient && (
           <>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -164,7 +164,7 @@ export default function RoleDashboard() {
           </>
         )}
 
-        {isLeadProvider && (
+        {isSupplier && (
           <>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -230,14 +230,14 @@ export default function RoleDashboard() {
                 <Badge variant="outline">קביעת פגישה</Badge>
               </>
             )}
-            {isCustomer && (
+            {isClient && (
               <>
                 <Badge variant="outline">צפייה בתיקים</Badge>
                 <Badge variant="outline">קביעת פגישה</Badge>
                 <Badge variant="outline">צפייה בחשבונות</Badge>
               </>
             )}
-            {isLeadProvider && (
+            {isSupplier && (
               <>
                 <Badge variant="outline">הכנסת ליד חדש</Badge>
                 <Badge variant="outline">מעקב ביצועים</Badge>

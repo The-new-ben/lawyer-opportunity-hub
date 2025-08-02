@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 
-type UserRole = 'admin' | 'lawyer' | 'customer' | 'lead_provider';
+type UserRole = 'admin' | 'lawyer' | 'client' | 'supplier';
 
 interface UserRoleData {
   role: UserRole | null;
@@ -10,8 +10,8 @@ interface UserRoleData {
   hasPermission: (requiredRole: UserRole | UserRole[]) => boolean;
   isAdmin: boolean;
   isLawyer: boolean;
-  isCustomer: boolean;
-  isLeadProvider: boolean;
+  isClient: boolean;
+  isSupplier: boolean;
 }
 
 export function useRole(): UserRoleData {
@@ -56,11 +56,11 @@ export function useRole(): UserRoleData {
         setRole(userRole.role as UserRole);
       } else {
         // Default role
-        setRole('customer');
+        setRole('client');
       }
     } catch (error) {
       console.error('Error fetching user role:', error);
-      setRole('customer'); // Default fallback
+      setRole('client'); // Default fallback
     } finally {
       setLoading(false);
     }
@@ -83,7 +83,7 @@ export function useRole(): UserRoleData {
     hasPermission,
     isAdmin: role === 'admin',
     isLawyer: role === 'lawyer',
-    isCustomer: role === 'customer',
-    isLeadProvider: role === 'lead_provider'
+    isClient: role === 'client',
+    isSupplier: role === 'supplier'
   };
 }
