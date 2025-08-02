@@ -1,12 +1,16 @@
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useLeads } from "@/hooks/useLeads";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Plus, Search, Users, Clock, TrendingUp, Phone, UserPlus } from "lucide-react";
 
 export default function Leads() {
@@ -14,47 +18,57 @@ export default function Leads() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [isOpen, setIsOpen] = useState(false);
-  
-  const [formData, setFormData] = useState({
-    name: "",
-    phone: "",
-    email: "",
-    legalArea: "",
-    priority: "",
-    notes: "",
+  const leadSchema = z.object({
+    name: z.string().min(1, "שם מלא הוא שדה חובה"),
+    phone: z.string().min(1, "טלפון הוא שדה חובה"),
+    email: z
+      .string()
+      .email("אימייל לא תקין")
+      .optional()
+      .or(z.literal("")),
+    legalArea: z.string().min(1, "תחום משפטי הוא שדה חובה"),
+    priority: z.string().min(1, "עדיפות היא שדה חובה"),
+    notes: z.string().optional(),
+  });
+
+  type LeadFormValues = z.infer<typeof leadSchema>;
+
+  const form = useForm<LeadFormValues>({
+    resolver: zodResolver(leadSchema),
+    defaultValues: {
+      name: "",
+      phone: "",
+      email: "",
+      legalArea: "",
+      priority: "",
+      notes: "",
+    },
+    mode: "onChange",
   });
 
   const { leads, isLoading, error, addLead, convertLeadToClient, getLeadStats } = useLeads();
 
-  const handleSaveLead = async () => {
-    if (!formData.name || !formData.phone || !formData.legalArea || !formData.priority) {
-      alert("אנא מלא את כל השדות הנדרשים");
-      return;
-    }
+  const [formMessage, setFormMessage] = useState<
+    { type: "success" | "error"; text: string } | null
+  >(null);
 
+  const onSubmit = async (values: LeadFormValues) => {
     try {
       await addLead.mutateAsync({
-        customer_name: formData.name,
-        customer_phone: formData.phone,
-        customer_email: formData.email,
-        case_description: formData.notes || "אין פרטים נוספים",
-        legal_category: formData.legalArea,
-        urgency_level: formData.priority,
+        customer_name: values.name,
+        customer_phone: values.phone,
+        customer_email: values.email,
+        case_description: values.notes || "אין פרטים נוספים",
+        legal_category: values.legalArea,
+        urgency_level: values.priority,
         estimated_budget: null,
       });
 
-      // Clear form and close dialog
-      setFormData({
-        name: "",
-        phone: "",
-        email: "",
-        legalArea: "",
-        priority: "",
-        notes: "",
-      });
-      setIsOpen(false);
-    } catch (error) {
-      console.error("Error adding lead:", error);
+      setFormMessage({ type: "success", text: "הליד נשמר בהצלחה" });
+      form.reset();
+    } catch (err) {
+      console.error("Error adding lead:", err);
+      setFormMessage({ type: "error", text: "שגיאה בשמירת הליד" });
     }
   };
 
@@ -120,83 +134,118 @@ export default function Leads() {
                 הוסף ליד חדש למערכת
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="name">שם מלא *</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="הזן שם מלא"
-                  required
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                {formMessage && (
+                  <Alert variant={formMessage.type === "error" ? "destructive" : "default"}>
+                    <AlertTitle>{formMessage.type === "error" ? "שגיאה" : "הצלחה"}</AlertTitle>
+                    <AlertDescription>{formMessage.text}</AlertDescription>
+                  </Alert>
+                )}
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel htmlFor="name">שם מלא *</FormLabel>
+                      <FormControl>
+                        <Input id="name" placeholder="הזן שם מלא" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              <div>
-                <Label htmlFor="phone">טלפון *</Label>
-                <Input
-                  id="phone"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="הזן מספר טלפון"
-                  required
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel htmlFor="phone">טלפון *</FormLabel>
+                      <FormControl>
+                        <Input id="phone" placeholder="הזן מספר טלפון" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              <div>
-                <Label htmlFor="email">אימייל</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="הזן כתובת אימייל"
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel htmlFor="email">אימייל</FormLabel>
+                      <FormControl>
+                        <Input id="email" type="email" placeholder="הזן כתובת אימייל" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              <div>
-                <Label htmlFor="legalArea">תחום משפטי *</Label>
-                <Select value={formData.legalArea} onValueChange={(value) => setFormData({ ...formData, legalArea: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="בחר תחום משפטי" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="אזרחי">משפט אזרחי</SelectItem>
-                    <SelectItem value="פלילי">משפט פלילי</SelectItem>
-                    <SelectItem value="משפחה">דיני משפחה</SelectItem>
-                    <SelectItem value="עבודה">דיני עבודה</SelectItem>
-                    <SelectItem value="נדלן">דיני נדלן</SelectItem>
-                    <SelectItem value="מסחרי">משפט מסחרי</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="priority">עדיפות *</Label>
-                <Select value={formData.priority} onValueChange={(value) => setFormData({ ...formData, priority: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="בחר עדיפות" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="high">גבוה</SelectItem>
-                    <SelectItem value="medium">בינוני</SelectItem>
-                    <SelectItem value="low">נמוך</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="notes">הערות</Label>
-                <Input
-                  id="notes"
-                  value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  placeholder="הזן פרטים נוספים"
+                <FormField
+                  control={form.control}
+                  name="legalArea"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel htmlFor="legalArea">תחום משפטי *</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="בחר תחום משפטי" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="אזרחי">משפט אזרחי</SelectItem>
+                          <SelectItem value="פלילי">משפט פלילי</SelectItem>
+                          <SelectItem value="משפחה">דיני משפחה</SelectItem>
+                          <SelectItem value="עבודה">דיני עבודה</SelectItem>
+                          <SelectItem value="נדלן">דיני נדלן</SelectItem>
+                          <SelectItem value="מסחרי">משפט מסחרי</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              <Button 
-                onClick={handleSaveLead} 
-                disabled={addLead.isPending}
-                className="w-full"
-              >
-                {addLead.isPending ? 'שומר...' : 'שמור ליד'}
-              </Button>
-            </div>
+                <FormField
+                  control={form.control}
+                  name="priority"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel htmlFor="priority">עדיפות *</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="בחר עדיפות" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="high">גבוה</SelectItem>
+                          <SelectItem value="medium">בינוני</SelectItem>
+                          <SelectItem value="low">נמוך</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel htmlFor="notes">הערות</FormLabel>
+                      <FormControl>
+                        <Input id="notes" placeholder="הזן פרטים נוספים" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit" disabled={addLead.isPending} className="w-full">
+                  {addLead.isPending ? "שומר..." : "שמור ליד"}
+                </Button>
+              </form>
+            </Form>
           </DialogContent>
         </Dialog>
       </div>
