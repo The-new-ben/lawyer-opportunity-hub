@@ -442,7 +442,7 @@ export function RoleDashboard() {
       {role === 'lawyer' && renderLawyerDashboard()}
       {role === 'client' && renderClientDashboard()}
       {role === 'supplier' && renderSupplierDashboard()}
-      {!role && (
+      {(!role || role === 'customer') && (
         <Card>
           <CardHeader>
             <CardTitle>ברוך הבא למערכת</CardTitle>

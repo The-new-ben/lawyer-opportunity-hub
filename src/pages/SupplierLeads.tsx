@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLeads } from "@/hooks/useLeads";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,13 +12,26 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Plus, Search, Users, Clock, TrendingUp, Phone, UserPlus } from "lucide-react";
-import { leadSchema, type LeadFormValues } from "@/lib/leadSchema";
 
 export default function SupplierLeads() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [isOpen, setIsOpen] = useState(false);
+  const leadSchema = z.object({
+    name: z.string().min(1, "שם מלא הוא שדה חובה"),
+    phone: z.string().min(1, "טלפון הוא שדה חובה"),
+    email: z
+      .string()
+      .email("אימייל לא תקין")
+      .optional()
+      .or(z.literal("")),
+    legalArea: z.string().min(1, "תחום משפטי הוא שדה חובה"),
+    priority: z.string().min(1, "עדיפות היא שדה חובה"),
+    notes: z.string().optional(),
+  });
+
+  type LeadFormValues = z.infer<typeof leadSchema>;
 
   const form = useForm<LeadFormValues>({
     resolver: zodResolver(leadSchema),

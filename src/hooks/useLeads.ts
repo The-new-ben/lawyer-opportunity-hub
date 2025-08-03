@@ -180,7 +180,7 @@ export const useLeads = () => {
       // 3. Update lead status to converted
       const { data: updatedLead, error: leadError } = await supabase
         .from('leads')
-        .update({ status: 'converted', client_id: client.id } as any)
+        .update({ status: 'converted' })
         .eq('id', leadId)
         .select()
         .single();

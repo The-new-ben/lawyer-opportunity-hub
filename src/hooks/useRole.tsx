@@ -3,7 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 
-type UserRole = 'admin' | 'lawyer' | 'client' | 'supplier';
+type UserRole = 'admin' | 'lawyer' | 'client' | 'supplier' | 'customer';
 
 interface UserRoleData {
   role: UserRole | null;
@@ -13,6 +13,7 @@ interface UserRoleData {
   isLawyer: boolean;
   isClient: boolean;
   isSupplier: boolean;
+  isCustomer: boolean;
 }
 
 export function useRole(): UserRoleData {
@@ -44,34 +45,33 @@ export function useRole(): UserRoleData {
     try {
       setLoading(true);
       
-      const { data: roleRow, error } = await supabase
-        .from('user_roles')
+      // יעיל יותר - רק בקשה אחת לprofiles
+      const { data: profile, error } = await supabase
+        .from('profiles')
         .select('role')
         .eq('user_id', user.id)
         .maybeSingle();
 
       if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching user role:', error);
         toast({
           title: 'Error fetching user role',
           description: error instanceof Error ? error.message : String(error),
           variant: 'destructive'
         });
-        setRole(null);
+        setRole('customer');
         return;
       }
 
-      const userRole = roleRow?.role as UserRole;
-      setRole(userRole || null);
-
+      const userRole = profile?.role as UserRole;
+      setRole(userRole || 'customer');
+      
     } catch (error) {
-      console.error('Error fetching user role:', error);
       toast({
         title: 'Error fetching user role',
         description: error instanceof Error ? error.message : String(error),
         variant: 'destructive'
       });
-      setRole(null);
+      setRole('customer'); // Default fallback
     } finally {
       setLoading(false);
     }
@@ -95,6 +95,7 @@ export function useRole(): UserRoleData {
     isAdmin: role === 'admin',
     isLawyer: role === 'lawyer',
     isClient: role === 'client',
-    isSupplier: role === 'supplier'
+    isSupplier: role === 'supplier',
+    isCustomer: role === 'customer'
   };
 }

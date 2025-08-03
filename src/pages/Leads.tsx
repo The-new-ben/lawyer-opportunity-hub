@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLeads } from "@/hooks/useLeads";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,13 +14,30 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Plus, Search, Users, Clock, TrendingUp, Phone, UserPlus, Calendar } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { CreateMeetingDialog } from "@/components/CreateMeetingDialog";
-import { leadSchema, type LeadFormValues } from "@/lib/leadSchema";
 
 export default function Leads() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [isOpen, setIsOpen] = useState(false);
+  const leadSchema = z.object({
+    name: z.string().min(1, "שם מלא הוא שדה חובה"),
+    phone: z.string().min(1, "טלפון הוא שדה חובה"),
+    email: z
+      .string()
+      .email("אימייל לא תקין")
+      .optional()
+      .or(z.literal("")),
+    legalArea: z.string().min(1, "תחום משפטי הוא שדה חובה"),
+    priority: z.string().min(1, "עדיפות היא שדה חובה"),
+    budget: z.preprocess(
+      (val) => (val === "" ? undefined : Number(val)),
+      z.number().nonnegative().optional()
+    ),
+    notes: z.string().optional(),
+  });
+
+  type LeadFormValues = z.infer<typeof leadSchema>;
 
   const form = useForm<LeadFormValues>({
     resolver: zodResolver(leadSchema),
