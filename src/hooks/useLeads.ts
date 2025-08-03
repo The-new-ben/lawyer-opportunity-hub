@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/use-toast';
 import { classifyLead } from '@/lib/aiService';
 import { sendWhatsAppTextMessage } from '@/lib/whatsappService';
 
@@ -47,7 +47,11 @@ export const useLeads = () => {
           const classificationResult = await classifyLead(newLead.case_description);
           classification = parseClassification(classificationResult);
         } catch (error) {
-          console.warn('AI classification failed, using defaults', error);
+          toast({
+            title: 'AI classification failed, using defaults',
+            description: error instanceof Error ? error.message : String(error),
+            variant: 'destructive'
+          });
         }
       }
 
@@ -76,16 +80,23 @@ export const useLeads = () => {
     },
     onSuccess: async (data) => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });
-      toast.success('ליד חדש נוצר בהצלחה');
+      toast({ title: 'ליד חדש נוצר בהצלחה' });
       
       // Trigger automated pipeline
       try {
         await supabase.functions.invoke('automated-lead-pipeline', {
           body: { leadId: data.id }
         });
-        console.log('Pipeline אוטומטי הופעל עבור ליד:', data.id);
+        toast({
+          title: 'Pipeline אוטומטי הופעל עבור ליד',
+          description: String(data.id)
+        });
       } catch (error) {
-        console.warn('Pipeline אוטומטי נכשל:', error);
+        toast({
+          title: 'Pipeline אוטומטי נכשל',
+          description: error instanceof Error ? error.message : String(error),
+          variant: 'destructive'
+        });
         
         // Fallback: Send basic WhatsApp confirmation
         if (data.customer_phone) {
@@ -95,14 +106,17 @@ export const useLeads = () => {
               `שלום ${data.customer_name}, בקשתך התקבלה במערכת ואנו נחזור אליך בהקדם. תחום: ${data.legal_category}`
             );
           } catch (error) {
-            console.warn('WhatsApp message failed to send', error);
+            toast({
+              title: 'WhatsApp message failed to send',
+              description: error instanceof Error ? error.message : String(error),
+              variant: 'destructive'
+            });
           }
         }
       }
     },
     onError: (error) => {
-      toast.error('שגיאה ביצירת ליד');
-      console.error('Error creating lead:', error);
+      toast({ title: 'שגיאה ביצירת ליד', variant: 'destructive', description: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -120,10 +134,10 @@ export const useLeads = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });
-      toast.success('הליד עודכן בהצלחה');
+      toast({ title: 'הליד עודכן בהצלחה' });
     },
     onError: () => {
-      toast.error('שגיאה בעדכון הליד');
+      toast({ title: 'שגיאה בעדכון הליד', variant: 'destructive' });
     }
   });
 
@@ -141,11 +155,10 @@ export const useLeads = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });
-      toast.success('הליד הומר ללקוח בהצלחה');
+      toast({ title: 'הליד הומר ללקוח בהצלחה' });
     },
     onError: (error) => {
-      toast.error('שגיאה בהמרת הליד ללקוח');
-      console.error('Error converting lead:', error);
+      toast({ title: 'שגיאה בהמרת הליד ללקוח', variant: 'destructive', description: error instanceof Error ? error.message : String(error) });
     }
   });
 

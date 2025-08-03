@@ -73,7 +73,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single();
 
       if (existingProfile) {
-        console.log('Profile already exists for user');
+        toast({ title: 'Profile already exists for user' });
         return;
       }
 
@@ -88,10 +88,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
 
       if (error && error.code !== '23505') { // Ignore duplicate key errors
-        console.error('Error creating profile:', error);
+        toast({
+          title: 'Error creating profile',
+          description: error instanceof Error ? error.message : String(error),
+          variant: 'destructive'
+        });
       }
     } catch (error) {
-      console.error('Error creating profile:', error);
+      toast({
+        title: 'Error creating profile',
+        description: error instanceof Error ? error.message : String(error),
+        variant: 'destructive'
+      });
     }
   };
 
@@ -138,7 +146,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       return { error: null };
     } catch (err) {
-      console.error('Signup error:', err);
+      toast({
+        title: 'Signup error',
+        description: err instanceof Error ? err.message : String(err),
+        variant: 'destructive'
+      });
       return { error: { message: "אירעה שגיאה לא צפויה. אנא נסה שוב." } };
     }
   };

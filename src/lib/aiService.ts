@@ -5,12 +5,17 @@
 // should ensure sensitive data is anonymized to preserve client privacy.
 
 import axios from "axios";
+import { toast } from "@/components/ui/use-toast";
 
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 const OPENAI_BASE_URL = "https://api.openai.com/v1";
 
 if (!OPENAI_API_KEY) {
-  console.warn("OpenAI API key not configured - AI features will use defaults");
+  toast({
+    title: 'OpenAI API key not configured',
+    description: 'AI features will use defaults',
+    variant: 'destructive'
+  });
 }
 
 // Classify a lead description into a legal practice area using a GPT model. This
@@ -50,7 +55,11 @@ export async function classifyLead(description: string): Promise<string> {
     const choice = response.data.choices?.[0]?.message?.content?.trim();
     return choice || "Unknown";
   } catch (error) {
-    console.error("AI classification failed", error);
+    toast({
+      title: 'AI classification failed',
+      description: error instanceof Error ? error.message : String(error),
+      variant: 'destructive'
+    });
     return "Unknown";
   }
 }
@@ -84,7 +93,11 @@ export async function generateClientResponse(
     const choice = response.data.choices?.[0]?.message?.content?.trim();
     return choice || "";
   } catch (error) {
-    console.error("AI response generation failed", error);
+    toast({
+      title: 'AI response generation failed',
+      description: error instanceof Error ? error.message : String(error),
+      variant: 'destructive'
+    });
     return "";
   }
 }

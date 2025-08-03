@@ -95,7 +95,6 @@ export default function LeadsPortal() {
       if (error) throw error
       setLeads(data || [])
     } catch (error) {
-      console.error('Error fetching leads:', error)
       toast({
         title: "שגיאה",
         description: "לא ניתן לטעון את הלידים",

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/use-toast';
 
 type UserRole = 'admin' | 'lawyer' | 'client' | 'supplier' | 'customer';
 
@@ -52,7 +53,11 @@ export function useRole(): UserRoleData {
         .maybeSingle();
 
       if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching user role:', error);
+        toast({
+          title: 'Error fetching user role',
+          description: error instanceof Error ? error.message : String(error),
+          variant: 'destructive'
+        });
         setRole('customer');
         return;
       }
@@ -61,7 +66,11 @@ export function useRole(): UserRoleData {
       setRole(userRole || 'customer');
       
     } catch (error) {
-      console.error('Error fetching user role:', error);
+      toast({
+        title: 'Error fetching user role',
+        description: error instanceof Error ? error.message : String(error),
+        variant: 'destructive'
+      });
       setRole('customer'); // Default fallback
     } finally {
       setLoading(false);

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog"
 import { Plus, Search, Phone, Mail, FileText, Calendar, UserPlus } from "lucide-react"
+import { toast } from "@/components/ui/use-toast"
 
 const Clients = () => {
   const [searchTerm, setSearchTerm] = useState("")
@@ -45,7 +46,11 @@ const Clients = () => {
       })
       setIsOpen(false)
     } catch (error) {
-      console.error("Error adding client:", error)
+      toast({
+        title: 'Error adding client',
+        description: error instanceof Error ? error.message : String(error),
+        variant: 'destructive'
+      })
     }
   }
 

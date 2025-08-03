@@ -52,7 +52,11 @@ export function CreateDepositDialog() {
       });
       setIsOpen(false);
     } catch (error) {
-      console.error('Error creating deposit:', error);
+      toast({
+        title: 'Error creating deposit',
+        description: error instanceof Error ? error.message : String(error),
+        variant: 'destructive'
+      });
     }
   };
 
