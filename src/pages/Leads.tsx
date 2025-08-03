@@ -28,6 +28,10 @@ export default function Leads() {
       .or(z.literal("")),
     legalArea: z.string().min(1, "תחום משפטי הוא שדה חובה"),
     priority: z.string().min(1, "עדיפות היא שדה חובה"),
+    budget: z.preprocess(
+      (val) => (val === "" ? undefined : Number(val)),
+      z.number().nonnegative().optional()
+    ),
     notes: z.string().optional(),
   });
 
@@ -41,6 +45,7 @@ export default function Leads() {
       email: "",
       legalArea: "",
       priority: "",
+      budget: "",
       notes: "",
     },
     mode: "onChange",
@@ -61,7 +66,7 @@ export default function Leads() {
         case_description: values.notes || "אין פרטים נוספים",
         legal_category: values.legalArea,
         urgency_level: values.priority,
-        estimated_budget: null,
+        estimated_budget: values.budget ? Number(values.budget) : null,
       });
 
       setFormMessage({ type: "success", text: "הליד נשמר בהצלחה" });
@@ -75,13 +80,7 @@ export default function Leads() {
   if (isLoading) return <div className="p-6">טוען לידים...</div>;
   if (error) return <div className="p-6 text-destructive">שגיאה בטעינת לידים: {error.message}</div>;
 
-  // Calculate stats manually if getLeadStats is not available
-  const stats = {
-    totalLeads: leads.length,
-    newLeads: leads.filter(l => l.status === 'new').length,
-    highPriorityLeads: leads.filter(l => l.urgency_level === 'high').length,
-    convertedLeads: leads.filter(l => l.status === 'converted').length
-  };
+  const stats = getLeadStats();
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -206,34 +205,47 @@ export default function Leads() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="priority"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel htmlFor="priority">עדיפות *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                  <FormField
+                    control={form.control}
+                    name="priority"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel htmlFor="priority">עדיפות *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="בחר עדיפות" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="high">גבוה</SelectItem>
+                            <SelectItem value="medium">בינוני</SelectItem>
+                            <SelectItem value="low">נמוך</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="budget"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel htmlFor="budget">תקציב משוער</FormLabel>
                         <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="בחר עדיפות" />
-                          </SelectTrigger>
+                          <Input id="budget" type="number" placeholder="הזן תקציב משוער" {...field} />
                         </FormControl>
-                        <SelectContent>
-                          <SelectItem value="high">גבוה</SelectItem>
-                          <SelectItem value="medium">בינוני</SelectItem>
-                          <SelectItem value="low">נמוך</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel htmlFor="notes">הערות</FormLabel>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel htmlFor="notes">הערות</FormLabel>
                       <FormControl>
                         <Input id="notes" placeholder="הזן פרטים נוספים" {...field} />
                       </FormControl>
