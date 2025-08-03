@@ -35,13 +35,14 @@ interface AppSidebarProps {
 const getMenuItems = (role: string | null) => {
   // מפתחות ייחודיים עם prefix לכל קטגוריה
   const allMenuItems: MenuItem[] = [
-    { title: "דשבורד", url: "/dashboard", icon: Home, roles: ["admin", "lawyer", "customer", "lead_provider"] },
-    { title: "לידים", url: "/leads", icon: Target, roles: ["lawyer", "admin", "lead_provider"] },
+    { title: "דשבורד", url: "/dashboard", icon: Home, roles: ["admin", "lawyer", "customer", "supplier"] },
+    { title: "לידים", url: "/leads", icon: Target, roles: ["lawyer", "admin"] },
+    { title: "לידים", url: "/supplier/leads", icon: Target, roles: ["supplier", "admin"] },
     { title: "לקוחות", url: "/clients", icon: Users, roles: ["lawyer", "admin"] },
     { title: "תיקים", url: "/cases", icon: FileText, roles: ["lawyer", "admin", "customer"] },
     { title: "התאמות", url: "/matching", icon: Search, roles: ["lawyer", "admin"] },
     { title: "לוח זמנים", url: "/calendar", icon: Calendar, roles: ["lawyer", "admin", "customer"] },
-    { title: "פורטל לידים", url: "/leads-portal", icon: Package, roles: ["lead_provider", "admin"] },
+    { title: "פורטל לידים", url: "/leads-portal", icon: Package, roles: ["supplier", "admin"] },
     { title: "ניהול מערכת", url: "/admin", icon: Shield, roles: ["admin"] },
   ]
 
