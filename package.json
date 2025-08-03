@@ -10,7 +10,9 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "start:server": "node server/app.js",
-    "test": "vitest"
+    "test:unit": "vitest --run --environment jsdom",
+    "test:e2e": "cypress run",
+    "test": "npm run test:unit && npm run test:e2e"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -74,15 +76,18 @@
   "devDependencies": {
     "@eslint/js": "^9.9.0",
     "@tailwindcss/typography": "^0.5.15",
+    "@testing-library/react": "^16.3.0",
     "@types/node": "^22.5.5",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react-swc": "^3.5.0",
     "autoprefixer": "^10.4.20",
+    "cypress": "^14.5.3",
     "eslint": "^9.9.0",
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.9",
     "globals": "^15.9.0",
+    "jsdom": "^26.1.0",
     "lovable-tagger": "^1.1.7",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.11",
