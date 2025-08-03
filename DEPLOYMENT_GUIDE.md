@@ -197,6 +197,28 @@ chmod +x deploy.sh
 2. Verify AI classification works
 3. Test AI summary generation
 
+GitHub pull request sync
+
+Create a webhook in GitHub project settings pointing to the /github-pr-sync path of the deployed backend. Use application/json as content type and add a secret. Store the same secret in the handler configuration.
+
+Supabase requirements
+
+Grant the service role insert and update access to tables used by pull request sync. The anon role only needs read. Set environment variables SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE and GITHUB_WEBHOOK_SECRET.
+
+Webhook testing
+
+Send a pull request event with curl:
+
+```
+curl -X POST https://your-domain/github-pr-sync \
+  -H 'X-GitHub-Event: pull_request' \
+  -H 'X-Hub-Signature-256: provided-signature' \
+  -H 'Content-Type: application/json' \
+  -d '{"action":"opened"}'
+```
+
+The same request can be issued in Postman by creating a POST request with the same headers and body.
+
 ## 🚨 Troubleshooting
 
 ### Common Issues
