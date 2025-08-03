@@ -129,18 +129,57 @@ export const useLeads = () => {
 
   const convertLeadToClient = useMutation({
     mutationFn: async (leadId: string) => {
+      const { data: lead, error: leadError } = await supabase
+        .from('leads')
+        .select('*')
+        .eq('id', leadId)
+        .single();
+
+      if (leadError) throw leadError;
+
+      const { data: client, error: clientError } = await supabase
+        .from('profiles')
+        .insert({
+          user_id: crypto.randomUUID(),
+          full_name: lead.customer_name,
+          phone: lead.customer_phone,
+          role: 'client',
+          whatsapp_number: lead.customer_phone
+        })
+        .select()
+        .single();
+
+      if (clientError) throw clientError;
+
+      const { error: caseError } = await supabase
+        .from('cases')
+        .insert({
+          title: lead.case_description,
+          client_id: client.id,
+          assigned_lawyer_id: lead.assigned_lawyer_id,
+          legal_category: lead.legal_category,
+          priority: lead.urgency_level || 'medium',
+          estimated_budget: lead.estimated_budget,
+          status: 'open',
+          opened_at: new Date().toISOString()
+        });
+
+      if (caseError) throw caseError;
+
       const { data, error } = await supabase
         .from('leads')
-        .update({ status: 'converted' })
+        .update({ status: 'converted', client_id: client.id } as any)
         .eq('id', leadId)
         .select()
         .single();
-      
+
       if (error) throw error;
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['cases'] });
       toast.success('הליד הומר ללקוח בהצלחה');
     },
     onError: (error) => {
