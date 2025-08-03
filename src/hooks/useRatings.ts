@@ -8,7 +8,7 @@ export interface Rating {
   client_id?: string;
   lawyer_id: string;
   score: number; // 1-5
-  comment?: string;
+  feedback?: string;
   created_at: string;
 }
 
