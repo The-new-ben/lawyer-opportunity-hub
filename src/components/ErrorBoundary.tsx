@@ -33,7 +33,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
       description: error.message,
       variant: 'destructive'
     });
-    Sentry.captureException(error, { extra: errorInfo });
+    Sentry.captureException(error, { extra: errorInfo as any });
   }
 
   handleRetry = () => {

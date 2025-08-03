@@ -46,7 +46,7 @@ export default function Leads() {
       email: "",
       legalArea: "",
       priority: "",
-      budget: "",
+      budget: undefined,
       notes: "",
     },
     mode: "onChange",
