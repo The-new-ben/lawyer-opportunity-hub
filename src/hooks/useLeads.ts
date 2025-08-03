@@ -143,25 +143,6 @@ export const useLeads = () => {
 
   const convertLeadToClient = useMutation({
     mutationFn: async (leadId: string) => {
- codex/expand-convertleadtoclient-functionality
-      const { data: lead, error: leadError } = await supabase
-        .from('leads')
-        .select('*')
-        .eq('id', leadId)
-        .single();
-
-      if (leadError) throw leadError;
-
-      const { data: client, error: clientError } = await supabase
-        .from('profiles')
-        .insert({
-          user_id: crypto.randomUUID(),
-          full_name: lead.customer_name,
-          phone: lead.customer_phone,
-          role: 'client',
-          whatsapp_number: lead.customer_phone
-        })
-
       const lead = leads.find(l => l.id === leadId);
       if (!lead) throw new Error('Lead not found');
 
@@ -174,29 +155,10 @@ export const useLeads = () => {
           phone: lead.customer_phone,
           role: 'client'
         }, { onConflict: 'user_id' })
- main
         .select()
         .single();
 
       if (clientError) throw clientError;
-
- codex/expand-convertleadtoclient-functionality
-      const { error: caseError } = await supabase
-        .from('cases')
-        .insert({
-          title: lead.case_description,
-          client_id: client.id,
-          assigned_lawyer_id: lead.assigned_lawyer_id,
-          legal_category: lead.legal_category,
-          priority: lead.urgency_level || 'medium',
-          estimated_budget: lead.estimated_budget,
-          status: 'open',
-          opened_at: new Date().toISOString()
-        });
-
-      if (caseError) throw caseError;
-
-      const { data, error } = await supabase
 
       // 2. Create new case for this client
       const { data: newCase, error: caseError } = await supabase
@@ -217,34 +179,24 @@ export const useLeads = () => {
 
       // 3. Update lead status to converted
       const { data: updatedLead, error: leadError } = await supabase
- main
         .from('leads')
         .update({ status: 'converted', client_id: client.id } as any)
         .eq('id', leadId)
         .select()
         .single();
 
- codex/expand-convertleadtoclient-functionality
-      if (error) throw error;
-      return data;
-
       if (leadError) throw leadError;
 
       return { client, case: newCase, lead: updatedLead };
- main
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });
       queryClient.invalidateQueries({ queryKey: ['clients'] });
       queryClient.invalidateQueries({ queryKey: ['cases'] });
- codex/expand-convertleadtoclient-functionality
-      toast.success('הליד הומר ללקוח בהצלחה');
-
       toast({ 
         title: 'הליד הומר ללקוח בהצלחה',
         description: `נוצר תיק חדש: ${data.case.title}`
       });
- main
     },
     onError: (error) => {
       toast({ 

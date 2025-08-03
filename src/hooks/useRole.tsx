@@ -51,17 +51,13 @@ export function useRole(): UserRoleData {
         .maybeSingle();
 
       if (error && error.code !== 'PGRST116') {
- codex/add-user_roles-table-and-update-registration-api
         console.error('Error fetching user role:', error);
-        setRole(null);
-
         toast({
           title: 'Error fetching user role',
           description: error instanceof Error ? error.message : String(error),
           variant: 'destructive'
         });
-        setRole('customer');
- main
+        setRole(null);
         return;
       }
 
@@ -69,17 +65,13 @@ export function useRole(): UserRoleData {
       setRole(userRole || null);
 
     } catch (error) {
- codex/add-user_roles-table-and-update-registration-api
       console.error('Error fetching user role:', error);
-      setRole(null);
-
       toast({
         title: 'Error fetching user role',
         description: error instanceof Error ? error.message : String(error),
         variant: 'destructive'
       });
-      setRole('customer'); // Default fallback
- main
+      setRole(null);
     } finally {
       setLoading(false);
     }
