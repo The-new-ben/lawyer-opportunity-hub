@@ -9,10 +9,10 @@ const paymentRoutes = require('./payments');
 const app = express();
 const port = process.env.PORT || 4000;
 
-const supabase = createClient(
-  process.env.SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE || ''
-);
+const { SUPABASE_URL, SUPABASE_SERVICE_ROLE } = process.env;
+if (!SUPABASE_URL) throw new Error('Missing SUPABASE_URL environment variable');
+if (!SUPABASE_SERVICE_ROLE) throw new Error('Missing SUPABASE_SERVICE_ROLE environment variable');
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE);
 
 const leadSchema = z
   .object({

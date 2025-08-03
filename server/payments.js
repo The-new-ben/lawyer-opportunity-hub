@@ -4,14 +4,13 @@ const { createClient } = require('@supabase/supabase-js');
 
 const router = express.Router();
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2022-11-15',
-});
-
-const supabase = createClient(
-  process.env.SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE || ''
-);
+const { STRIPE_SECRET_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_SERVICE_ROLE } = process.env;
+if (!STRIPE_SECRET_KEY) throw new Error('Missing STRIPE_SECRET_KEY environment variable');
+const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: '2022-11-15' });
+if (!SUPABASE_URL) throw new Error('Missing SUPABASE_URL environment variable');
+const supabaseServiceRole = SUPABASE_SERVICE_ROLE_KEY || SUPABASE_SERVICE_ROLE;
+if (!supabaseServiceRole) throw new Error('Missing service role key environment variable');
+const supabase = createClient(SUPABASE_URL, supabaseServiceRole);
 
 router.post('/checkout', async (req, res) => {
   try {
