@@ -20,7 +20,7 @@ export function RatingDialog({ caseId, lawyerId, clientId, trigger }: RatingDial
     lawyer_id: lawyerId,
     client_id: clientId,
     score: 0,
-    comment: '',
+    feedback: '',
   });
   const [hoveredStar, setHoveredStar] = useState(0);
 
@@ -40,7 +40,7 @@ export function RatingDialog({ caseId, lawyerId, clientId, trigger }: RatingDial
       lawyer_id: lawyerId,
       client_id: clientId,
       score: 0,
-      comment: '',
+      feedback: '',
     });
   };
 
@@ -107,11 +107,11 @@ export function RatingDialog({ caseId, lawyerId, clientId, trigger }: RatingDial
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="comment">תגובה (אופציונלי)</Label>
+            <Label htmlFor="feedback">תגובה (אופציונלי)</Label>
             <Textarea
-              id="comment"
-              value={rating.comment || ''}
-              onChange={(e) => setRating({ ...rating, comment: e.target.value })}
+              id="feedback"
+              value={rating.feedback || ''}
+              onChange={(e) => setRating({ ...rating, feedback: e.target.value })}
               placeholder="ספר לנו על החוויה שלך..."
               className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
               rows={3}

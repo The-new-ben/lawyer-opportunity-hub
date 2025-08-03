@@ -1013,7 +1013,7 @@ export type Database = {
         Row: {
           case_id: string
           client_id: string | null
-          comment: string | null
+          feedback: string | null
           created_at: string
           id: string
           lawyer_id: string
@@ -1022,7 +1022,7 @@ export type Database = {
         Insert: {
           case_id: string
           client_id?: string | null
-          comment?: string | null
+          feedback?: string | null
           created_at?: string
           id?: string
           lawyer_id: string
@@ -1031,7 +1031,7 @@ export type Database = {
         Update: {
           case_id?: string
           client_id?: string | null
-          comment?: string | null
+          feedback?: string | null
           created_at?: string
           id?: string
           lawyer_id?: string
