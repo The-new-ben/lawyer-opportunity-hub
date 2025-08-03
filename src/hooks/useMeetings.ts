@@ -1,23 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import type { Database } from '@/integrations/supabase/types';
 
-export interface Meeting {
-  id: string;
-  case_id?: string;
-  lead_id?: string;
-  lawyer_id: string;
-  client_id?: string;
-  scheduled_at: string;
-  location?: string;
-  meeting_type: 'in_person' | 'video' | 'phone';
-  notes?: string;
-  status: 'scheduled' | 'completed' | 'cancelled' | 'no_show';
-  created_at: string;
-  updated_at: string;
-}
-
-export type NewMeeting = Omit<Meeting, 'id' | 'created_at' | 'updated_at'>;
+export type Meeting = Database['public']['Tables']['meetings']['Row'];
+export type NewMeeting = Database['public']['Tables']['meetings']['Insert'];
 
 export const useMeetings = () => {
   const queryClient = useQueryClient();
