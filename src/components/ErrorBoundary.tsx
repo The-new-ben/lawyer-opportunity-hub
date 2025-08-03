@@ -2,6 +2,8 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, RefreshCw } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
+import * as Sentry from "@sentry/react";
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -26,12 +28,12 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('Error Boundary caught an error:', error, errorInfo);
-    
-    // In production, you could send this to your error reporting service
-    if (process.env.NODE_ENV === 'production') {
-      // Example: sendErrorToService(error, errorInfo);
-    }
+    toast({
+      title: 'Unexpected error',
+      description: error.message,
+      variant: 'destructive'
+    });
+    Sentry.captureException(error, { extra: errorInfo as any });
   }
 
   handleRetry = () => {

@@ -6,7 +6,6 @@ import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Layout } from "@/components/Layout";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { QueryProvider } from "@/providers/QueryProvider";
 import Dashboard from "./pages/Dashboard";
 import Leads from "./pages/Leads";
@@ -29,18 +28,18 @@ import UpdatePassword from "./pages/UpdatePassword";
 import LeadsPortal from "./pages/LeadsPortal";
 import MeetingScheduler from "./pages/MeetingScheduler";
 import RoleDashboard from "./pages/RoleDashboard";
+import SupplierLeads from "./pages/SupplierLeads";
 import { RoleBasedRoute } from "./components/RoleBasedRoute";
 
 const App = () => (
-  <ErrorBoundary>
-    <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-      <QueryProvider>
-        <AuthProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <Router>
-              <Routes>
+  <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+    <QueryProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <Router>
+            <Routes>
                 {/* Public Routes */}
                 <Route path="/landing" element={<Landing />} />
                 <Route path="/auth" element={<Auth />} />
@@ -55,14 +54,29 @@ const App = () => (
                       <Layout>
                         <Routes>
                           <Route path="/" element={<Index />} />
-                          <Route path="/dashboard" element={<Dashboard />} />
+                          <Route path="/dashboard" element={<RoleDashboard />} />
+                          <Route path="/dashboard/lawyer" element={
+                            <RoleBasedRoute allowedRoles={['lawyer', 'admin']}>
+                              <Dashboard />
+                            </RoleBasedRoute>
+                          } />
+                          <Route path="/dashboard/admin" element={
+                            <RoleBasedRoute allowedRoles={['admin']}>
+                              <Dashboard />
+                            </RoleBasedRoute>
+                          } />
+                          <Route path="/supplier/leads" element={
+                            <RoleBasedRoute allowedRoles={['supplier', 'admin']}>
+                              <SupplierLeads />
+                            </RoleBasedRoute>
+                          } />
                           <Route path="/leads" element={
-                            <RoleBasedRoute allowedRoles={['lawyer', 'admin', 'lead_provider']}>
+                            <RoleBasedRoute allowedRoles={['lawyer', 'admin']}>
                               <Leads />
                             </RoleBasedRoute>
                           } />
                           <Route path="/leads-portal" element={
-                            <RoleBasedRoute allowedRoles={['lead_provider', 'admin']}>
+                            <RoleBasedRoute allowedRoles={['supplier', 'admin']}>
                               <LeadsPortal />
                             </RoleBasedRoute>
                           } />
@@ -71,10 +85,26 @@ const App = () => (
                               <Clients />
                             </RoleBasedRoute>
                           } />
-                          <Route path="/cases" element={<Cases />} />
-                          <Route path="/cases/:id" element={<CaseDetails />} />
-                          <Route path="/calendar" element={<Calendar />} />
-                          <Route path="/payments" element={<Payments />} />
+                          <Route path="/cases" element={
+                            <RoleBasedRoute allowedRoles={['lawyer', 'admin', 'client', 'customer']}>
+                              <Cases />
+                            </RoleBasedRoute>
+                          } />
+                          <Route path="/cases/:id" element={
+                            <RoleBasedRoute allowedRoles={['lawyer', 'admin', 'client', 'customer']}>
+                              <CaseDetails />
+                            </RoleBasedRoute>
+                          } />
+                          <Route path="/calendar" element={
+                            <RoleBasedRoute allowedRoles={['lawyer', 'admin', 'client', 'customer']}>
+                              <Calendar />
+                            </RoleBasedRoute>
+                          } />
+                          <Route path="/payments" element={
+                            <RoleBasedRoute allowedRoles={['lawyer', 'admin', 'client', 'customer']}>
+                              <Payments />
+                            </RoleBasedRoute>
+                          } />
                           <Route path="/commissions" element={
                             <RoleBasedRoute allowedRoles={['lawyer', 'admin']}>
                               <Commissions />
@@ -109,7 +139,6 @@ const App = () => (
         </AuthProvider>
       </QueryProvider>
     </ThemeProvider>
-  </ErrorBoundary>
 );
 
 export default App;

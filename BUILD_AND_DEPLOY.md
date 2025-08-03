@@ -73,6 +73,11 @@ Configure these in [Supabase Dashboard](https://supabase.com/dashboard/project/m
 
 For frontend deployment, set `VITE_OPENAI_API_KEY` in your environment variables.
 
+Repository secrets for automation
+- SUPABASE_URL
+- SUPABASE_SERVICE_ROLE
+- STRIPE_SECRET_KEY
+
 ### Feature Verification
 
 After deployment, test these key features:

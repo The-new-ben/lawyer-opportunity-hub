@@ -42,3 +42,6 @@ verify_jwt = false
 
 [functions.automated-lead-pipeline]
 verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false

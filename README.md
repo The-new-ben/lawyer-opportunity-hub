@@ -77,6 +77,26 @@ The application uses Supabase with the following main tables:
 - `meetings` - Scheduled appointments
 - `contracts` - Digital contracts and signatures
 
+Auto assignment trigger and notification setup
+
+Run migrations
+
+```bash
+supabase migration up
+```
+
+Deploy edge function
+
+```bash
+supabase functions deploy assignment-notification --no-verify-jwt
+```
+
+Set webhook for the trigger
+
+```sql
+select set_config('app.settings.assignment_webhook','https://PROJECT_REF.functions.supabase.co/assignment-notification', false);
+```
+
 ### 5. Supabase Secrets (Production)
 
 For production deployment, store sensitive API keys in Supabase Secrets:

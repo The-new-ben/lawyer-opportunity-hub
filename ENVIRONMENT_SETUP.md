@@ -39,7 +39,15 @@ For local development, set `VITE_OPENAI_API_KEY` in your `.env` file.
 2. Add each secret with its value
 3. Edge Functions automatically access them via `Deno.env.get('SECRET_NAME')`
 
-### 3. Development Environment
+### 3. Sentry Configuration
+
+Set the Sentry DSN to enable error tracking:
+
+```bash
+VITE_SENTRY_DSN=your_sentry_dsn
+```
+
+### 4. Development Environment
 
 #### Prerequisites:
 ```bash
@@ -62,7 +70,7 @@ npm run build
 npm run preview
 ```
 
-### 4. Production Deployment
+### 5. Production Deployment
 
 #### Static Hosting (Netlify, Vercel, GitHub Pages):
 1. Build command: `npm run build`

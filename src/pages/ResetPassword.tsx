@@ -11,6 +11,7 @@ import { Loader2, ArrowLeft } from 'lucide-react';
 export default function ResetPassword() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -31,7 +32,7 @@ export default function ResetPassword() {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/update-password`,
     });
-    
+
     if (error) {
       toast({
         title: "שגיאה בשליחת איפוס סיסמה",
@@ -39,16 +40,31 @@ export default function ResetPassword() {
         variant: "destructive",
       });
     } else {
-      toast({
-        title: "נשלחה הודעת איפוס",
-        description: "אנא בדוק את האימייל שלך ולחץ על הקישור לאיפוס סיסמה",
-      });
-      // Navigate back to auth page after 2 seconds
-      setTimeout(() => navigate('/auth'), 2000);
+      setSent(true);
     }
     
     setLoading(false);
   };
+
+  if (sent) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 overflow-x-hidden">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-bold text-primary">בדוק את האימייל שלך</CardTitle>
+            <CardDescription>
+              נשלחה אליך הודעה עם קישור לאיפוס סיסמה
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Button className="w-full" onClick={() => navigate('/auth')}>
+              חזור להתחברות
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 overflow-x-hidden">
@@ -73,15 +89,15 @@ export default function ResetPassword() {
                 placeholder="example@email.com"
               />
             </div>
-            
+
             <Button type="submit" className="w-full" disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               שלח קישור איפוס
             </Button>
           </form>
-          
-          <Button 
-            variant="ghost" 
+
+          <Button
+            variant="ghost"
             className="w-full"
             onClick={() => navigate('/auth')}
             disabled={loading}

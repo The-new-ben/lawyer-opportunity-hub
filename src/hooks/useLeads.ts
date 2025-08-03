@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/use-toast';
 import { classifyLead } from '@/lib/aiService';
 import { sendWhatsAppTextMessage } from '@/lib/whatsappService';
 
@@ -47,7 +47,11 @@ export const useLeads = () => {
           const classificationResult = await classifyLead(newLead.case_description);
           classification = parseClassification(classificationResult);
         } catch (error) {
-          console.warn('AI classification failed, using defaults', error);
+          toast({
+            title: 'AI classification failed, using defaults',
+            description: error instanceof Error ? error.message : String(error),
+            variant: 'destructive'
+          });
         }
       }
 
@@ -76,16 +80,23 @@ export const useLeads = () => {
     },
     onSuccess: async (data) => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });
-      toast.success('ליד חדש נוצר בהצלחה');
+      toast({ title: 'ליד חדש נוצר בהצלחה' });
       
       // Trigger automated pipeline
       try {
         await supabase.functions.invoke('automated-lead-pipeline', {
           body: { leadId: data.id }
         });
-        console.log('Pipeline אוטומטי הופעל עבור ליד:', data.id);
+        toast({
+          title: 'Pipeline אוטומטי הופעל עבור ליד',
+          description: String(data.id)
+        });
       } catch (error) {
-        console.warn('Pipeline אוטומטי נכשל:', error);
+        toast({
+          title: 'Pipeline אוטומטי נכשל',
+          description: error instanceof Error ? error.message : String(error),
+          variant: 'destructive'
+        });
         
         // Fallback: Send basic WhatsApp confirmation
         if (data.customer_phone) {
@@ -95,14 +106,17 @@ export const useLeads = () => {
               `שלום ${data.customer_name}, בקשתך התקבלה במערכת ואנו נחזור אליך בהקדם. תחום: ${data.legal_category}`
             );
           } catch (error) {
-            console.warn('WhatsApp message failed to send', error);
+            toast({
+              title: 'WhatsApp message failed to send',
+              description: error instanceof Error ? error.message : String(error),
+              variant: 'destructive'
+            });
           }
         }
       }
     },
     onError: (error) => {
-      toast.error('שגיאה ביצירת ליד');
-      console.error('Error creating lead:', error);
+      toast({ title: 'שגיאה ביצירת ליד', variant: 'destructive', description: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -120,32 +134,124 @@ export const useLeads = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });
-      toast.success('הליד עודכן בהצלחה');
+      toast({ title: 'הליד עודכן בהצלחה' });
     },
     onError: () => {
-      toast.error('שגיאה בעדכון הליד');
+      toast({ title: 'שגיאה בעדכון הליד', variant: 'destructive' });
     }
   });
 
   const convertLeadToClient = useMutation({
     mutationFn: async (leadId: string) => {
-      const { data, error } = await supabase
+ codex/expand-convertleadtoclient-functionality
+      const { data: lead, error: leadError } = await supabase
         .from('leads')
-        .update({ status: 'converted' })
+        .select('*')
+        .eq('id', leadId)
+        .single();
+
+      if (leadError) throw leadError;
+
+      const { data: client, error: clientError } = await supabase
+        .from('profiles')
+        .insert({
+          user_id: crypto.randomUUID(),
+          full_name: lead.customer_name,
+          phone: lead.customer_phone,
+          role: 'client',
+          whatsapp_number: lead.customer_phone
+        })
+
+      const lead = leads.find(l => l.id === leadId);
+      if (!lead) throw new Error('Lead not found');
+
+      // 1. Create or upsert client in profiles table
+      const { data: client, error: clientError } = await supabase
+        .from('profiles')
+        .upsert({
+          user_id: crypto.randomUUID(), // Generate new user ID for client
+          full_name: lead.customer_name,
+          phone: lead.customer_phone,
+          role: 'client'
+        }, { onConflict: 'user_id' })
+ main
+        .select()
+        .single();
+
+      if (clientError) throw clientError;
+
+ codex/expand-convertleadtoclient-functionality
+      const { error: caseError } = await supabase
+        .from('cases')
+        .insert({
+          title: lead.case_description,
+          client_id: client.id,
+          assigned_lawyer_id: lead.assigned_lawyer_id,
+          legal_category: lead.legal_category,
+          priority: lead.urgency_level || 'medium',
+          estimated_budget: lead.estimated_budget,
+          status: 'open',
+          opened_at: new Date().toISOString()
+        });
+
+      if (caseError) throw caseError;
+
+      const { data, error } = await supabase
+
+      // 2. Create new case for this client
+      const { data: newCase, error: caseError } = await supabase
+        .from('cases')
+        .insert({
+          client_id: client.id,
+          assigned_lawyer_id: lead.assigned_lawyer_id,
+          title: `טיפול ב${lead.legal_category} עבור ${lead.customer_name}`,
+          legal_category: lead.legal_category,
+          estimated_budget: lead.estimated_budget,
+          status: 'open',
+          priority: lead.urgency_level || 'medium'
+        })
+        .select()
+        .single();
+
+      if (caseError) throw caseError;
+
+      // 3. Update lead status to converted
+      const { data: updatedLead, error: leadError } = await supabase
+ main
+        .from('leads')
+        .update({ status: 'converted', client_id: client.id } as any)
         .eq('id', leadId)
         .select()
         .single();
-      
+
+ codex/expand-convertleadtoclient-functionality
       if (error) throw error;
       return data;
+
+      if (leadError) throw leadError;
+
+      return { client, case: newCase, lead: updatedLead };
+ main
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['cases'] });
+ codex/expand-convertleadtoclient-functionality
       toast.success('הליד הומר ללקוח בהצלחה');
+
+      toast({ 
+        title: 'הליד הומר ללקוח בהצלחה',
+        description: `נוצר תיק חדש: ${data.case.title}`
+      });
+ main
     },
     onError: (error) => {
-      toast.error('שגיאה בהמרת הליד ללקוח');
-      console.error('Error converting lead:', error);
+      toast({ 
+        title: 'שגיאה בהמרת הליד ללקוח', 
+        variant: 'destructive', 
+        description: error instanceof Error ? error.message : String(error) 
+      });
     }
   });
 

@@ -55,10 +55,10 @@ serve(async (req) => {
         });
         break;
 
-      case 'list':
+      case 'list': {
         const timeMin = new Date().toISOString();
         const timeMax = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(); // 30 days from now
-        
+
         response = await fetch(
           `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`,
           {
@@ -69,6 +69,7 @@ serve(async (req) => {
           }
         );
         break;
+      }
 
       case 'update':
         if (!event.id) throw new Error('Event ID required for update');
