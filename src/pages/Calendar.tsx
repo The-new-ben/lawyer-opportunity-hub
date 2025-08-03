@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Clock, Users, Calendar as CalendarIcon, MapPin } from "lucide-react";
 import { CreateEventDialog } from "@/components/CreateEventDialog";
 import { CalendlyEmbed } from "@/components/CalendlyEmbed";
+import { GoogleCalendarButton } from "@/components/GoogleCalendarButton";
 
 const Calendar = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -200,6 +201,8 @@ const Calendar = () => {
             <CalendlyEmbed />
           </CardContent>
         </Card>
+        
+        <GoogleCalendarButton />
       </div>
     </div>
   )
