@@ -1,19 +1,23 @@
-import { google } from 'googleapis'
 import type { Event } from '@/hooks/useCalendar'
 
-const api = google.calendar('v3')
-
 export async function syncEventToGoogle(event: Event, token: string) {
-  const auth = new google.auth.OAuth2()
-  auth.setCredentials({ access_token: token })
-  await api.events.insert({
-    auth,
-    calendarId: 'primary',
-    requestBody: {
+  const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
       summary: event.title,
       description: event.description || undefined,
       start: { dateTime: event.start_time },
       end: { dateTime: event.end_time }
-    }
+    })
   })
+  
+  if (!response.ok) {
+    throw new Error(`Google Calendar API error: ${response.statusText}`)
+  }
+  
+  return response.json()
 }
