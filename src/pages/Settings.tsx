@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
-import { User, Bell, Shield, Globe, CreditCard, Database, MessageSquare, Bot, Settings as SettingsIcon, CheckCircle } from "lucide-react"
+import { User, Bell, Shield, Globe, CreditCard, Database, MessageSquare, Bot, Settings as SettingsIcon, CheckCircle, Loader2 } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
 import { useState, useEffect } from "react"
 import { useRole } from "@/hooks/useRole"
@@ -15,6 +15,8 @@ import { WhatsAppConfigManager, ROLE_WHATSAPP_FEATURES, type WhatsAppSettings } 
 const Settings = () => {
   const { role } = useRole();
   const [whatsappSettings, setWhatsappSettings] = useState<WhatsAppSettings>(WhatsAppConfigManager.loadSettings());
+  const [isSaving, setIsSaving] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
   const roleFeatures = WhatsAppConfigManager.getRoleFeatures(role || 'customer');
 
   useEffect(() => {
@@ -22,60 +24,85 @@ const Settings = () => {
     setWhatsappSettings(WhatsAppConfigManager.loadSettings());
   }, []);
 
-  const saveWhatsAppSettings = () => {
+  const saveWhatsAppSettings = async () => {
+    setIsSaving(true);
+    
     try {
+      console.log('שומר הגדרות WhatsApp:', whatsappSettings);
+      
       const validation = WhatsAppConfigManager.validateSettings(whatsappSettings);
       
       if (!validation.valid) {
         toast({
-          title: "שגיאות בהגדרות",
+          title: "❌ שגיאות בהגדרות",
           description: validation.errors.join(', '),
           variant: "destructive"
         });
+        setIsSaving(false);
         return;
       }
 
       WhatsAppConfigManager.saveSettings(whatsappSettings);
+      console.log('הגדרות WhatsApp נשמרו בהצלחה');
       
       toast({
-        title: "הגדרות WhatsApp נשמרו בהצלחה",
-        description: "ההגדרות החדשות יחולו מיידית",
+        title: "✅ הגדרות WhatsApp נשמרו בהצלחה!",
+        description: "ההגדרות החדשות יחולו מיידית ונשמרו בזיכרון המקומי",
       });
     } catch (error) {
+      console.error('שגיאה בשמירת הגדרות WhatsApp:', error);
       toast({
-        title: "שגיאה",
-        description: "לא ניתן לשמור את ההגדרות",
+        title: "❌ שגיאה בשמירה",
+        description: "לא ניתן לשמור את ההגדרות. נסה שוב.",
         variant: "destructive"
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const testWhatsAppConnection = async () => {
     if (!whatsappSettings.token || !whatsappSettings.phoneId) {
       toast({
-        title: "שגיאה",
-        description: "אנא הזן את Token ו-Phone ID לפני הבדיקה",
+        title: "❌ חסרים פרטים",
+        description: "אנא הזן את Token ו-Phone ID לפני בדיקת החיבור",
         variant: "destructive"
       });
       return;
     }
 
-    const isConnected = await WhatsAppConfigManager.testConnection(
-      whatsappSettings.token, 
-      whatsappSettings.phoneId
-    );
+    setIsTesting(true);
+    console.log('בודק חיבור WhatsApp...');
+    
+    try {
+      const isConnected = await WhatsAppConfigManager.testConnection(
+        whatsappSettings.token, 
+        whatsappSettings.phoneId
+      );
 
-    if (isConnected) {
+      if (isConnected) {
+        console.log('חיבור WhatsApp הצליח');
+        toast({
+          title: "✅ חיבור WhatsApp תקין!",
+          description: "החיבור לשירות WhatsApp Business הצליח בהצלחה",
+        });
+      } else {
+        console.log('חיבור WhatsApp נכשל');
+        toast({
+          title: "❌ שגיאה בחיבור WhatsApp",
+          description: "אנא בדוק את הפרטים שהזנת. ייתכן שה-Token או Phone ID אינם תקינים.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('שגיאה בבדיקת חיבור WhatsApp:', error);
       toast({
-        title: "חיבור WhatsApp תקין ✅",
-        description: "החיבור לשירות WhatsApp Business הצליח",
-      });
-    } else {
-      toast({
-        title: "שגיאה בחיבור WhatsApp ❌",
-        description: "אנא בדוק את הפרטים שהזנת",
+        title: "❌ שגיאה בבדיקת החיבור",
+        description: "אירעה שגיאה בעת ביצוע בדיקת החיבור. נסה שוב.",
         variant: "destructive"
       });
+    } finally {
+      setIsTesting(false);
     }
   };
 
@@ -227,10 +254,37 @@ const Settings = () => {
               </div>
               
               <div className="flex gap-2">
-                <Button onClick={saveWhatsAppSettings}>שמור הגדרות WhatsApp</Button>
-                <Button variant="outline" onClick={testWhatsAppConnection}>
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  בדוק חיבור
+                <Button 
+                  onClick={saveWhatsAppSettings} 
+                  disabled={isSaving}
+                  className="min-w-[140px]"
+                >
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      שומר...
+                    </>
+                  ) : (
+                    '💾 שמור הגדרות WhatsApp'
+                  )}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={testWhatsAppConnection}
+                  disabled={isTesting}
+                  className="min-w-[120px]"
+                >
+                  {isTesting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      בודק...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      🔍 בדוק חיבור
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
