@@ -9,10 +9,10 @@ const paymentRoutes = require('./payments');
 const app = express();
 const port = process.env.PORT || 4000;
 
-const supabase = createClient(
-  process.env.SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE || ''
-);
+const { SUPABASE_URL, SUPABASE_SERVICE_ROLE } = process.env;
+if (!SUPABASE_URL) throw new Error('Missing SUPABASE_URL environment variable');
+if (!SUPABASE_SERVICE_ROLE) throw new Error('Missing SUPABASE_SERVICE_ROLE environment variable');
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE);
 
 const leadSchema = z
   .object({
@@ -27,7 +27,7 @@ const leadSchema = z
     source: z.string().optional(),
     estimated_budget: z.coerce.number().optional(),
   })
-  .passthrough();
+  .strict();
 
 app.use(express.json());
 app.use(
@@ -95,7 +95,7 @@ app.get('/api/leads', async (req, res) => {
 
 app.patch('/api/leads/:id', async (req, res) => {
   const { id } = req.params;
-  const result = leadSchema.partial().safeParse(req.body);
+  const result = leadSchema.partial().strict().safeParse(req.body);
   if (!result.success) {
     return res.status(400).json({ error: result.error.errors });
   }

@@ -1,21 +1,34 @@
 const express = require('express');
 const Stripe = require('stripe');
 const { createClient } = require('@supabase/supabase-js');
+const { z } = require('zod');
 
 const router = express.Router();
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2022-11-15',
-});
+const { STRIPE_SECRET_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_SERVICE_ROLE } = process.env;
+if (!STRIPE_SECRET_KEY) throw new Error('Missing STRIPE_SECRET_KEY environment variable');
+const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: '2022-11-15' });
+if (!SUPABASE_URL) throw new Error('Missing SUPABASE_URL environment variable');
+const supabaseServiceRole = SUPABASE_SERVICE_ROLE_KEY || SUPABASE_SERVICE_ROLE;
+if (!supabaseServiceRole) throw new Error('Missing service role key environment variable');
+const supabase = createClient(SUPABASE_URL, supabaseServiceRole);
 
-const supabase = createClient(
-  process.env.SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE || ''
-);
+const checkoutSchema = z.object({
+  lead_id: z.coerce.number().int().positive(),
+  lawyer_id: z.coerce.number().int().positive(),
+  amount: z.coerce.number().positive(),
+  deposit_type: z.string().min(1),
+  payment_method: z.string().min(1)
+});
 
 router.post('/checkout', async (req, res) => {
   try {
-    const { lead_id, lawyer_id, amount, deposit_type, payment_method } = req.body;
+    const result = checkoutSchema.safeParse(req.body);
+    if (!result.success) {
+      return res.status(400).json({ error: result.error.errors });
+    }
+
+    const { lead_id, lawyer_id, amount, deposit_type, payment_method } = result.data;
 
     const { data: deposit, error } = await supabase
       .from('deposits')
@@ -25,7 +38,7 @@ router.post('/checkout', async (req, res) => {
         amount,
         deposit_type,
         payment_method,
-        status: 'pending',
+        status: 'pending'
       })
       .select()
       .single();
