@@ -160,12 +160,21 @@ export class WhatsAppConfigManager {
 
   static async testConnection(token: string, phoneId: string): Promise<boolean> {
     try {
+      console.log('Testing WhatsApp connection with phoneId:', phoneId);
       const response = await fetch(`https://graph.facebook.com/v19.0/${phoneId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
+
+      console.log('WhatsApp connection response status:', response.status);
+      console.log('WhatsApp connection response ok:', response.ok);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('WhatsApp connection error response:', errorText);
+      }
 
       return response.ok;
     } catch (error) {
