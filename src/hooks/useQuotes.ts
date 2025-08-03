@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/use-toast';
 
 export interface Quote {
   id: string;
@@ -51,11 +51,10 @@ export const useQuotes = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quotes'] });
-      toast.success('הצעת מחיר נשלחה בהצלחה');
+      toast({ title: 'הצעת מחיר נשלחה בהצלחה' });
     },
     onError: (error) => {
-      toast.error('שגיאה בשליחת הצעת מחיר');
-      console.error('Error creating quote:', error);
+      toast({ title: 'שגיאה בשליחת הצעת מחיר', variant: 'destructive', description: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -73,10 +72,10 @@ export const useQuotes = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quotes'] });
-      toast.success('הצעת מחיר עודכנה בהצלחה');
+      toast({ title: 'הצעת מחיר עודכנה בהצלחה' });
     },
     onError: () => {
-      toast.error('שגיאה בעדכון הצעת מחיר');
+      toast({ title: 'שגיאה בעדכון הצעת מחיר', variant: 'destructive' });
     }
   });
 
@@ -94,10 +93,10 @@ export const useQuotes = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quotes'] });
-      toast.success('הצעת המחיר אושרה בהצלחה');
+      toast({ title: 'הצעת המחיר אושרה בהצלחה' });
     },
     onError: () => {
-      toast.error('שגיאה באישור הצעת מחיר');
+      toast({ title: 'שגיאה באישור הצעת מחיר', variant: 'destructive' });
     }
   });
 
@@ -115,10 +114,10 @@ export const useQuotes = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quotes'] });
-      toast.success('הצעת המחיר נדחתה');
+      toast({ title: 'הצעת המחיר נדחתה' });
     },
     onError: () => {
-      toast.error('שגיאה בדחיית הצעת מחיר');
+      toast({ title: 'שגיאה בדחיית הצעת מחיר', variant: 'destructive' });
     }
   });
 

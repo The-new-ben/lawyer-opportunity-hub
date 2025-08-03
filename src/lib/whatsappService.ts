@@ -6,6 +6,7 @@
 // available message types and required consent windows.
 
 import axios from "axios";
+import { toast } from "@/components/ui/use-toast";
 
 const WHATSAPP_BASE_URL = "https://graph.facebook.com/v19.0";
 // Read configuration from environment variables (Vite or Node)
@@ -17,9 +18,11 @@ const ACCESS_TOKEN =
     .VITE_WHATSAPP_TOKEN || "";
 
 if (!PHONE_NUMBER_ID || !ACCESS_TOKEN) {
-  console.warn(
-    "WhatsApp environment variables missing - messaging disabled"
-  );
+  toast({
+    title: 'WhatsApp environment variables missing',
+    description: 'Messaging disabled',
+    variant: 'destructive'
+  });
 }
 
 // Send a simple text message to a recipient phone number. You must ensure that the
@@ -30,9 +33,11 @@ export async function sendWhatsAppTextMessage(
   text: string
 ): Promise<void> {
   if (!PHONE_NUMBER_ID || !ACCESS_TOKEN) {
-    console.warn(
-      "WhatsApp message skipped - environment variables missing"
-    );
+    toast({
+      title: 'WhatsApp message skipped',
+      description: 'Environment variables missing',
+      variant: 'destructive'
+    });
     return; // Skip silently
   }
   const url = `${WHATSAPP_BASE_URL}/${PHONE_NUMBER_ID}/messages`;
@@ -51,7 +56,11 @@ export async function sendWhatsAppTextMessage(
       },
     });
   } catch (error) {
-    console.error("Failed to send WhatsApp message", error);
+    toast({
+      title: 'Failed to send WhatsApp message',
+      description: error instanceof Error ? error.message : String(error),
+      variant: 'destructive'
+    });
     throw error;
   }
 }
@@ -65,9 +74,11 @@ export async function sendWhatsAppTemplateMessage(
   language: string = "he" // default to Hebrew
 ): Promise<void> {
   if (!PHONE_NUMBER_ID || !ACCESS_TOKEN) {
-    console.warn(
-      "WhatsApp template message skipped - environment variables missing"
-    );
+    toast({
+      title: 'WhatsApp template message skipped',
+      description: 'Environment variables missing',
+      variant: 'destructive'
+    });
     return;
   }
   const url = `${WHATSAPP_BASE_URL}/${PHONE_NUMBER_ID}/messages`;
@@ -88,7 +99,11 @@ export async function sendWhatsAppTemplateMessage(
       },
     });
   } catch (error) {
-    console.error("Failed to send WhatsApp template message", error);
+    toast({
+      title: 'Failed to send WhatsApp template message',
+      description: error instanceof Error ? error.message : String(error),
+      variant: 'destructive'
+    });
     throw error;
   }
 }

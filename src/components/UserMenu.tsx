@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { User, Settings, LogOut } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
+import { toast } from '@/components/ui/use-toast';
 
 export function UserMenu() {
   const { user, signOut } = useAuth();
@@ -17,7 +18,11 @@ export function UserMenu() {
       await signOut();
       navigate('/');
     } catch (error) {
-      console.error('Error signing out:', error);
+      toast({
+        title: 'Error signing out',
+        description: error instanceof Error ? error.message : String(error),
+        variant: 'destructive'
+      });
     } finally {
       setIsLoading(false);
     }

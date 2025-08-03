@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Plus, Search, Users, Clock, TrendingUp, Phone, UserPlus } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
 
 export default function Leads() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -67,7 +68,11 @@ export default function Leads() {
       setFormMessage({ type: "success", text: "הליד נשמר בהצלחה" });
       form.reset();
     } catch (err) {
-      console.error("Error adding lead:", err);
+      toast({
+        title: 'Error adding lead',
+        description: err instanceof Error ? err.message : String(err),
+        variant: 'destructive'
+      });
       setFormMessage({ type: "error", text: "שגיאה בשמירת הליד" });
     }
   };

@@ -74,7 +74,6 @@ const MeetingScheduler = () => {
       }));
 
     } catch (error) {
-      console.error('Error fetching quote:', error);
       toast({
         title: "שגיאה",
         description: "לא ניתן לטעון את נתוני ההצעה",
@@ -137,7 +136,6 @@ const MeetingScheduler = () => {
       await sendConfirmationMessage();
 
     } catch (error) {
-      console.error('Error scheduling meeting:', error);
       toast({
         title: "שגיאה",
         description: "לא ניתן לקבוע את הפגישה",
@@ -181,7 +179,11 @@ ${meetingData.notes || 'אין הערות נוספות'}
       });
 
     } catch (error) {
-      console.warn('Failed to send confirmation message:', error);
+      toast({
+        title: 'Failed to send confirmation message',
+        description: error instanceof Error ? error.message : String(error),
+        variant: 'destructive'
+      });
     }
   };
 
@@ -218,7 +220,6 @@ ${meetingData.notes || 'אין הערות נוספות'}
       setStep(3);
 
     } catch (error) {
-      console.error('Error creating deposit:', error);
       toast({
         title: "שגיאה",
         description: "לא ניתן לעבור לתשלום",

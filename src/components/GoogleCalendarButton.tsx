@@ -7,6 +7,11 @@ import { syncEventToGoogleViaEdgeFunction, getGoogleCalendarEvents } from '@/int
 import { useToast } from '@/hooks/use-toast';
 import type { Event } from '@/hooks/useCalendar';
 
+type GoogleEvent = {
+  summary?: string;
+  start?: { dateTime?: string };
+};
+
 interface GoogleCalendarButtonProps {
   event?: Event;
   onSync?: () => void;
@@ -15,7 +20,7 @@ interface GoogleCalendarButtonProps {
 export const GoogleCalendarButton: React.FC<GoogleCalendarButtonProps> = ({ event, onSync }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [events, setEvents] = useState<any[]>([]);
+  const [events, setEvents] = useState<GoogleEvent[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -28,7 +33,6 @@ export const GoogleCalendarButton: React.FC<GoogleCalendarButtonProps> = ({ even
       await googleAuth.initializeGoogleSignIn();
       await googleAuth.showOneTap();
     } catch (error) {
-      console.error('Google sign-in error:', error);
       toast({
         title: "שגיאה",
         description: "לא ניתן להתחבר ל-Google Calendar",
@@ -65,7 +69,6 @@ export const GoogleCalendarButton: React.FC<GoogleCalendarButtonProps> = ({ even
       });
       onSync?.();
     } catch (error) {
-      console.error('Sync error:', error);
       toast({
         title: "שגיאה",
         description: "לא ניתן לסנכרן עם Google Calendar",
@@ -88,7 +91,6 @@ export const GoogleCalendarButton: React.FC<GoogleCalendarButtonProps> = ({ even
         description: `נטענו ${calendarEvents.items?.length || 0} אירועים`,
       });
     } catch (error) {
-      console.error('Load events error:', error);
       toast({
         title: "שגיאה",
         description: "לא ניתן לטעון אירועים מ-Google Calendar",
@@ -175,7 +177,7 @@ export const GoogleCalendarButton: React.FC<GoogleCalendarButtonProps> = ({ even
           <div className="mt-4">
             <h4 className="font-medium mb-2">אירועים מ-Google Calendar:</h4>
             <div className="space-y-1 max-h-32 overflow-y-auto">
-              {events.slice(0, 5).map((event: any, index: number) => (
+              {events.slice(0, 5).map((event: GoogleEvent, index: number) => (
                 <div key={index} className="text-sm p-2 bg-muted rounded">
                   <div className="font-medium">{event.summary}</div>
                   <div className="text-muted-foreground">

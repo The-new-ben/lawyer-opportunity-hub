@@ -6,7 +6,6 @@ import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Layout } from "@/components/Layout";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { QueryProvider } from "@/providers/QueryProvider";
 import Dashboard from "./pages/Dashboard";
 import Leads from "./pages/Leads";
@@ -32,15 +31,14 @@ import RoleDashboard from "./pages/RoleDashboard";
 import { RoleBasedRoute } from "./components/RoleBasedRoute";
 
 const App = () => (
-  <ErrorBoundary>
-    <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-      <QueryProvider>
-        <AuthProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <Router>
-              <Routes>
+  <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+    <QueryProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <Router>
+            <Routes>
                 {/* Public Routes */}
                 <Route path="/landing" element={<Landing />} />
                 <Route path="/auth" element={<Auth />} />
@@ -109,7 +107,6 @@ const App = () => (
         </AuthProvider>
       </QueryProvider>
     </ThemeProvider>
-  </ErrorBoundary>
 );
 
 export default App;
