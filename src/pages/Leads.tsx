@@ -11,8 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Plus, Search, Users, Clock, TrendingUp, Phone, UserPlus } from "lucide-react";
+import { Plus, Search, Users, Clock, TrendingUp, Phone, UserPlus, Calendar } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
+import { CreateMeetingDialog } from "@/components/CreateMeetingDialog";
 
 export default function Leads() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -388,8 +389,17 @@ export default function Leads() {
                       {convertLeadToClient.isPending ? 'ממיר...' : 'הפוך ללקוח'}
                     </Button>
                   )}
+                  {lead.assigned_lawyer_id && (
+                    <CreateMeetingDialog 
+                      leadId={lead.id}
+                      lawyerId={lead.assigned_lawyer_id}
+                    />
+                  )}
                   <div className="text-xs text-muted-foreground">
                     נוצר: {new Date(lead.created_at).toLocaleDateString('he-IL')}
+                    {lead.assigned_lawyer_id && (
+                      <div>הוקצה לעורך דין</div>
+                    )}
                   </div>
                 </div>
               </div>
