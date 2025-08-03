@@ -143,22 +143,67 @@ export const useLeads = () => {
 
   const convertLeadToClient = useMutation({
     mutationFn: async (leadId: string) => {
-      const { data, error } = await supabase
+      const lead = leads.find(l => l.id === leadId);
+      if (!lead) throw new Error('Lead not found');
+
+      // 1. Create or upsert client in profiles table
+      const { data: client, error: clientError } = await supabase
+        .from('profiles')
+        .upsert({
+          user_id: crypto.randomUUID(), // Generate new user ID for client
+          full_name: lead.customer_name,
+          phone: lead.customer_phone,
+          role: 'client'
+        }, { onConflict: 'user_id' })
+        .select()
+        .single();
+
+      if (clientError) throw clientError;
+
+      // 2. Create new case for this client
+      const { data: newCase, error: caseError } = await supabase
+        .from('cases')
+        .insert({
+          client_id: client.id,
+          assigned_lawyer_id: lead.assigned_lawyer_id,
+          title: `טיפול ב${lead.legal_category} עבור ${lead.customer_name}`,
+          legal_category: lead.legal_category,
+          estimated_budget: lead.estimated_budget,
+          status: 'open',
+          priority: lead.urgency_level || 'medium'
+        })
+        .select()
+        .single();
+
+      if (caseError) throw caseError;
+
+      // 3. Update lead status to converted
+      const { data: updatedLead, error: leadError } = await supabase
         .from('leads')
         .update({ status: 'converted' })
         .eq('id', leadId)
         .select()
         .single();
-      
-      if (error) throw error;
-      return data;
+
+      if (leadError) throw leadError;
+
+      return { client, case: newCase, lead: updatedLead };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });
-      toast({ title: 'הליד הומר ללקוח בהצלחה' });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['cases'] });
+      toast({ 
+        title: 'הליד הומר ללקוח בהצלחה',
+        description: `נוצר תיק חדש: ${data.case.title}`
+      });
     },
     onError: (error) => {
-      toast({ title: 'שגיאה בהמרת הליד ללקוח', variant: 'destructive', description: error instanceof Error ? error.message : String(error) });
+      toast({ 
+        title: 'שגיאה בהמרת הליד ללקוח', 
+        variant: 'destructive', 
+        description: error instanceof Error ? error.message : String(error) 
+      });
     }
   });
 

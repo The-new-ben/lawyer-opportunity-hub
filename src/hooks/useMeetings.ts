@@ -34,12 +34,24 @@ export const useMeetings = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: async (data) => {
       queryClient.invalidateQueries({ queryKey: ['meetings'] });
       toast({
         title: "פגישה נקבעה בהצלחה",
         description: "הפגישה נוספה ליומן",
       });
+      
+      // Send meeting notifications
+      try {
+        await supabase.functions.invoke('assignment-notification', {
+          body: { 
+            type: 'meeting_scheduled',
+            meetingId: data.id 
+          }
+        });
+      } catch (error) {
+        console.error('Failed to send meeting notification:', error);
+      }
     },
     onError: (error) => {
       toast({
