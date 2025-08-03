@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -136,14 +136,14 @@ export default function Auth() {
                   התחבר
                 </Button>
                 <div className="text-center">
-                  <Button 
+                  <Button
                     type="button"
-                    variant="link" 
-                    onClick={() => navigate('/reset-password')}
+                    variant="link"
                     disabled={loading}
                     className="text-sm"
+                    asChild
                   >
-                    שכחת סיסמה?
+                    <Link to="/reset-password">שכחת סיסמה?</Link>
                   </Button>
                 </div>
               </form>
