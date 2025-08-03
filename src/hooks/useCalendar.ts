@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/use-toast';
 import { syncEventToGoogle } from '@/integrations/googleCalendar';
 import { createCalendlyEvent } from '@/integrations/calendly';
 
@@ -51,7 +51,11 @@ export const useCalendar = () => {
         try {
           await syncEventToGoogle(data, googleToken);
         } catch (e) {
-          console.error('google sync error', e);
+          toast({
+            title: 'google sync error',
+            description: e instanceof Error ? e.message : String(e),
+            variant: 'destructive'
+          });
         }
       }
 
@@ -60,7 +64,11 @@ export const useCalendar = () => {
         try {
           await createCalendlyEvent(data, calendlyToken);
         } catch (e) {
-          console.error('calendly sync error', e);
+          toast({
+            title: 'calendly sync error',
+            description: e instanceof Error ? e.message : String(e),
+            variant: 'destructive'
+          });
         }
       }
 
@@ -68,11 +76,10 @@ export const useCalendar = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
-      toast.success('אירוע חדש נוצר בהצלחה');
+      toast({ title: 'אירוע חדש נוצר בהצלחה' });
     },
     onError: (error) => {
-      toast.error('שגיאה ביצירת אירוע');
-      console.error('Error creating event:', error);
+      toast({ title: 'שגיאה ביצירת אירוע', variant: 'destructive', description: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -90,10 +97,10 @@ export const useCalendar = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
-      toast.success('האירוע עודכן בהצלחה');
+      toast({ title: 'האירוע עודכן בהצלחה' });
     },
     onError: () => {
-      toast.error('שגיאה בעדכון האירוע');
+      toast({ title: 'שגיאה בעדכון האירוע', variant: 'destructive' });
     }
   });
 
@@ -108,10 +115,10 @@ export const useCalendar = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
-      toast.success('האירוע נמחק בהצלחה');
+      toast({ title: 'האירוע נמחק בהצלחה' });
     },
     onError: () => {
-      toast.error('שגיאה במחיקת האירוע');
+      toast({ title: 'שגיאה במחיקת האירוע', variant: 'destructive' });
     }
   });
 

@@ -5,7 +5,6 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Plus, CreditCard } from 'lucide-react';
-import { useDeposits } from '@/hooks/usePayments';
 import { useToast } from '@/hooks/use-toast';
 
 export function CreateDepositDialog() {
@@ -18,7 +17,6 @@ export function CreateDepositDialog() {
     payment_method: 'bit'
   });
 
-  const { addDeposit } = useDeposits();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -34,25 +32,27 @@ export function CreateDepositDialog() {
     }
 
     try {
-      await addDeposit.mutateAsync({
-        lead_id: depositData.lead_id,
-        lawyer_id: depositData.lawyer_id,
-        amount: parseFloat(depositData.amount),
-        deposit_type: depositData.deposit_type,
-        payment_method: depositData.payment_method,
-        status: 'pending'
+      const res = await fetch('/api/payments/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lead_id: depositData.lead_id,
+          lawyer_id: depositData.lawyer_id,
+          amount: parseFloat(depositData.amount),
+          deposit_type: depositData.deposit_type,
+          payment_method: depositData.payment_method,
+        }),
       });
-
-      setDepositData({
-        lead_id: '',
-        lawyer_id: '',
-        amount: '',
-        deposit_type: 'consultation',
-        payment_method: 'bit'
-      });
-      setIsOpen(false);
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
     } catch (error) {
-      console.error('Error creating deposit:', error);
+      toast({
+        title: 'Error creating deposit',
+        description: error instanceof Error ? error.message : String(error),
+        variant: 'destructive'
+      });
     }
   };
 
@@ -153,12 +153,11 @@ export function CreateDepositDialog() {
             >
               ביטול
             </Button>
-            <Button 
-              type="submit" 
-              disabled={addDeposit.isPending}
+            <Button
+              type="submit"
               className="flex-1"
             >
-              {addDeposit.isPending ? 'שומר...' : 'שמור פיקדון'}
+              {'שמור פיקדון'}
             </Button>
           </div>
         </form>

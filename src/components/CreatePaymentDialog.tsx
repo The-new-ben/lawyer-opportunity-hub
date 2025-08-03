@@ -63,7 +63,6 @@ export function CreatePaymentDialog() {
       });
       setIsOpen(false);
     } catch (error) {
-      console.error('Error creating payment:', error);
       toast({
         title: "שגיאה ביצירת תשלום",
         description: "אנא נסה שוב",

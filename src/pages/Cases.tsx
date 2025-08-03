@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Plus, Search, Calendar, FileText, Clock, DollarSign, UserPlus } from "lucide-react"
 import { MeetingScheduler } from "@/components/MeetingScheduler"
 import { RatingDialog } from "@/components/RatingDialog"
+import { toast } from "@/components/ui/use-toast"
 
 const Cases = () => {
   const [searchTerm, setSearchTerm] = useState("")
@@ -56,7 +57,11 @@ const Cases = () => {
       })
       setIsOpen(false)
     } catch (error) {
-      console.error("Error adding case:", error)
+      toast({
+        title: 'Error adding case',
+        description: error instanceof Error ? error.message : String(error),
+        variant: 'destructive'
+      })
     }
   }
 

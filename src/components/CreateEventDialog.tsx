@@ -64,7 +64,11 @@ export function CreateEventDialog({ lawyerId, clientId, caseId }: CreateEventDia
       });
       setIsOpen(false);
     } catch (error) {
-      console.error('Error creating event:', error);
+      toast({
+        title: 'Error creating event',
+        description: error instanceof Error ? error.message : String(error),
+        variant: 'destructive'
+      });
     }
   };
 

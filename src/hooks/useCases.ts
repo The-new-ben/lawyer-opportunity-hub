@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/use-toast';
 
 export type Case = {
   id: string;
@@ -54,11 +54,10 @@ export const useCases = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cases'] });
-      toast.success('תיק חדש נוצר בהצלחה');
+      toast({ title: 'תיק חדש נוצר בהצלחה' });
     },
     onError: (error) => {
-      toast.error('שגיאה ביצירת תיק');
-      console.error('Error creating case:', error);
+      toast({ title: 'שגיאה ביצירת תיק', variant: 'destructive', description: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -76,10 +75,10 @@ export const useCases = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cases'] });
-      toast.success('התיק עודכן בהצלחה');
+      toast({ title: 'התיק עודכן בהצלחה' });
     },
     onError: () => {
-      toast.error('שגיאה בעדכון התיק');
+      toast({ title: 'שגיאה בעדכון התיק', variant: 'destructive' });
     }
   });
 
@@ -97,10 +96,10 @@ export const useCases = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cases'] });
-      toast.success('התיק נסגר בהצלחה');
+      toast({ title: 'התיק נסגר בהצלחה' });
     },
     onError: () => {
-      toast.error('שגיאה בסגירת התיק');
+      toast({ title: 'שגיאה בסגירת התיק', variant: 'destructive' });
     }
   });
 

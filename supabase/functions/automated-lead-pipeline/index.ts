@@ -22,9 +22,6 @@ const whatsappPhoneId = getEnvVar('WHATSAPP_PHONE_ID');
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-// TODO: Consider moving update logic to a single RPC or wrapping in a
-// database transaction to prevent partial pipeline states.
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -105,27 +102,16 @@ serve(async (req) => {
       }
     }).eq('id', leadId);
 
-    // שלב 3: עדכון הליד עם עורך הדין המשוייך
-    const { error: assignError } = await supabase
-      .from('leads')
-      .update({ 
-        assigned_lawyer_id: bestLawyer.lawyer_id,
-        status: 'assigned'
-      })
-      .eq('id', leadId);
+    // שלב 3: שיוך עורך דין ורישום הפעילות בתוך טרנזקציה אחת
+    const { error: assignmentError } = await supabase.rpc('assign_lawyer_and_log', {
+      p_lead_id: leadId,
+      p_lawyer_id: bestLawyer.lawyer_id,
+      p_assignment_note: `שיוך אוטומטי - ציון התאמה: ${bestLawyer.matching_score}`
+    });
 
-    if (assignError) {
-      throw new Error(`שגיאה בשיוך עורך דין: ${assignError.message}`);
+    if (assignmentError) {
+      throw new Error(`שגיאה בשיוך עורך דין: ${assignmentError.message}`);
     }
-
-    // עדכון שהשיוך הושלם
-    await supabase.from('leads').update({
-      case_details: {
-        ...lead.case_details,
-        pipeline_stage: 'lawyer_assigned',
-        lawyer_assigned_at: new Date().toISOString()
-      }
-    }).eq('id', leadId);
 
     // שלב 4: יצירת quote אוטומטי
     const basePrice = calculateBasePrice(lead.legal_category);
@@ -196,22 +182,6 @@ serve(async (req) => {
           meeting_link: meetingLink // עדיין שומר את הלינק למקרה שהלקוח יצטרך אותו
         }
       }).eq('id', leadId);
-    }
-
-    // שלב 6: רישום הפעילות במערכת
-    const { error: logError } = await supabase
-      .from('lead_assignments')
-      .insert({
-        lead_id: leadId,
-        lawyer_id: bestLawyer.lawyer_id,
-        assignment_type: 'automatic',
-        status: 'completed',
-        notes: `שיוך אוטומטי - ציון התאמה: ${bestLawyer.matching_score}`,
-        response_deadline: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-      });
-
-    if (logError) {
-      console.warn(`שגיאה ברישום הפעילות: ${logError.message}`);
     }
 
     // עדכון סופי - תהליך הושלם בהצלחה

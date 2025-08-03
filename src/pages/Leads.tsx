@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLeads } from "@/hooks/useLeads";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,27 +10,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Plus, Search, Users, Clock, TrendingUp, Phone, UserPlus } from "lucide-react";
+import { Plus, Search, Users, Clock, TrendingUp, Phone, UserPlus, Calendar } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
+import { CreateMeetingDialog } from "@/components/CreateMeetingDialog";
+import { leadSchema, type LeadFormValues } from "@/lib/leadSchema";
 
 export default function Leads() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [isOpen, setIsOpen] = useState(false);
-  const leadSchema = z.object({
-    name: z.string().min(1, "שם מלא הוא שדה חובה"),
-    phone: z.string().min(1, "טלפון הוא שדה חובה"),
-    email: z
-      .string()
-      .email("אימייל לא תקין")
-      .optional()
-      .or(z.literal("")),
-    legalArea: z.string().min(1, "תחום משפטי הוא שדה חובה"),
-    priority: z.string().min(1, "עדיפות היא שדה חובה"),
-    notes: z.string().optional(),
-  });
-
-  type LeadFormValues = z.infer<typeof leadSchema>;
 
   const form = useForm<LeadFormValues>({
     resolver: zodResolver(leadSchema),
@@ -41,6 +29,7 @@ export default function Leads() {
       email: "",
       legalArea: "",
       priority: "",
+      budget: undefined,
       notes: "",
     },
     mode: "onChange",
@@ -61,13 +50,17 @@ export default function Leads() {
         case_description: values.notes || "אין פרטים נוספים",
         legal_category: values.legalArea,
         urgency_level: values.priority,
-        estimated_budget: null,
+        estimated_budget: values.budget ? Number(values.budget) : null,
       });
 
       setFormMessage({ type: "success", text: "הליד נשמר בהצלחה" });
       form.reset();
     } catch (err) {
-      console.error("Error adding lead:", err);
+      toast({
+        title: 'Error adding lead',
+        description: err instanceof Error ? err.message : String(err),
+        variant: 'destructive'
+      });
       setFormMessage({ type: "error", text: "שגיאה בשמירת הליד" });
     }
   };
@@ -75,13 +68,7 @@ export default function Leads() {
   if (isLoading) return <div className="p-6">טוען לידים...</div>;
   if (error) return <div className="p-6 text-destructive">שגיאה בטעינת לידים: {error.message}</div>;
 
-  // Calculate stats manually if getLeadStats is not available
-  const stats = {
-    totalLeads: leads.length,
-    newLeads: leads.filter(l => l.status === 'new').length,
-    highPriorityLeads: leads.filter(l => l.urgency_level === 'high').length,
-    convertedLeads: leads.filter(l => l.status === 'converted').length
-  };
+  const stats = getLeadStats();
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -206,34 +193,47 @@ export default function Leads() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="priority"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel htmlFor="priority">עדיפות *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                  <FormField
+                    control={form.control}
+                    name="priority"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel htmlFor="priority">עדיפות *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="בחר עדיפות" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="high">גבוה</SelectItem>
+                            <SelectItem value="medium">בינוני</SelectItem>
+                            <SelectItem value="low">נמוך</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="budget"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel htmlFor="budget">תקציב משוער</FormLabel>
                         <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="בחר עדיפות" />
-                          </SelectTrigger>
+                          <Input id="budget" type="number" placeholder="הזן תקציב משוער" {...field} />
                         </FormControl>
-                        <SelectContent>
-                          <SelectItem value="high">גבוה</SelectItem>
-                          <SelectItem value="medium">בינוני</SelectItem>
-                          <SelectItem value="low">נמוך</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel htmlFor="notes">הערות</FormLabel>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel htmlFor="notes">הערות</FormLabel>
                       <FormControl>
                         <Input id="notes" placeholder="הזן פרטים נוספים" {...field} />
                       </FormControl>
@@ -371,8 +371,17 @@ export default function Leads() {
                       {convertLeadToClient.isPending ? 'ממיר...' : 'הפוך ללקוח'}
                     </Button>
                   )}
+                  {lead.assigned_lawyer_id && (
+                    <CreateMeetingDialog 
+                      leadId={lead.id}
+                      lawyerId={lead.assigned_lawyer_id}
+                    />
+                  )}
                   <div className="text-xs text-muted-foreground">
                     נוצר: {new Date(lead.created_at).toLocaleDateString('he-IL')}
+                    {lead.assigned_lawyer_id && (
+                      <div>הוקצה לעורך דין</div>
+                    )}
                   </div>
                 </div>
               </div>

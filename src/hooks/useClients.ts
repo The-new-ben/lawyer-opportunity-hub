@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/use-toast';
 
 export type Client = {
   id: string;
@@ -64,11 +64,10 @@ export const useClients = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clients'] });
-      toast.success('לקוח חדש נוסף בהצלחה');
+      toast({ title: 'לקוח חדש נוסף בהצלחה' });
     },
     onError: (error) => {
-      toast.error('שגיאה בהוספת לקוח');
-      console.error('Error creating client:', error);
+      toast({ title: 'שגיאה בהוספת לקוח', variant: 'destructive', description: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -86,10 +85,10 @@ export const useClients = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clients'] });
-      toast.success('פרטי הלקוח עודכנו בהצלחה');
+      toast({ title: 'פרטי הלקוח עודכנו בהצלחה' });
     },
     onError: () => {
-      toast.error('שגיאה בעדכון פרטי הלקוח');
+      toast({ title: 'שגיאה בעדכון פרטי הלקוח', variant: 'destructive' });
     }
   });
 
@@ -104,10 +103,10 @@ export const useClients = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clients'] });
-      toast.success('הלקוח נמחק בהצלחה');
+      toast({ title: 'הלקוח נמחק בהצלחה' });
     },
     onError: () => {
-      toast.error('שגיאה במחיקת הלקוח');
+      toast({ title: 'שגיאה במחיקת הלקוח', variant: 'destructive' });
     }
   });
 

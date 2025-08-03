@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { FileText, Calendar, User, DollarSign, Clock, ArrowRight, Edit } from 'lucide-react';
 import { MeetingScheduler } from '@/components/MeetingScheduler';
 import { RatingDialog } from '@/components/RatingDialog';
+import { toast } from '@/components/ui/use-toast';
 
 export default function CaseDetails() {
   const { id } = useParams<{ id: string }>();
@@ -64,7 +65,11 @@ export default function CaseDetails() {
       });
       setIsEditing(false);
     } catch (error) {
-      console.error('Error updating case:', error);
+      toast({
+        title: 'Error updating case',
+        description: error instanceof Error ? error.message : String(error),
+        variant: 'destructive'
+      });
     }
   };
 
@@ -74,7 +79,11 @@ export default function CaseDetails() {
         await closeCase.mutateAsync(caseData.id);
         navigate('/cases');
       } catch (error) {
-        console.error('Error closing case:', error);
+        toast({
+          title: 'Error closing case',
+          description: error instanceof Error ? error.message : String(error),
+          variant: 'destructive'
+        });
       }
     }
   };

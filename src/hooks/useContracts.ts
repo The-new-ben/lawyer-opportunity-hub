@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/use-toast';
 
 export interface DigitalContract {
   id: string;
@@ -72,11 +72,10 @@ export const useContracts = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['digital-contracts'] });
-      toast.success('חוזה דיגיטלי נוצר בהצלחה');
+      toast({ title: 'חוזה דיגיטלי נוצר בהצלחה' });
     },
     onError: (error) => {
-      toast.error('שגיאה ביצירת החוזה');
-      console.error('Error creating contract:', error);
+      toast({ title: 'שגיאה ביצירת החוזה', variant: 'destructive', description: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -123,10 +122,10 @@ export const useContracts = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['digital-contracts'] });
-      toast.success('החוזה נחתם בהצלחה');
+      toast({ title: 'החוזה נחתם בהצלחה' });
     },
     onError: () => {
-      toast.error('שגיאה בחתימת החוזה');
+      toast({ title: 'שגיאה בחתימת החוזה', variant: 'destructive' });
     }
   });
 
@@ -144,10 +143,10 @@ export const useContracts = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['digital-contracts'] });
-      toast.success('החוזה עודכן בהצלחה');
+      toast({ title: 'החוזה עודכן בהצלחה' });
     },
     onError: () => {
-      toast.error('שגיאה בעדכון החוזה');
+      toast({ title: 'שגיאה בעדכון החוזה', variant: 'destructive' });
     }
   });
 

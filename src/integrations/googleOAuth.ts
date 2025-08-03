@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/use-toast';
 
 // Google OAuth2 configuration
 const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID'; // This should be set from environment or config
@@ -57,7 +58,7 @@ class GoogleAuth {
   async initializeGoogleSignIn(): Promise<void> {
     await this.loadGoogleIdentityServices();
     
-    // @ts-ignore - Google Identity Services global
+    // @ts-expect-error - Google Identity Services global
     window.google.accounts.id.initialize({
       client_id: this.clientId,
       callback: this.handleCredentialResponse.bind(this),
@@ -68,13 +69,13 @@ class GoogleAuth {
 
   async showOneTap(): Promise<void> {
     await this.initializeGoogleSignIn();
-    // @ts-ignore
+    // @ts-expect-error Google Identity Services prompt
     window.google.accounts.id.prompt();
   }
 
   async renderSignInButton(elementId: string): Promise<void> {
     await this.initializeGoogleSignIn();
-    // @ts-ignore
+    // @ts-expect-error Google Identity Services renderButton
     window.google.accounts.id.renderButton(
       document.getElementById(elementId),
       {
@@ -86,10 +87,13 @@ class GoogleAuth {
     );
   }
 
-  private async handleCredentialResponse(response: any) {
+  private async handleCredentialResponse(response: { credential: string }) {
     try {
       // Here you would typically verify the JWT token with your backend
-      console.log('Google credential response:', response);
+      toast({
+        title: 'Google credential response',
+        description: JSON.stringify(response)
+      });
       
       // Store the credential for calendar access
       localStorage.setItem('google_credential', response.credential);
@@ -97,12 +101,16 @@ class GoogleAuth {
       // You might want to exchange this for an access token
       await this.exchangeCredentialForAccessToken(response.credential);
     } catch (error) {
-      console.error('Error handling Google credential:', error);
+      toast({
+        title: 'Error handling Google credential',
+        description: error instanceof Error ? error.message : String(error),
+        variant: 'destructive'
+      });
     }
   }
 
   // Method 3: Direct API Key Access (Public Calendar Data Only)
-  async getPublicCalendarEvents(calendarId: string = 'primary'): Promise<any> {
+  async getPublicCalendarEvents(calendarId: string = 'primary'): Promise<unknown> {
     const apiKey = 'YOUR_PUBLIC_API_KEY'; // This should be your public API key
     const timeMin = new Date().toISOString();
     const timeMax = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
@@ -118,7 +126,11 @@ class GoogleAuth {
 
       return await response.json();
     } catch (error) {
-      console.error('Error fetching public calendar events:', error);
+      toast({
+        title: 'Error fetching public calendar events',
+        description: error instanceof Error ? error.message : String(error),
+        variant: 'destructive'
+      });
       throw error;
     }
   }
@@ -134,7 +146,11 @@ class GoogleAuth {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Error exchanging code for tokens:', error);
+      toast({
+        title: 'Error exchanging code for tokens',
+        description: error instanceof Error ? error.message : String(error),
+        variant: 'destructive'
+      });
       throw error;
     }
   }
@@ -152,7 +168,11 @@ class GoogleAuth {
       localStorage.setItem('google_access_token', data.access_token);
       localStorage.setItem('google_token_expires', (Date.now() + data.expires_in * 1000).toString());
     } catch (error) {
-      console.error('Error exchanging credential for access token:', error);
+      toast({
+        title: 'Error exchanging credential for access token',
+        description: error instanceof Error ? error.message : String(error),
+        variant: 'destructive'
+      });
       throw error;
     }
   }
