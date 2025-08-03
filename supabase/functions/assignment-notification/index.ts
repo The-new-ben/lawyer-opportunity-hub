@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const logStep = (step: string, details?: any) => {
+const logStep = (step: string, details?: Record<string, unknown>) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[ASSIGNMENT-NOTIFICATION] ${step}${detailsStr}`);
 };
@@ -170,7 +170,11 @@ async function sendWhatsAppMessage(phoneNumber: string, message: string) {
   const whatsappPhoneId = Deno.env.get('WHATSAPP_PHONE_ID');
 
   if (!whatsappToken || !whatsappPhoneId) {
-    throw new Error('WhatsApp credentials not configured');
+    console.warn(
+      `[ASSIGNMENT-NOTIFICATION] Missing WhatsApp credentials, skipping message`,
+      { phoneNumber },
+    );
+    return;
   }
 
   const cleanedPhone = phoneNumber.replace(/\D/g, '');
