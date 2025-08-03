@@ -4,6 +4,7 @@ const { createClient } = require('@supabase/supabase-js');
 const { z } = require('zod');
 require('dotenv').config();
 const { syncLead } = require('./hubspot');
+const paymentRoutes = require('./payments');
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -34,6 +35,8 @@ app.use(
     origin: process.env.CLIENT_ORIGIN || '*',
   })
 );
+
+app.use('/api/payments', paymentRoutes);
 
 // simple health check
 app.get('/api/health', (_req, res) => {
