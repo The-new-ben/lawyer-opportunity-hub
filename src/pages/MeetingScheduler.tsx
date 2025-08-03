@@ -10,14 +10,35 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
+interface LawyerData {
+  id: string;
+  profiles: {
+    full_name: string;
+  };
+}
+
+interface LeadData {
+  id: string;
+  customer_name: string;
+  customer_phone: string;
+  customer_email?: string | null;
+  legal_category: string;
+}
+
+interface QuoteData {
+  id: string;
+  quote_amount: number;
+  estimated_duration_days: number;
+  leads: LeadData;
+  lawyers: LawyerData;
+}
+
 const MeetingScheduler = () => {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [quote, setQuote] = useState<any>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [lawyer, setLawyer] = useState<any>(null);
+  const [quote, setQuote] = useState<QuoteData | null>(null);
+  const [lawyer, setLawyer] = useState<LawyerData | null>(null);
   const [step, setStep] = useState(1);
   
   const [meetingData, setMeetingData] = useState({
@@ -62,15 +83,16 @@ const MeetingScheduler = () => {
         throw quoteError;
       }
 
-      setQuote(quoteData);
-      setLawyer(quoteData.lawyers);
-      
+      const typedQuote = quoteData as QuoteData;
+      setQuote(typedQuote);
+      setLawyer(typedQuote.lawyers);
+
       // מילוי נתוני הלקוח מהליד
       setMeetingData(prev => ({
         ...prev,
-        customerName: quoteData.leads.customer_name,
-        customerPhone: quoteData.leads.customer_phone,
-        customerEmail: quoteData.leads.customer_email || ''
+        customerName: typedQuote.leads.customer_name,
+        customerPhone: typedQuote.leads.customer_phone,
+        customerEmail: typedQuote.leads.customer_email || ''
       }));
 
     } catch (error) {
@@ -94,9 +116,13 @@ const MeetingScheduler = () => {
       return;
     }
 
+    if (!quote || !lawyer) {
+      return;
+    }
+
     try {
       setLoading(true);
-      
+
       const scheduledAt = new Date(`${meetingData.date}T${meetingData.time}`);
       
       // יצירת הפגישה
@@ -147,6 +173,9 @@ const MeetingScheduler = () => {
   };
 
   const sendConfirmationMessage = async () => {
+    if (!quote || !lawyer) {
+      return;
+    }
     try {
       const meetingDateTime = new Date(`${meetingData.date}T${meetingData.time}`);
       const formattedDate = meetingDateTime.toLocaleDateString('he-IL');
@@ -188,9 +217,12 @@ ${meetingData.notes || 'אין הערות נוספות'}
   };
 
   const handlePayDeposit = async () => {
+    if (!quote || !lawyer) {
+      return;
+    }
     try {
       setLoading(true);
-      
+
       // יצירת deposit
       const depositAmount = Math.round(quote.quote_amount * 0.5); // 50% מקדמה
       
