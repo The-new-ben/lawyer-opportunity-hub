@@ -42,7 +42,7 @@ app.get('/api/health', (_req, res) => {
 
 // Simple auth register
 app.post('/auth/register', async (req, res) => {
-  const { email, password, fullName } = req.body;
+  const { email, password, fullName, role = 'client' } = req.body;
   const { data, error } = await supabase.auth.admin.createUser({
     email,
     password,
@@ -52,7 +52,18 @@ app.post('/auth/register', async (req, res) => {
   if (error) {
     return res.status(400).json({ error: error.message });
   }
-  res.json({ user: data.user });
+
+  const user = data.user;
+  if (user) {
+    const { error: roleError } = await supabase
+      .from('user_roles')
+      .insert({ user_id: user.id, role });
+    if (roleError) {
+      return res.status(400).json({ error: roleError.message });
+    }
+  }
+
+  res.json({ user });
 });
 
 // login

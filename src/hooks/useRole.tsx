@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 
-type UserRole = 'admin' | 'lawyer' | 'client' | 'supplier' | 'customer';
+type UserRole = 'admin' | 'lawyer' | 'client' | 'supplier';
 
 interface UserRoleData {
   role: UserRole | null;
@@ -12,7 +12,6 @@ interface UserRoleData {
   isLawyer: boolean;
   isClient: boolean;
   isSupplier: boolean;
-  isCustomer: boolean;
 }
 
 export function useRole(): UserRoleData {
@@ -44,25 +43,24 @@ export function useRole(): UserRoleData {
     try {
       setLoading(true);
       
-      // יעיל יותר - רק בקשה אחת לprofiles
-      const { data: profile, error } = await supabase
-        .from('profiles')
+      const { data: roleRow, error } = await supabase
+        .from('user_roles')
         .select('role')
         .eq('user_id', user.id)
         .maybeSingle();
 
       if (error && error.code !== 'PGRST116') {
         console.error('Error fetching user role:', error);
-        setRole('customer');
+        setRole(null);
         return;
       }
 
-      const userRole = profile?.role as UserRole;
-      setRole(userRole || 'customer');
-      
+      const userRole = roleRow?.role as UserRole;
+      setRole(userRole || null);
+
     } catch (error) {
       console.error('Error fetching user role:', error);
-      setRole('customer'); // Default fallback
+      setRole(null);
     } finally {
       setLoading(false);
     }
@@ -86,7 +84,6 @@ export function useRole(): UserRoleData {
     isAdmin: role === 'admin',
     isLawyer: role === 'lawyer',
     isClient: role === 'client',
-    isSupplier: role === 'supplier',
-    isCustomer: role === 'customer'
+    isSupplier: role === 'supplier'
   };
 }
