@@ -15,7 +15,7 @@ function getEnvVar(key: string): string {
 }
 
 const supabaseUrl = getEnvVar('SUPABASE_URL');
-const supabaseServiceKey = getEnvVar('SUPABASE_SERVICE_ROLE_KEY');
+const supabaseServiceKey = getEnvVar('SUPABASE_SERVICE_ROLE');
 const openaiApiKey = getEnvVar('OPENAI_API_KEY');
 const whatsappToken = getEnvVar('WHATSAPP_TOKEN');
 const whatsappPhoneId = getEnvVar('WHATSAPP_PHONE_ID');
