@@ -160,7 +160,32 @@ export class WhatsAppConfigManager {
 
   static async testConnection(token: string, phoneId: string): Promise<boolean> {
     try {
+      // בדיקת תוקף הנתונים הבסיסיים
+      if (!token || token.trim() === '') {
+        console.error('WhatsApp connection test failed: Missing token');
+        throw new Error('חסר API Token');
+      }
+
+      if (!phoneId || phoneId.trim() === '') {
+        console.error('WhatsApp connection test failed: Missing phone ID');
+        throw new Error('חסר Phone Number ID');
+      }
+
+      // בדיקת פורמט Phone ID (צריך להיות מספרי)
+      if (!/^\d+$/.test(phoneId)) {
+        console.error('WhatsApp connection test failed: Invalid phone ID format');
+        throw new Error('Phone Number ID צריך להיות מספרי');
+      }
+
+      // בדיקת פורמט Token (צריך להיות ארוך מ-50 תווים לפחות)
+      if (token.length < 50) {
+        console.error('WhatsApp connection test failed: Token too short');
+        throw new Error('API Token נראה לא תקין (קצר מדי)');
+      }
+
       console.log('Testing WhatsApp connection with phoneId:', phoneId);
+      console.log('Token length:', token.length);
+      
       const response = await fetch(`https://graph.facebook.com/v19.0/${phoneId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -174,12 +199,26 @@ export class WhatsAppConfigManager {
       if (!response.ok) {
         const errorText = await response.text();
         console.error('WhatsApp connection error response:', errorText);
+        
+        // הודעות שגיאה ברורות יותר
+        if (response.status === 401) {
+          throw new Error('API Token לא תקין או פג תוקף');
+        } else if (response.status === 404) {
+          throw new Error('Phone Number ID לא נמצא');
+        } else if (response.status === 403) {
+          throw new Error('אין הרשאה - בדוק הגדרות WhatsApp Business');
+        } else {
+          throw new Error(`שגיאת חיבור: ${response.status} - ${errorText}`);
+        }
       }
 
-      return response.ok;
+      const data = await response.json();
+      console.log('WhatsApp connection successful:', data);
+      return true;
+      
     } catch (error) {
       console.error('WhatsApp connection test failed:', error);
-      return false;
+      throw error;
     }
   }
 
