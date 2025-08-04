@@ -73,33 +73,60 @@ const Settings = () => {
 
     setIsTesting(true);
     console.log('בודק חיבור WhatsApp...');
+    console.log('Token length:', whatsappSettings.token.length);
+    console.log('Phone ID:', whatsappSettings.phoneId);
     
     try {
-      const isConnected = await WhatsAppConfigManager.testConnection(
+      await WhatsAppConfigManager.testConnection(
         whatsappSettings.token, 
         whatsappSettings.phoneId
       );
 
-      if (isConnected) {
-        console.log('חיבור WhatsApp הצליח');
-        toast({
-          title: "✅ חיבור WhatsApp תקין!",
-          description: "החיבור לשירות WhatsApp Business הצליח בהצלחה",
-        });
-      } else {
-        console.log('חיבור WhatsApp נכשל');
-        toast({
-          title: "❌ שגיאה בחיבור WhatsApp",
-          description: "אנא בדוק את הפרטים שהזנת. ייתכן שה-Token או Phone ID אינם תקינים.",
-          variant: "destructive"
-        });
-      }
-    } catch (error) {
-      console.error('שגיאה בבדיקת חיבור WhatsApp:', error);
+      console.log('✅ חיבור WhatsApp הצליח');
       toast({
-        title: "❌ שגיאה בבדיקת החיבור",
-        description: "אירעה שגיאה בעת ביצוע בדיקת החיבור. נסה שוב.",
-        variant: "destructive"
+        title: "✅ חיבור WhatsApp תקין!",
+        description: "החיבור לשירות WhatsApp Business הצליח בהצלחה. ה-API Token ו-Phone ID תקינים.",
+      });
+    } catch (error: any) {
+      console.error('❌ שגיאה בבדיקת חיבור WhatsApp:', error);
+      
+      // מציג הודעת שגיאה מפורטת בהתאם לסוג הבעיה
+      let errorTitle = "❌ כשל בחיבור WhatsApp";
+      let errorDescription = "שגיאה לא ידועה";
+      
+      if (error?.message) {
+        errorDescription = error.message;
+        
+        // הוספת הנחיות ספציפיות לפי סוג השגיאה
+        if (error.message.includes('API Token')) {
+          errorTitle = "❌ בעיה ב-API Token";
+          errorDescription = `${error.message}\n\nהשגת Token:\n1. היכנס ל-Meta Business Manager\n2. בחר את האפליקציה שלך\n3. לך ל-WhatsApp > Configuration\n4. העתק את ה-Token`;
+        } else if (error.message.includes('Phone Number ID')) {
+          errorTitle = "❌ בעיה ב-Phone Number ID";
+          errorDescription = `${error.message}\n\nהשגת Phone ID:\n1. היכנס ל-Meta Business Manager\n2. לך ל-WhatsApp > API Setup\n3. העתק את ה-Phone Number ID (מספרי בלבד)`;
+        } else if (error.message.includes('401')) {
+          errorTitle = "❌ אימות נכשל";
+          errorDescription = "ה-API Token לא תקין או פג תוקף. אנא בדוק שהעתקת את ה-Token המלא והנכון.";
+        } else if (error.message.includes('404')) {
+          errorTitle = "❌ Phone ID לא נמצא";
+          errorDescription = "ה-Phone Number ID לא קיים במערכת. אנא וודא שהזנת את המספר הנכון.";
+        } else if (error.message.includes('403')) {
+          errorTitle = "❌ חסרות הרשאות";
+          errorDescription = "לא מוגדרות הרשאות מתאימות ב-WhatsApp Business. בדוק הגדרות ההרשאות באפליקציה.";
+        }
+      }
+      
+      // בדיקה אם זו שגיאת רשת
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        errorTitle = "❌ בעיית חיבור לאינטרנט";
+        errorDescription = "לא ניתן להתחבר לשרתי Facebook. אנא בדוק את חיבור האינטרנט ונסה שוב.";
+      }
+      
+      toast({
+        title: errorTitle,
+        description: errorDescription,
+        variant: "destructive",
+        duration: 8000 // זמן ארוך יותר להודעות שגיאה מפורטות
       });
     } finally {
       setIsTesting(false);
