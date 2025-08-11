@@ -12,9 +12,9 @@ serve(async (req) => {
 
   // Simple test to verify the function works
   const result = {
-    status: "פונקציה פועלת!",
+    status: "Function is running!",
     timestamp: new Date().toISOString(),
-    message: "זה מאשר שהפונקציות Edge עובדות נכון"
+    message: "This confirms that Edge functions are working correctly"
   };
 
   return new Response(JSON.stringify(result, null, 2), {

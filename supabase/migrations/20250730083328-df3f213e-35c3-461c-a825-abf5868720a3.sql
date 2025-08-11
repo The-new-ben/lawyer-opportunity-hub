@@ -14,7 +14,7 @@
 INSERT INTO profiles (user_id, full_name, role) 
 SELECT 
   '00000000-0000-0000-0000-000000000000'::uuid as user_id,
-  'מערכת מוכנה לרישום' as full_name,
+  'System ready for registration' as full_name,
   'admin' as role
 WHERE NOT EXISTS (
   SELECT 1 FROM profiles 

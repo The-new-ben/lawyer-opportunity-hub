@@ -109,7 +109,7 @@ BEGIN
     created_at,
     updated_at
   ) VALUES (
-    'טיפול ב' || v_lead.legal_category || ' עבור ' || v_lead.customer_name,
+    'Handling ' || v_lead.legal_category || ' for ' || v_lead.customer_name,
     v_client_id,
     v_lead.assigned_lawyer_id,
     v_lead.legal_category,
