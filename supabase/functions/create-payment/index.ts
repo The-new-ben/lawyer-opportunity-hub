@@ -7,7 +7,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const logStep = (step: string, details?: any) => {
+const logStep = (step: string, details?: Record<string, unknown>) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[CREATE-PAYMENT] ${step}${detailsStr}`);
 };
@@ -15,6 +15,10 @@ const logStep = (step: string, details?: any) => {
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+  const role = (req as Request & { auth?: { user?: { role?: string } } }).auth?.user?.role;
+  if (role !== 'admin') {
+    return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: corsHeaders });
   }
 
   try {
