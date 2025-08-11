@@ -39,7 +39,7 @@ export const useLeadDeposits = () => {
     mutationFn: async (newDeposit: NewLeadDeposit) => {
       const { data, error } = await supabase
         .from('deposits')
-        .insert(newDeposit as any)
+        .insert(newDeposit)
         .select()
         .single();
       
@@ -63,7 +63,7 @@ export const useLeadDeposits = () => {
     mutationFn: async ({ id, values }: { id: string; values: Partial<LeadDeposit> }) => {
       const { data, error } = await supabase
         .from('deposits')
-        .update({ ...values, updated_at: new Date().toISOString() } as any)
+        .update({ ...values, updated_at: new Date().toISOString() })
         .eq('id', id)
         .select()
         .single();

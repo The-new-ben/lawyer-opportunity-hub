@@ -87,7 +87,7 @@ const Settings = () => {
         title: "✅ חיבור WhatsApp תקין!",
         description: "החיבור לשירות WhatsApp Business הצליח בהצלחה. ה-API Token ו-Phone ID תקינים.",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('❌ שגיאה בבדיקת חיבור WhatsApp:', error);
       
       // מציג הודעת שגיאה מפורטת בהתאם לסוג הבעיה
