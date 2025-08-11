@@ -11,3 +11,9 @@ export const uploadCourtDocument = async (payload: { caseId: string; documentUrl
   if (error) throw error;
   return data;
 };
+
+export const fetchAdminMetrics = async () => {
+  const { data, error } = await supabase.functions.invoke('admin-metrics');
+  if (error) throw error;
+  return data;
+};
