@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Plus, CreditCard } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { createDeposit } from '@/services/payments';
 
 export function CreateDepositDialog() {
   const [isOpen, setIsOpen] = useState(false);
@@ -32,18 +33,13 @@ export function CreateDepositDialog() {
     }
 
     try {
-      const res = await fetch('/api/payments/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          lead_id: depositData.lead_id,
-          lawyer_id: depositData.lawyer_id,
-          amount: parseFloat(depositData.amount),
-          deposit_type: depositData.deposit_type,
-          payment_method: depositData.payment_method,
-        }),
+      const data = await createDeposit({
+        lead_id: depositData.lead_id,
+        lawyer_id: depositData.lawyer_id,
+        amount: parseFloat(depositData.amount),
+        deposit_type: depositData.deposit_type,
+        payment_method: depositData.payment_method,
       });
-      const data = await res.json();
       if (data.url) {
         window.location.href = data.url;
       }
