@@ -2,6 +2,9 @@
   command = "npm run build"
   publish = "dist"
 
+[build.environment]
+  SUPABASE_SERVICE_ROLE_KEY = ""
+
 # Headers for better security and caching
 [[headers]]
   for = "/*"
