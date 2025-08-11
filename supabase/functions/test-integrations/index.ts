@@ -22,7 +22,7 @@ serve(async (req) => {
       supabase: {
         url: !!Deno.env.get('SUPABASE_URL'),
         anon_key: !!Deno.env.get('SUPABASE_ANON_KEY'),
-        service_role: !!Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'),
+        service_role: !!Deno.env.get('SUPABASE_SERVICE_ROLE'),
       },
       openai: {
         api_key: !!Deno.env.get('OPENAI_API_KEY'),

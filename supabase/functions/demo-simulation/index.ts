@@ -17,7 +17,7 @@ serve(async (req) => {
     const checks = {
       supabase_url: !!Deno.env.get('SUPABASE_URL'),
       supabase_anon_key: !!Deno.env.get('SUPABASE_ANON_KEY'),
-      supabase_service_key: !!Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'),
+      supabase_service_key: !!Deno.env.get('SUPABASE_SERVICE_ROLE'),
       openai_key: !!Deno.env.get('OPENAI_API_KEY'),
       whatsapp_token: !!Deno.env.get('WHATSAPP_TOKEN'),
       whatsapp_phone_id: !!Deno.env.get('WHATSAPP_PHONE_ID'),
