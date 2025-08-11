@@ -37,26 +37,74 @@ serve(async (req) => {
 
     const event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
 
-    if (event.type === 'checkout.session.completed') {
-      const session = event.data.object as Stripe.Checkout.Session;
-      
-      // Update payment status
-      await supabaseAdmin
-        .from('payments')
-        .update({ 
-          status: 'paid',
-          paid_at: new Date().toISOString()
-        })
-        .eq('stripe_payment_intent_id', session.id);
+    switch (event.type) {
+      case 'checkout.session.completed': {
+        const session = event.data.object as Stripe.Checkout.Session;
+        if (session.mode === 'subscription') {
+          const subscriptionId = session.subscription as string;
+          const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+          await supabaseAdmin.from('subscriptions').upsert({
+            user_id: session.metadata?.supabase_user_id,
+            stripe_customer_id: session.customer as string,
+            stripe_subscription_id: subscriptionId,
+            price_id: subscription.items.data[0].price.id,
+            tier: session.metadata?.tier || null,
+            status: subscription.status,
+            current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'stripe_subscription_id' });
+        } else {
+          await supabaseAdmin
+            .from('payments')
+            .update({
+              status: 'paid',
+              paid_at: new Date().toISOString()
+            })
+            .eq('stripe_payment_intent_id', session.id);
 
-      // Update deposit status
-      await supabaseAdmin
-        .from('deposits')
-        .update({ 
-          status: 'paid',
-          paid_at: new Date().toISOString()
-        })
-        .eq('transaction_id', session.id);
+          await supabaseAdmin
+            .from('deposits')
+            .update({
+              status: 'paid',
+              paid_at: new Date().toISOString()
+            })
+            .eq('transaction_id', session.id);
+        }
+        break;
+      }
+      case 'customer.subscription.updated':
+      case 'customer.subscription.deleted': {
+        const subscription = event.data.object as Stripe.Subscription;
+        await supabaseAdmin
+          .from('subscriptions')
+          .update({
+            status: subscription.status,
+            current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('stripe_subscription_id', subscription.id);
+        break;
+      }
+      case 'invoice.payment_failed': {
+        const invoice = event.data.object as Stripe.Invoice;
+        const customerId = invoice.customer as string;
+        const { data: subRecord } = await supabaseAdmin
+          .from('subscriptions')
+          .select('user_id')
+          .eq('stripe_customer_id', customerId)
+          .single();
+        if (subRecord?.user_id) {
+          await supabaseAdmin.functions.invoke('assignment-notification', {
+            body: {
+              type: 'subscription_payment_failed',
+              userId: subRecord.user_id
+            }
+          });
+        }
+        break;
+      }
+      default:
+        break;
     }
 
     return new Response(JSON.stringify({ received: true }), {
