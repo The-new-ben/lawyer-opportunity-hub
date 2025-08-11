@@ -12,137 +12,152 @@ import { toast } from "sonner"
 import { useLeads } from "@/hooks/useLeads"
 import { useMeetings } from "@/hooks/useMeetings"
 import { usePayments } from "@/hooks/usePayments"
-import { useQuotes } from "@/hooks/useQuotes"
-import { 
-  Users, 
-  UserPlus, 
-  DollarSign, 
-  FileText, 
-  TrendingUp,
+import { useClients } from "@/hooks/useClients"
+import { useCases } from "@/hooks/useCases"
+import {
+  Users,
+  UserPlus,
+  DollarSign,
+  FileText,
   Plus,
   Calendar,
   Clock,
   Brain,
   RefreshCw,
   Activity,
-  ArrowUpDown,
-  Eye,
-  CheckCircle
+  CheckCircle,
+  Gavel
 } from "lucide-react"
 
 export default function Dashboard() {
-  const [isLoadingSummary, setIsLoadingSummary] = useState(false);
-  const [selectedPeriod, setSelectedPeriod] = useState("today");
+  const [isLoadingSummary, setIsLoadingSummary] = useState(false)
+  const [selectedPeriod, setSelectedPeriod] = useState("today")
 
-  // Real data hooks
-  const { leads, getLeadStats } = useLeads();
-  const { meetings } = useMeetings();
-  const { payments } = usePayments();
-  const { quotes } = useQuotes();
+  const { leads, getLeadStats } = useLeads()
+  const { meetings } = useMeetings()
+  const { payments } = usePayments()
+  const { getClientStats } = useClients()
+  const { getCaseStats } = useCases()
 
-  // AI Summary Query
   const { data: aiSummary, refetch: refetchSummary } = useQuery({
-    queryKey: ['ai-summary'],
+    queryKey: ["ai-summary"],
     queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke('ai-summary');
-      if (error) throw error;
-      return data;
+      const { data, error } = await supabase.functions.invoke("ai-summary")
+      if (error) throw error
+      return data
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
+    staleTime: 5 * 60 * 1000
+  })
 
-  // Pipeline activity tracking
-  const { data: pipelineActivity } = useQuery({
-    queryKey: ['pipeline-activity'],
+  const { data: courtSessions = [] } = useQuery({
+    queryKey: ["court-sessions"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('leads')
+        .from("court_sessions")
+        .select("*")
+        .order("scheduled_at", { ascending: true })
+      if (error) throw error
+      return data
+    }
+  })
+
+  const { data: pipelineActivity } = useQuery({
+    queryKey: ["pipeline-activity"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("leads")
         .select(`
           *,
           quotes(*),
           meetings(*),
           deposits(*)
         `)
-        .order('created_at', { ascending: false })
-        .limit(10);
-      
-      if (error) throw error;
-      return data;
+        .order("created_at", { ascending: false })
+        .limit(10)
+      if (error) throw error
+      return data
     },
-    refetchInterval: 30000, // Refresh every 30 seconds
-  });
+    refetchInterval: 30000
+  })
 
   const handleRefreshSummary = async () => {
-    setIsLoadingSummary(true);
+    setIsLoadingSummary(true)
     try {
-      await refetchSummary();
-      toast.success("סיכום עודכן בהצלחה");
+      await refetchSummary()
+      toast.success("Summary updated")
     } catch (error) {
-      toast.error("שגיאה בעדכון הסיכום");
+      toast.error("Error updating summary")
     } finally {
-      setIsLoadingSummary(false);
+      setIsLoadingSummary(false)
     }
-  };
+  }
 
-  // Real stats calculation
-  const leadStats = getLeadStats();
-  const totalPayments = payments?.reduce((sum, p) => sum + (Number(p.amount) || 0), 0) || 0;
+  const leadStats = getLeadStats()
+  const clientStats = getClientStats()
+  const caseStats = getCaseStats()
+  const totalPayments = payments?.reduce((sum, p) => sum + (Number(p.amount) || 0), 0) || 0
   const todayMeetings = meetings?.filter(m => {
-    const meetingDate = new Date(m.scheduled_at).toDateString();
-    const today = new Date().toDateString();
-    return meetingDate === today;
-  }) || [];
+    const meetingDate = new Date(m.scheduled_at).toDateString()
+    const today = new Date().toDateString()
+    return meetingDate === today
+  }) || []
+  const upcomingSessions = courtSessions.filter(s => new Date(s.scheduled_at) >= new Date())
 
   const stats = [
     {
-      title: "סה״כ לידים",
+      title: "Total Leads",
       value: leadStats.totalLeads,
-      change: `${leadStats.newLeads} חדשים`,
+      change: `${leadStats.newLeads} new`,
       icon: UserPlus,
       trend: "up" as const
     },
     {
-      title: "לידים גבוהי עדיפות",
-      value: leadStats.highPriorityLeads,
-      change: `${leadStats.convertedLeads} הומרו`,
-      icon: TrendingUp,
+      title: "Total Clients",
+      value: clientStats.totalClients,
+      change: `${clientStats.newThisMonth} new this month`,
+      icon: Users,
       trend: "up" as const
     },
     {
-      title: "סה״כ תשלומים",
+      title: "Open Cases",
+      value: caseStats.openCases,
+      change: `${caseStats.totalCases} total`,
+      icon: FileText,
+      trend: "neutral" as const
+    },
+    {
+      title: "Upcoming Court Sessions",
+      value: upcomingSessions.length,
+      change: `${courtSessions.length} total`,
+      icon: Gavel,
+      trend: "neutral" as const
+    },
+    {
+      title: "Total Payments",
       value: `₪${totalPayments.toLocaleString()}`,
-      change: `${payments?.length || 0} תשלומים`,
+      change: `${payments?.length || 0} payments`,
       icon: DollarSign,
       trend: "up" as const
-    },
-    {
-      title: "פגישות היום",
-      value: todayMeetings.length,
-      change: `${meetings?.length || 0} סה״כ פגישות`,
-      icon: Calendar,
-      trend: "neutral" as const
     }
   ]
 
-  // Real data
-  const recentLeads = leads?.slice(0, 4) || [];
-  const todayMeetingsDetailed = todayMeetings.slice(0, 4);
+  const recentLeads = leads?.slice(0, 4) || []
+  const todayMeetingsDetailed = todayMeetings.slice(0, 4)
 
-  // Pipeline activity status
   const getActivityStatus = (lead: {
     quotes?: unknown[]
     meetings?: unknown[]
     deposits?: unknown[]
   }) => {
-    const hasQuote = lead.quotes && lead.quotes.length > 0;
-    const hasMeeting = lead.meetings && lead.meetings.length > 0;
-    const hasDeposit = lead.deposits && lead.deposits.length > 0;
-    
-    if (hasDeposit) return { status: "מונטז", icon: CheckCircle, color: "text-green-600" };
-    if (hasMeeting) return { status: "פגישה נקבעה", icon: Calendar, color: "text-blue-600" };
-    if (hasQuote) return { status: "הצעת מחיר נשלחה", icon: FileText, color: "text-orange-600" };
-    return { status: "בהמתנה", icon: Clock, color: "text-gray-600" };
-  };
+    const hasQuote = lead.quotes && lead.quotes.length > 0
+    const hasMeeting = lead.meetings && lead.meetings.length > 0
+    const hasDeposit = lead.deposits && lead.deposits.length > 0
+
+    if (hasDeposit) return { status: "Converted", icon: CheckCircle, color: "text-green-600" }
+    if (hasMeeting) return { status: "Meeting Scheduled", icon: Calendar, color: "text-blue-600" }
+    if (hasQuote) return { status: "Quote Sent", icon: FileText, color: "text-orange-600" }
+    return { status: "Pending", icon: Clock, color: "text-gray-600" }
+  }
 
   const getPriorityVariant = (priority: string) => {
     switch (priority) {
@@ -164,13 +179,12 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-3 sm:p-4 md:p-6 space-y-4 md:space-y-6 animate-fade-in flex flex-col overflow-x-hidden" dir="rtl">
-      {/* Header */}
+    <div className="w-full max-w-7xl mx-auto p-3 sm:p-4 md:p-6 space-y-4 md:space-y-6 animate-fade-in flex flex-col overflow-x-hidden" dir="ltr">
       <div className="flex flex-col sm:flex-row gap-4 sm:justify-between sm:items-center animate-slide-in-right">
         <div className="space-y-1">
-          <h1 className="text-2xl sm:text-3xl font-bold text-primary animate-fade-in">דשבורד ראשי</h1>
-          <p className="text-sm sm:text-base text-muted-foreground animate-fade-in" style={{ animationDelay: '100ms' }}>
-            סקירה כללית של פעילות המשרד - עדכון אוטומטי
+          <h1 className="text-2xl sm:text-3xl font-bold text-primary animate-fade-in">Dashboard</h1>
+          <p className="text-sm sm:text-base text-muted-foreground animate-fade-in" style={{ animationDelay: "100ms" }}>
+            Overview of office activity with automatic updates
           </p>
         </div>
         <div className="flex gap-2 flex-col sm:flex-row">
@@ -179,52 +193,50 @@ export default function Dashboard() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="today">היום</SelectItem>
-              <SelectItem value="week">השבוע</SelectItem>
-              <SelectItem value="month">החודש</SelectItem>
+              <SelectItem value="today">Today</SelectItem>
+              <SelectItem value="week">This Week</SelectItem>
+              <SelectItem value="month">This Month</SelectItem>
             </SelectContent>
           </Select>
-          <Button className="gap-2 w-full sm:w-auto hover-scale animate-scale-in" style={{ animationDelay: '200ms' }}>
+          <Button className="gap-2 w-full sm:w-auto hover-scale animate-scale-in" style={{ animationDelay: "200ms" }}>
             <Plus className="h-4 w-4" />
-            ליד חדש
+            New Lead
           </Button>
         </div>
       </div>
 
-      {/* Stats Grid - Mobile First Responsive */}
-      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 animate-fade-in" style={{ animationDelay: '300ms' }}>
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 animate-fade-in" style={{ animationDelay: "300ms" }}>
         {stats.map((stat, index) => (
-          <div 
-            key={index} 
+          <div
+            key={index}
             className="animate-scale-in hover-scale"
-            style={{ animationDelay: `${300 + (index * 100)}ms` }}
+            style={{ animationDelay: `${300 + index * 100}ms` }}
           >
             <StatsCard {...stat} />
           </div>
         ))}
       </div>
 
-      {/* AI Summary Card - Mobile Optimized */}
-      <Card className="w-full animate-fade-in hover-scale" style={{ animationDelay: '700ms' }}>
+      <Card className="w-full animate-fade-in hover-scale" style={{ animationDelay: "700ms" }}>
         <CardHeader className="pb-3">
           <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Brain className="h-5 w-5 animate-pulse" />
-              סיכום AI של המשרד
+              AI Office Summary
             </CardTitle>
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={handleRefreshSummary}
               disabled={isLoadingSummary}
               className="gap-2 w-full sm:w-auto hover-scale"
             >
-              <RefreshCw className={`h-4 w-4 ${isLoadingSummary ? 'animate-spin' : ''}`} />
-              רענן
+              <RefreshCw className={`h-4 w-4 ${isLoadingSummary ? "animate-spin" : ""}`} />
+              Refresh
             </Button>
           </div>
           <CardDescription className="text-sm">
-            ניתוח אוטומטי של נתוני המשרד עם תובנות והמלצות
+            Automatic analysis of office data with insights and recommendations
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-0">
@@ -235,7 +247,7 @@ export default function Dashboard() {
               </div>
               {aiSummary.timestamp && (
                 <p className="text-xs text-muted-foreground">
-                  עודכן לאחרונה: {new Date(aiSummary.timestamp).toLocaleString('he-IL')}
+                  Last updated: {new Date(aiSummary.timestamp).toLocaleString("en-US")}
                 </p>
               )}
             </div>
@@ -243,24 +255,22 @@ export default function Dashboard() {
             <div className="flex items-center justify-center p-6 sm:p-8 text-muted-foreground">
               <div className="text-center space-y-2 animate-fade-in">
                 <Brain className="h-8 w-8 mx-auto opacity-50 animate-pulse" />
-                <p className="text-sm">לחץ על "רענן" לקבלת סיכום AI</p>
+                <p className="text-sm">Press "Refresh" to get AI summary</p>
               </div>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Content Grid - Mobile First */}
-      <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2 animate-fade-in" style={{ animationDelay: '800ms' }}>
-        {/* Recent Leads - Mobile Optimized */}
-        <Card className="w-full hover-scale animate-scale-in" style={{ animationDelay: '900ms' }}>
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2 animate-fade-in" style={{ animationDelay: "800ms" }}>
+        <Card className="w-full hover-scale animate-scale-in" style={{ animationDelay: "900ms" }}>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
               <UserPlus className="h-5 w-5" />
-              לידים אחרונים
+              Recent Leads
             </CardTitle>
             <CardDescription className="text-sm">
-              לידים שהתקבלו לאחרונה עם סטטוס פייפליין
+              Latest leads with pipeline status
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-0">
@@ -269,7 +279,7 @@ export default function Dashboard() {
                 <div
                   key={lead.id}
                   className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-all duration-200 hover-scale animate-fade-in"
-                  style={{ animationDelay: `${1000 + (index * 100)}ms` }}
+                  style={{ animationDelay: `${1000 + index * 100}ms` }}
                 >
                   <div className="flex-1 space-y-1">
                     <div className="font-medium text-sm sm:text-base">{lead.customer_name}</div>
@@ -295,27 +305,26 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Pipeline Activity - Mobile Optimized */}
-        <Card className="w-full hover-scale animate-scale-in" style={{ animationDelay: '1000ms' }}>
+        <Card className="w-full hover-scale animate-scale-in" style={{ animationDelay: "1000ms" }}>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Activity className="h-5 w-5" />
-              פעילות פייפליין אוטומטי
+              Pipeline Activity
             </CardTitle>
             <CardDescription className="text-sm">
-              מעקב אחר תהליכים אוטומטיים
+              Tracking automated processes
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-0">
             <div className="space-y-3">
               {pipelineActivity?.map((lead, index) => {
-                const activityStatus = getActivityStatus(lead);
-                const StatusIcon = activityStatus.icon;
+                const activityStatus = getActivityStatus(lead)
+                const StatusIcon = activityStatus.icon
                 return (
                   <div
                     key={lead.id}
                     className="flex flex-col sm:flex-row gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-all duration-200 hover-scale animate-fade-in"
-                    style={{ animationDelay: `${1100 + (index * 100)}ms` }}
+                    style={{ animationDelay: `${1100 + index * 100}ms` }}
                   >
                     <div className="flex items-center gap-2">
                       <StatusIcon className={`h-4 w-4 ${activityStatus.color}`} />
@@ -324,28 +333,26 @@ export default function Dashboard() {
                     <div className="flex-1 space-y-1">
                       <div className="font-medium text-sm sm:text-base">{lead.customer_name}</div>
                       <div className="text-xs sm:text-sm text-muted-foreground">
-                        {lead.legal_category} • {new Date(lead.created_at).toLocaleDateString('he-IL')}
+                        {lead.legal_category} • {new Date(lead.created_at).toLocaleDateString("en-US")}
                       </div>
                     </div>
                   </div>
-                );
+                )
               })}
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Secondary Grid */}
-      <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2 animate-fade-in" style={{ animationDelay: '1200ms' }}>
-        {/* Today's Schedule */}
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2 animate-fade-in" style={{ animationDelay: "1200ms" }}>
         <Card className="w-full hover-scale animate-scale-in">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Calendar className="h-5 w-5" />
-              פגישות היום
+              Today's Meetings
             </CardTitle>
             <CardDescription className="text-sm">
-              פגישות שנקבעו להיום
+              Meetings scheduled for today
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-0">
@@ -358,13 +365,13 @@ export default function Dashboard() {
                   >
                     <div className="flex items-center gap-2 text-primary font-medium text-sm">
                       <Clock className="h-4 w-4" />
-                      {new Date(meeting.scheduled_at).toLocaleTimeString('he-IL', { 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
+                      {new Date(meeting.scheduled_at).toLocaleTimeString("en-US", {
+                        hour: "2-digit",
+                        minute: "2-digit"
                       })}
                     </div>
                     <div className="flex-1 space-y-1">
-                      <div className="font-medium text-sm sm:text-base">פגישה עם לקוח</div>
+                      <div className="font-medium text-sm sm:text-base">Client Meeting</div>
                       <div className="text-xs sm:text-sm text-muted-foreground">{meeting.meeting_type}</div>
                     </div>
                   </div>
@@ -372,23 +379,22 @@ export default function Dashboard() {
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   <Calendar className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">אין פגישות מתוכננות להיום</p>
+                  <p className="text-sm">No meetings scheduled for today</p>
                 </div>
               )}
             </div>
           </CardContent>
         </Card>
 
-        {/* System Status */}
         <div className="animate-scale-in">
           <SystemStatus />
         </div>
       </div>
 
-      {/* Workflow Infographic - Mobile Optimized */}
-      <div className="animate-fade-in" style={{ animationDelay: '1300ms' }}>
+      <div className="animate-fade-in" style={{ animationDelay: "1300ms" }}>
         <WorkflowInfographic />
       </div>
     </div>
   )
 }
+
