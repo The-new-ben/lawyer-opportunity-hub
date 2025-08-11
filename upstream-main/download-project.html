@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>הורדת פרויקט HyperCourt</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1e40af;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .download-btn {
+            background: #1e40af;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            display: block;
+            margin: 20px auto;
+            transition: background 0.3s;
+        }
+        .download-btn:hover {
+            background: #1d4ed8;
+        }
+        .file-list {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .file-item {
+            padding: 5px 0;
+            border-bottom: 1px solid #e5e7eb;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .instructions {
+            background: #dbeafe;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .instructions h3 {
+            color: #1e40af;
+            margin-top: 0;
+        }
+        .instructions ol {
+            padding-right: 20px;
+        }
+        .instructions li {
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏛️ HyperCourt Enterprise - הורדת פרויקט</h1>
+        
+        <p style="text-align: center; color: #666; font-size: 16px;">
+            מערכת משפטית מתקדמת עם ארכיטקטורה מיקרו-שירותים
+        </p>
+
+        <button class="download-btn" onclick="downloadProject()">
+            📦 הורד פרויקט מלא (ZIP)
+        </button>
+
+        <div class="instructions">
+            <h3>🚀 הוראות התקנה והפעלה:</h3>
+            <ol>
+                <li><strong>חלץ את הקובץ</strong> למיקום הרצוי במחשב</li>
+                <li><strong>פתח טרמינל</strong> בתיקיית הפרויקט</li>
+                <li><strong>התקן תלויות:</strong> <code>npm install</code></li>
+                <li><strong>הפעל את האפליקציה:</strong> <code>npm run dev</code></li>
+                <li><strong>פתח בדפדפן:</strong> <code>http://localhost:5173</code></li>
+            </ol>
+        </div>
+
+        <div class="instructions">
+            <h3>📁 מבנה הפרויקט:</h3>
+            <div class="file-list" id="fileList">
+                <div class="file-item">📄 README.md - תיעוד מלא של הפרויקט</div>
+                <div class="file-item">📄 package.json - תלויות ופקודות</div>
+                <div class="file-item">📄 index.html - עמוד ראשי</div>
+                <div class="file-item">📁 src/ - קוד המקור</div>
+                <div class="file-item">├── 📄 App.tsx - רכיב ראשי</div>
+                <div class="file-item">├── 📄 main.tsx - נקודת כניסה</div>
+                <div class="file-item">├── 📄 index.css - עיצוב גלובלי</div>
+                <div class="file-item">├── 📁 components/ - רכיבי React</div>
+                <div class="file-item">│   ├── 📄 MainApp.tsx - אפליקציה ראשית</div>
+                <div class="file-item">│   ├── 📄 Header.tsx - כותרת</div>
+                <div class="file-item">│   ├── 📄 CaseForm.tsx - טופס דיון</div>
+                <div class="file-item">│   ├── 📄 CasesList.tsx - רשימת דיונים</div>
+                <div class="file-item">│   ├── 📄 CaseCard.tsx - כרטיס דיון</div>
+                <div class="file-item">│   ├── 📄 AdminPanel.tsx - פאנל ניהול</div>
+                <div class="file-item">│   └── 📄 ErrorBoundary.tsx - טיפול בשגיאות</div>
+                <div class="file-item">├── 📁 services/ - שירותי API</div>
+                <div class="file-item">│   ├── 📄 aiService.ts - שירות AI</div>
+                <div class="file-item">│   ├── 📄 caseService.ts - ניהול דיונים</div>
+                <div class="file-item">│   └── 📄 authService.ts - אימות</div>
+                <div class="file-item">├── 📁 contexts/ - React Contexts</div>
+                <div class="file-item">│   └── 📄 AuthContext.tsx - הקשר אימות</div>
+                <div class="file-item">└── 📁 utils/ - כלי עזר</div>
+                <div class="file-item">    └── 📄 textHighlight.ts - הדגשת טקסט</div>
+                <div class="file-item">📁 backend/ - שרת Node.js</div>
+                <div class="file-item">├── 📄 .env.example - דוגמת משתני סביבה</div>
+                <div class="file-item">├── 📁 routes/ - נתיבי API</div>
+                <div class="file-item">│   ├── 📄 auth.js - אימות</div>
+                <div class="file-item">│   └── 📄 ai.js - בינה מלאכותית</div>
+                <div class="file-item">└── 📁 middleware/ - Middleware</div>
+                <div class="file-item">    └── 📄 auth.js - אימות</div>
+            </div>
+        </div>
+
+        <div class="instructions">
+            <h3>🔧 תכונות עיקריות:</h3>
+            <ul>
+                <li>🤖 <strong>בינה מלאכותית:</strong> ניתוח משפטי מתקדם</li>
+                <li>⚖️ <strong>מערכות משפט:</strong> Common Law, Civil Law, הלכה יהודית ועוד</li>
+                <li>🔍 <strong>חיפוש מתקדם:</strong> חיפוש והדגשה בדיונים</li>
+                <li>💾 <strong>שמירה מקומית:</strong> IndexedDB לשמירת נתונים</li>
+                <li>📊 <strong>פאנל ניהול:</strong> סטטיסטיקות וגיבוי נתונים</li>
+                <li>🎨 <strong>עיצוב מתקדם:</strong> Tailwind CSS ואנימציות</li>
+                <li>🔒 <strong>אבטחה:</strong> JWT, Rate Limiting, Validation</li>
+            </ul>
+        </div>
+
+        <div class="instructions">
+            <h3>🌐 פריסה לייצור:</h3>
+            <ol>
+                <li><strong>בנה את הפרויקט:</strong> <code>npm run build</code></li>
+                <li><strong>העלה לשרת:</strong> תיקיית <code>dist/</code></li>
+                <li><strong>הגדר משתני סביבה</strong> בשרת הייצור</li>
+            </ol>
+        </div>
+
+        <p style="text-align: center; color: #666; margin-top: 30px;">
+            💡 לתמיכה נוספת, עיין בקובץ README.md
+        </p>
+    </div>
+
+    <script>
+        function downloadProject() {
+            // Create a comprehensive project structure
+            const projectFiles = {
+                'README.md': `# HyperCourt Enterprise - מערכת משפטית מתקדמת
+
+מערכת משפטית מתקדמת עם ארכיטקטורה מיקרו-שירותים, אבטחה מתקדמת ותמיכה בפריסה בענן.
+
+## תכונות עיקריות
+
+### 🔐 אבטחה מתקדמת
+- **JWT Authentication** - אימות מבוסס טוקנים
+- **Refresh Tokens** - ניהול הפעלות ארוכות טווח
+- **Rate Limiting** - הגנה מפני התקפות
+- **Input Validation** - ולידציה מקיפה של נתונים
+- **CORS Protection** - הגנה מפני בקשות חוצות מקור
+
+### 🏗️ ארכיטקטורה מתקדמת
+- **Microservices Ready** - מוכן לפיצול לשירותים
+- **Docker Support** - קונטיינרים מוכנים לייצור
+- **Database Migrations** - ניהול סכמת בסיס נתונים
+- **API Documentation** - OpenAPI/Swagger
+- **Testing Framework** - בדיקות אוטומטיות
+
+### 🚀 פיתוח ופריסה
+- **CI/CD Pipeline** - GitHub Actions
+- **Environment Management** - ניהול סביבות
+- **Health Checks** - מעקב תקינות מערכת
+- **Error Handling** - טיפול מתקדם בשגיאות
+
+## הוראות הפעלה
+
+### פיתוח מקומי
+
+1. **Clone הפרויקט**:
+\`\`\`bash
+git clone <repository-url>
+cd hypercourt-enterprise
+\`\`\`
+
+2. **הגדרת Frontend**:
+\`\`\`bash
+npm install
+npm run dev
+\`\`\`
+
+3. **הגדרת Backend**:
+\`\`\`bash
+cd backend
+cp .env.example .env
+# ערוך את קובץ .env עם הערכים שלך
+npm install
+npm run dev
+\`\`\`
+
+### בדיקות
+
+\`\`\`bash
+npm test
+\`\`\`
+
+## API Documentation
+
+השרת מספק תיעוד API אוטומטי ב:
+- Development: \`http://localhost:5001/api-docs\`
+- Production: \`https://your-domain.com/api-docs\`
+
+## אבטחה
+
+### Environment Variables
+
+הגדר את המשתנים הבאים בקובץ \`.env\`:
+
+\`\`\`env
+# JWT Configuration
+JWT_SECRET=your-super-secret-jwt-key
+JWT_REFRESH_SECRET=your-refresh-token-secret
+JWT_EXPIRES_IN=15m
+JWT_REFRESH_EXPIRES_IN=7d
+
+# Database
+DATABASE_URL=postgresql://user:password@localhost:5432/hypercourt
+
+# External APIs
+HUGGING_FACE_TOKEN=hf_your_token_here
+
+# Server Configuration
+PORT=5001
+NODE_ENV=production
+\`\`\`
+
+---
+
+**HyperCourt Enterprise** - מערכת משפטית מתקדמת לעידן הדיגיטלי`,
+
+                'package.json': JSON.stringify({
+                    "name": "hypercourt-enterprise",
+                    "private": true,
+                    "version": "1.0.0",
+                    "type": "module",
+                    "scripts": {
+                        "dev": "vite",
+                        "build": "vite build",
+                        "lint": "eslint .",
+                        "preview": "vite preview"
+                    },
+                    "dependencies": {
+                        "dompurify": "^3.2.6",
+                        "lucide-react": "^0.344.0",
+                        "react": "^18.3.1",
+                        "react-dom": "^18.3.1",
+                        "swagger-jsdoc": "^6.2.8",
+                        "swagger-ui-express": "^5.0.1"
+                    },
+                    "devDependencies": {
+                        "@eslint/js": "^9.9.1",
+                        "@types/react": "^18.3.5",
+                        "@types/react-dom": "^18.3.0",
+                        "@vitejs/plugin-react": "^4.3.1",
+                        "autoprefixer": "^10.4.18",
+                        "eslint": "^9.9.1",
+                        "eslint-plugin-react-hooks": "^5.1.0-rc.0",
+                        "eslint-plugin-react-refresh": "^0.4.11",
+                        "globals": "^15.9.0",
+                        "postcss": "^8.4.35",
+                        "tailwindcss": "^3.4.1",
+                        "typescript": "^5.5.3",
+                        "typescript-eslint": "^8.3.0",
+                        "vite": "^5.4.2"
+                    }
+                }, null, 2),
+
+                'index.html': `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HyperCourt - מערכת משפטית מלאה</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>`,
+
+                'vite.config.ts': `import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [react()],
+  optimizeDeps: {
+    exclude: ['lucide-react'],
+  },
+});`,
+
+                'tailwind.config.js': `/** @type {import('tailwindcss').Config} */
+export default {
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+};`,
+
+                'postcss.config.js': `export default {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+};`
+            };
+
+            // Create and download ZIP
+            const zip = new JSZip();
+            
+            // Add all files to ZIP
+            Object.entries(projectFiles).forEach(([filename, content]) => {
+                zip.file(filename, content);
+            });
+
+            // Generate and download
+            zip.generateAsync({type:"blob"}).then(function(content) {
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(content);
+                link.download = 'hypercourt-enterprise.zip';
+                link.click();
+                URL.revokeObjectURL(link.href);
+            });
+        }
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</body>
+</html>

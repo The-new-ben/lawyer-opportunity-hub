@@ -1,0 +1,67 @@
+# ===========================================
+# SUPABASE CONFIGURATION
+# ===========================================
+
+project_id = "your-project-id"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[auth]
+enabled = true
+site_url = "https://jus-tice.com"
+additional_redirect_urls = ["http://localhost:5173", "http://localhost:3000"]
+jwt_expiry = 3600
+refresh_token_rotation_enabled = true
+security_update_password_require_reauthentication = true
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false
+secure_password_change = true
+
+[auth.sms]
+enable_signup = false
+
+[auth.external.github]
+enabled = false
+
+[auth.external.google]
+enabled = false
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[realtime]
+enabled = true
+ip_version = "IPv4"
+
+[studio]
+enabled = true
+port = 54323
+api_url = "http://localhost"
+
+[inbucket]
+enabled = true
+port = 54324
+smtp_port = 54325
+pop3_port = 54326
+
+[storage]
+enabled = true
+file_size_limit = "50MiB"
+image_transformation = true
+
+[edge_functions]
+enabled = true
+ip_version = "IPv4"
+
+[analytics]
+enabled = false

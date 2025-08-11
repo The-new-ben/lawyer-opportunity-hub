@@ -1,0 +1,150 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Google-like Design System */
+:root {
+  --google-blue: #1a73e8;
+  --google-blue-hover: #1557b0;
+  --google-blue-light: #e8f0fe;
+  --google-gray: #5f6368;
+  --google-gray-light: #f8f9fa;
+  --google-border: #dadce0;
+  --google-text: #202124;
+  --google-text-secondary: #5f6368;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #ffffff;
+  color: var(--google-text);
+  direction: rtl;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Google-style buttons */
+.btn-google {
+  @apply inline-flex items-center justify-center px-6 py-2 text-sm font-medium rounded-md transition-all duration-200;
+  background-color: var(--google-blue);
+  color: white;
+  border: 1px solid var(--google-blue);
+}
+
+.btn-google:hover {
+  background-color: var(--google-blue-hover);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+}
+
+.btn-google-secondary {
+  @apply inline-flex items-center justify-center px-6 py-2 text-sm font-medium rounded-md transition-all duration-200;
+  background-color: white;
+  color: var(--google-blue);
+  border: 1px solid var(--google-border);
+}
+
+.btn-google-secondary:hover {
+  background-color: var(--google-blue-light);
+}
+
+/* Google-style inputs */
+.input-google {
+  @apply w-full px-3 py-2 text-sm border rounded-md transition-all duration-200;
+  border-color: var(--google-border);
+  background-color: white;
+}
+
+.input-google:focus {
+  outline: none;
+  border-color: var(--google-blue);
+  box-shadow: 0 0 0 1px var(--google-blue);
+}
+
+/* Google-style cards */
+.card-google {
+  @apply bg-white rounded-lg border transition-all duration-200;
+  border-color: var(--google-border);
+}
+
+.card-google:hover {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--google-gray-light);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--google-border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--google-gray);
+}
+
+/* Loading animation */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Status indicators */
+.status-active {
+  @apply bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium;
+}
+
+.status-pending {
+  @apply bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium;
+}
+
+.status-closed {
+  @apply bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs font-medium;
+}
+
+/* Case type indicators */
+.case-civil {
+  @apply bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium;
+}
+
+.case-criminal {
+  @apply bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium;
+}
+
+.case-commercial {
+  @apply bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium;
+}
+
+.case-family {
+  @apply bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs font-medium;
+}
+
+/* Responsive utilities */
+@media (max-width: 768px) {
+  .sidebar-mobile {
+    transform: translateX(-100%);
+  }
+  
+  .sidebar-mobile.open {
+    transform: translateX(0);
+  }
+}

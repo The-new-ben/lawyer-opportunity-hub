@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>הורדת פרויקט HyperCourt</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1e40af;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+        }
+        .download-btn {
+            background: linear-gradient(45deg, #1e40af, #3b82f6);
+            color: white;
+            padding: 20px 40px;
+            border: none;
+            border-radius: 15px;
+            font-size: 20px;
+            cursor: pointer;
+            display: block;
+            margin: 30px auto;
+            transition: all 0.3s;
+            box-shadow: 0 10px 20px rgba(30, 64, 175, 0.3);
+        }
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(30, 64, 175, 0.4);
+        }
+        .download-btn:active {
+            transform: translateY(0);
+        }
+        .instructions {
+            background: #f8fafc;
+            padding: 25px;
+            border-radius: 15px;
+            margin: 25px 0;
+            border-right: 5px solid #1e40af;
+        }
+        .instructions h3 {
+            color: #1e40af;
+            margin-top: 0;
+        }
+        .file-list {
+            background: #f1f5f9;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .status {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+        }
+        .status.success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+        .status.error {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏛️ HyperCourt - הורדת פרויקט</h1>
+        
+        <p style="text-align: center; color: #666; font-size: 18px; margin-bottom: 30px;">
+            מערכת משפטית מתקדמת עם בינה מלאכותית
+        </p>
+
+        <button class="download-btn" onclick="downloadProject()" id="downloadBtn">
+            📦 הורד פרויקט מלא (ZIP)
+        </button>
+
+        <div id="status" class="status"></div>
+
+        <div class="instructions">
+            <h3>🚀 הוראות התקנה:</h3>
+            <ol style="padding-right: 20px;">
+                <li><strong>חלץ את הקובץ</strong> למיקום הרצוי במחשב</li>
+                <li><strong>פתח טרמינל</strong> בתיקיית הפרויקט</li>
+                <li><strong>התקן תלויות:</strong> <code>npm install</code></li>
+                <li><strong>הפעל את האפליקציה:</strong> <code>npm run dev</code></li>
+                <li><strong>פתח בדפדפן:</strong> <code>http://localhost:5173</code></li>
+            </ol>
+        </div>
+
+        <div class="instructions">
+            <h3>📁 מבנה הפרויקט:</h3>
+            <div class="file-list">
+📄 package.json - תלויות ופקודות<br>
+📄 index.html - עמוד ראשי<br>
+📄 vite.config.ts - תצורת Vite<br>
+📄 tailwind.config.js - תצורת Tailwind<br>
+📄 tsconfig.json - תצורת TypeScript<br>
+📁 src/ - קוד המקור<br>
+├── 📄 App.tsx - רכיב ראשי<br>
+├── 📄 main.tsx - נקודת כניסה<br>
+├── 📄 index.css - עיצוב גלובלי<br>
+├── 📁 components/ - רכיבי React<br>
+│   ├── 📄 MainApp.tsx - אפליקציה ראשית<br>
+│   ├── 📄 Header.tsx - כותרת<br>
+│   ├── 📄 CaseForm.tsx - טופס דיון<br>
+│   ├── 📄 CasesList.tsx - רשימת דיונים<br>
+│   ├── 📄 CaseCard.tsx - כרטיס דיון<br>
+│   ├── 📄 AdminPanel.tsx - פאנל ניהול<br>
+│   └── 📄 ErrorBoundary.tsx - טיפול בשגיאות<br>
+├── 📁 services/ - שירותי API<br>
+│   ├── 📄 aiService.ts - שירות AI<br>
+│   ├── 📄 caseService.ts - ניהול דיונים<br>
+│   └── 📄 authService.ts - אימות<br>
+└── 📁 utils/ - כלי עזר<br>
+    └── 📄 textHighlight.ts - הדגשת טקסט
+            </div>
+        </div>
+
+        <div class="instructions">
+            <h3>✨ תכונות עיקריות:</h3>
+            <ul style="padding-right: 20px;">
+                <li>🤖 <strong>בינה מלאכותית:</strong> ניתוח משפטי מתקדם</li>
+                <li>⚖️ <strong>מערכות משפט:</strong> Common Law, Civil Law, הלכה יהודית ועוד</li>
+                <li>🔍 <strong>חיפוש מתקדם:</strong> חיפוש והדגשה בדיונים</li>
+                <li>💾 <strong>שמירה מקומית:</strong> IndexedDB לשמירת נתונים</li>
+                <li>📊 <strong>פאנל ניהול:</strong> סטטיסטיקות וגיבוי נתונים</li>
+                <li>🎨 <strong>עיצוב מתקדם:</strong> Tailwind CSS ואנימציות</li>
+            </ul>
+        </div>
+
+        <p style="text-align: center; color: #666; margin-top: 40px;">
+            💡 לתמיכה נוספת, עיין בקובץ README.md בפרויקט
+        </p>
+    </div>
+
+    <script>
+        async function downloadProject() {
+            const btn = document.getElementById('downloadBtn');
+            const status = document.getElementById('status');
+            
+            btn.disabled = true;
+            btn.innerHTML = '⏳ מכין הורדה...';
+            
+            try {
+                const zip = new JSZip();
+                
+                // Add all project files
+                const files = {
+                    'package.json': `{
+  "name": "hypercourt-enterprise",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "dompurify": "^3.2.6",
+    "lucide-react": "^0.344.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.9.1",
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.18",
+    "eslint": "^9.9.1",
+    "eslint-plugin-react-hooks": "^5.1.0-rc.0",
+    "eslint-plugin-react-refresh": "^0.4.11",
+    "globals": "^15.9.0",
+    "postcss": "^8.4.35",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.5.3",
+    "typescript-eslint": "^8.3.0",
+    "vite": "^5.4.2"
+  }
+}`,
+                    'index.html': `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HyperCourt - מערכת משפטית מלאה</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>`,
+                    'vite.config.ts': `import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [react()],
+  optimizeDeps: {
+    exclude: ['lucide-react'],
+  },
+});`,
+                    'tailwind.config.js': `/** @type {import('tailwindcss').Config} */
+export default {
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+};`,
+                    'postcss.config.js': `export default {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+};`,
+                    'tsconfig.json': `{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ]
+}`,
+                    'tsconfig.app.json': `{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["src"]
+}`,
+                    'tsconfig.node.json': `{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2023"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["vite.config.ts"]
+}`,
+                    'README.md': `# HyperCourt Enterprise - מערכת משפטית מתקדמת
+
+מערכת משפטית מתקדמת עם בינה מלאכותית לניתוח משפטי.
+
+## התקנה והפעלה
+
+\`\`\`bash
+npm install
+npm run dev
+\`\`\`
+
+## תכונות עיקריות
+
+- 🤖 בינה מלאכותית לניתוח משפטי
+- ⚖️ תמיכה במערכות משפט שונות
+- 🔍 חיפוש מתקדם בדיונים
+- 💾 שמירה מקומית של נתונים
+- 📊 פאנל ניהול מתקדם
+
+## מבנה הפרויקト
+
+- \`src/components/\` - רכיבי React
+- \`src/services/\` - שירותי API
+- \`src/utils/\` - כלי עזר
+
+## רישיון
+
+MIT License`,
+                    'src/main.tsx': `import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import App from './App.tsx';
+import './index.css';
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+);`,
+                    'src/index.css': `@tailwind base;
+@tailwind components;
+@tailwind utilities;`,
+                    'src/App.tsx': `import React from 'react';
+import MainApp from './components/MainApp';
+import ErrorBoundary from './components/ErrorBoundary';
+
+function App() {
+  return (
+    <ErrorBoundary>
+      <MainApp />
+    </ErrorBoundary>
+  );
+}
+
+export default App;`
+                };
+
+                // Add all files to ZIP
+                Object.entries(files).forEach(([path, content]) => {
+                    zip.file(path, content);
+                });
+
+                // Generate and download
+                const content = await zip.generateAsync({type: "blob"});
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(content);
+                link.download = 'hypercourt-project.zip';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+
+                // Show success message
+                status.className = 'status success';
+                status.style.display = 'block';
+                status.innerHTML = '✅ הפרויקט הורד בהצלחה! בדוק את תיקיית ההורדות שלך.';
+                
+                btn.innerHTML = '✅ הורדה הושלמה!';
+                
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = '📦 הורד פרויקט מלא (ZIP)';
+                    status.style.display = 'none';
+                }, 3000);
+
+            } catch (error) {
+                console.error('Download failed:', error);
+                status.className = 'status error';
+                status.style.display = 'block';
+                status.innerHTML = '❌ שגיאה בהורדה. נסה שוב.';
+                
+                btn.disabled = false;
+                btn.innerHTML = '📦 הורד פרויקט מלא (ZIP)';
+            }
+        }
+    </script>
+</body>
+</html>
