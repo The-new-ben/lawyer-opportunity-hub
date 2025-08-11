@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { HfInference } from "https://esm.sh/@huggingface/inference@2.3.2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -33,6 +34,7 @@ interface CaseBuilderPayload {
     goal?: string;
     jurisdiction?: string;
     category?: string;
+    case_id?: string;
   };
   model?: string;
 }
@@ -60,7 +62,23 @@ interface IntakeExtractPayload {
   model?: string;
 }
 
-type RequestBody = IntakePayload | PartyInterrogationPayload | CaseBuilderPayload | RoleMatchPayload | IntakeExtractPayload;
+interface ResearchPayload {
+  action: "research";
+  locale?: string;
+  context?: {
+    query: string;
+    case_id?: string;
+  };
+  model?: string;
+}
+
+type RequestBody =
+  | IntakePayload
+  | PartyInterrogationPayload
+  | CaseBuilderPayload
+  | RoleMatchPayload
+  | IntakeExtractPayload
+  | ResearchPayload;
 
 const MODEL_URL = Deno.env.get("MODEL_SERVER_URL");
 const MODEL_API_KEY = Deno.env.get("MODEL_API_KEY");
@@ -101,6 +119,18 @@ async function callModelViaHF(prompt: string, model?: string) {
   } catch (err) {
     console.error("HF generation failed:", err);
     return null;
+  }
+}
+
+async function storeDocument(caseId: string, title: string, content: string) {
+  const url = Deno.env.get("SUPABASE_URL");
+  const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!(url && key)) return;
+  try {
+    const client = createClient(url, key);
+    await client.from("case_documents").insert({ case_id: caseId, title, content });
+  } catch (err) {
+    console.error("storeDocument failed:", err);
   }
 }
 
@@ -152,6 +182,12 @@ Respond in STRICT JSON with:
   "search_prompt": string,
   "roles": { "lawyer": string[], "mediator": string[], "judge": string[], "juror": string[] }
 }`;
+}
+
+function buildResearchPrompt(locale: string, query: string) {
+  return `You are a legal research assistant. Answer the query using relevant sources in ${locale}.
+Query: ${query}
+Return STRICT JSON with { "results": [ { "source": string, "url": string, "summary": string } ] }`;
 }
 
 function buildIntakeExtractPrompt(
@@ -291,6 +327,7 @@ Consider context: ${JSON.stringify(body.context || {})}`;
       if (gen) {
         try {
           const parsed = typeof gen === "string" ? JSON.parse(gen) : gen;
+          if (b.context?.case_id) await storeDocument(b.context.case_id, "case_plan", JSON.stringify(parsed));
           return new Response(JSON.stringify(parsed), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
         } catch (e) {
           console.warn("Case plan JSON parse failed, returning template:", e);
@@ -315,6 +352,23 @@ Consider context: ${JSON.stringify(body.context || {})}`;
         ],
         risks: ["Jurisdictional challenges", "Insufficient documentation"],
       };
+      if (b.context?.case_id) await storeDocument(b.context.case_id, "case_plan", JSON.stringify(fallback));
+      return new Response(JSON.stringify(fallback), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    if (body.action === "research") {
+      const b = body as ResearchPayload;
+      const prompt = buildResearchPrompt(locale, b.context?.query || "");
+      const gen = await callModelViaHF(prompt, b.model);
+      if (gen) {
+        try {
+          const parsed = typeof gen === "string" ? JSON.parse(gen) : gen;
+          return new Response(JSON.stringify(parsed), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        } catch (e) {
+          console.warn("Research JSON parse failed, returning fallback:", e);
+        }
+      }
+      const fallback = { results: [] };
       return new Response(JSON.stringify(fallback), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 

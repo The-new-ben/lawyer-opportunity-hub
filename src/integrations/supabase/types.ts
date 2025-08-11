@@ -113,6 +113,38 @@ export type Database = {
           },
         ]
       }
+      case_documents: {
+        Row: {
+          id: string
+          case_id: string | null
+          title: string | null
+          content: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          case_id?: string | null
+          title?: string | null
+          content?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          case_id?: string | null
+          title?: string | null
+          content?: string | null
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "case_documents_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "cases"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       commissions: {
         Row: {
           amount: number
