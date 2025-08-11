@@ -1,166 +1,96 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, DollarSign } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useQueryClient } from '@tanstack/react-query';
 
 export function CreatePaymentDialog() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [paymentData, setPaymentData] = useState({
-    contract_id: '',
-    amount: '',
-    payment_type: 'advance',
-    notes: ''
-  });
-
+  const [open, setOpen] = useState(false);
+  const [tier, setTier] = useState('bronze');
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!paymentData.contract_id || !paymentData.amount) {
-      toast({
-        title: "שגיאה",
-        description: "אנא מלא את כל השדות הנדרשים",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsLoading(true);
+  const handleSubscribe = async () => {
+    setLoading(true);
     try {
-      const { error } = await supabase
-        .from('payments')
-        .insert({
-          contract_id: paymentData.contract_id,
-          amount: parseFloat(paymentData.amount),
-          payment_type: paymentData.payment_type,
-          status: 'pending'
-        });
-
+      const { data, error } = await supabase.functions.invoke('create-payment', {
+        body: { action: 'subscription', tier }
+      });
       if (error) throw error;
-
+      if (data?.url) {
+        window.location.href = data.url as string;
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
       toast({
-        title: "תשלום נוסף בהצלחה",
-        description: "התשלום נוסף למערכת",
-      });
-
-      queryClient.invalidateQueries({ queryKey: ['payments'] });
-      
-      setPaymentData({
-        contract_id: '',
-        amount: '',
-        payment_type: 'advance',
-        notes: ''
-      });
-      setIsOpen(false);
-    } catch (error) {
-      toast({
-        title: "שגיאה ביצירת תשלום",
-        description: "אנא נסה שוב",
-        variant: "destructive",
+        title: 'שגיאה',
+        description: message,
+        variant: 'destructive'
       });
     } finally {
-      setIsLoading(false);
+      setLoading(false);
+    }
+  };
+
+  const handleBillingPortal = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-payment', {
+        body: { action: 'billing_portal' }
+      });
+      if (error) throw error;
+      if (data?.url) {
+        window.location.href = data.url as string;
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      toast({
+        title: 'שגיאה',
+        description: message,
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          הוסף תשלום
-        </Button>
+        <Button>ניהול מנוי</Button>
       </DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5" />
-            הוספת תשלום חדש
-          </DialogTitle>
+          <DialogTitle>בחירת מסלול</DialogTitle>
         </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="contract_id">מזהה חוזה *</Label>
-            <Input
-              id="contract_id"
-              value={paymentData.contract_id}
-              onChange={(e) => setPaymentData({ ...paymentData, contract_id: e.target.value })}
-              placeholder="הזן מזהה החוזה"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="amount">סכום *</Label>
-            <Input
-              id="amount"
-              type="number"
-              value={paymentData.amount}
-              onChange={(e) => setPaymentData({ ...paymentData, amount: e.target.value })}
-              placeholder="0"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="payment_type">סוג תשלום</Label>
-            <Select 
-              value={paymentData.payment_type} 
-              onValueChange={(value) => setPaymentData({ ...paymentData, payment_type: value })}
-            >
+            <Label>מסלול</Label>
+            <Select value={tier} onValueChange={setTier}>
               <SelectTrigger>
-                <SelectValue placeholder="בחר סוג תשלום" />
+                <SelectValue placeholder="בחר מסלול" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="advance">מקדמה</SelectItem>
-                <SelectItem value="partial">תשלום חלקי</SelectItem>
-                <SelectItem value="final">תשלום סופי</SelectItem>
-                <SelectItem value="refund">החזר</SelectItem>
+                <SelectItem value="bronze">ברונזה</SelectItem>
+                <SelectItem value="silver">כסף</SelectItem>
+                <SelectItem value="gold">זהב</SelectItem>
+                <SelectItem value="platinum">פלטינום</SelectItem>
               </SelectContent>
             </Select>
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="notes">הערות</Label>
-            <Textarea
-              id="notes"
-              value={paymentData.notes}
-              onChange={(e) => setPaymentData({ ...paymentData, notes: e.target.value })}
-              placeholder="הערות נוספות..."
-              rows={3}
-            />
-          </div>
-
-          <div className="flex gap-2 pt-4">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => setIsOpen(false)}
-              className="flex-1"
-            >
-              ביטול
+          <div className="flex gap-2 pt-2">
+            <Button onClick={handleSubscribe} disabled={loading} className="flex-1">
+              הרשמה
             </Button>
-            <Button 
-              type="submit" 
-              disabled={isLoading}
-              className="flex-1"
-            >
-              {isLoading ? 'שומר...' : 'שמור תשלום'}
+            <Button variant="outline" onClick={handleBillingPortal} disabled={loading} className="flex-1">
+              ניהול חיוב
             </Button>
           </div>
-        </form>
+        </div>
       </DialogContent>
     </Dialog>
   );
 }
+
