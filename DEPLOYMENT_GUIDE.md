@@ -14,6 +14,7 @@ This comprehensive guide will walk you through deploying the Lawyer Opportunity 
 ### ✅ Environment Setup
 - [ ] `.env.local` file created with real values
 - [ ] Supabase secrets configured
+- [ ] SUPABASE_SERVICE_ROLE_KEY set in Netlify
 - [ ] WhatsApp Business API credentials ready
 - [ ] OpenAI API key available
 
@@ -85,7 +86,7 @@ This creates a `dist` folder with optimized static files.
 
 3. **Configure Environment Variables** in Netlify:
    - Go to Site Settings > Environment Variables
-   - Add any needed environment variables
+   - Add `SUPABASE_SERVICE_ROLE_KEY` with your Supabase service role secret
 
 4. **Custom Domain** (Optional):
    - Go to Domain Management
