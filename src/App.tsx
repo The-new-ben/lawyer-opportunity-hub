@@ -33,6 +33,7 @@ import CourtDashboard from "./pages/court/CourtDashboard";
 import CourtSessionDetails from "./pages/court/CourtSessionDetails";
 import { RoleBasedRoute } from "./components/RoleBasedRoute";
 import GlobalCourt from "./pages/GlobalCourt";
+import CaseIntake from "./pages/CaseIntake";
 
 const App = () => (
   <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
@@ -48,6 +49,7 @@ const App = () => (
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/update-password" element={<UpdatePassword />} />
+                <Route path="/case-intake" element={<CaseIntake />} />
                 <Route path="/" element={<GlobalCourt />} />
                 
                 {/* Protected Routes */}

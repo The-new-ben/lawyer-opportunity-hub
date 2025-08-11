@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { getDocument } from "https://esm.sh/pdfjs-dist@3.9.179";
+import { recognize } from "https://esm.sh/tesseract.js@5";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -30,6 +32,23 @@ serve(async (req) => {
 
     const { caseId, documentUrl, description } = await req.json();
 
+    let ocrText = "";
+    try {
+      const resp = await fetch(documentUrl);
+      const buf = await resp.arrayBuffer();
+      if (documentUrl.toLowerCase().endsWith(".pdf")) {
+        const pdf = await getDocument({ data: new Uint8Array(buf) }).promise;
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const content = await page.getTextContent();
+          ocrText += content.items.map((it: any) => it.str).join(" ");
+        }
+      } else {
+        const { data: { text } } = await recognize(new Uint8Array(buf), "eng");
+        ocrText = text;
+      }
+    } catch (_e) {}
+
     const { data, error } = await client
       .from('court_documents')
       .insert({
@@ -45,7 +64,7 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    return new Response(JSON.stringify({ data }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify({ data, ocrText }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
