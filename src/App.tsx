@@ -129,12 +129,12 @@ const App = () => (
                               </RoleBasedRoute>
                             } />
                             <Route path="/court" element={
-                              <RoleBasedRoute allowedRoles={['lawyer', 'admin']}>
+                              <RoleBasedRoute allowedRoles={['admin']}>
                                 <CourtDashboard />
                               </RoleBasedRoute>
                             } />
                             <Route path="/court/session/:id" element={
-                              <RoleBasedRoute allowedRoles={['lawyer', 'admin']}>
+                              <RoleBasedRoute allowedRoles={['admin']}>
                                 <CourtSessionDetails />
                               </RoleBasedRoute>
                             } />
