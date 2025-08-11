@@ -56,12 +56,12 @@ const GlobalCourt = () => {
             {showAdditionalTools ? (
               <>
                 <ChevronUp className="w-4 h-4 mr-2" />
-                הסתר כלים נוספים
+                Hide Additional Tools
               </>
             ) : (
               <>
                 <ChevronDown className="w-4 h-4 mr-2" />
-                הצג כלים נוספים
+                Show Additional Tools
               </>
             )}
           </Button>
@@ -70,9 +70,9 @@ const GlobalCourt = () => {
         {showAdditionalTools && (
           <div className="space-y-8">
             <header className="text-center space-y-2">
-              <h2 className="text-3xl font-bold">כלים נוספים</h2>
+              <h2 className="text-3xl font-bold">Additional Tools</h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                כלים מתקדמים נוספים להכנת תיקים ודיונים משפטיים
+                Advanced tools for case preparation and legal proceedings
               </p>
             </header>
 
