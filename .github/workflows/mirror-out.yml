@@ -25,7 +25,7 @@ jobs:
         run: |
           set -e
           set -o pipefail
-          git remote add mirror https://x-access-token:${MIRROR_TOKEN}@github.com/The-new-ben/project.git
+          git remote add mirror https://x-access-token:${MIRROR_TOKEN}@github.com/The-new-ben/lawyer-opportunity-hub.git
 
           echo "Attempting fast-forward push to external main..."
           if git push mirror HEAD:main; then
@@ -41,5 +41,5 @@ jobs:
           curl -s -X POST \
             -H "Authorization: token ${MIRROR_TOKEN}" \
             -H "Accept: application/vnd.github+json" \
-            https://api.github.com/repos/The-new-ben/project/pulls \
+            https://api.github.com/repos/The-new-ben/lawyer-opportunity-hub/pulls \
             -d "$(jq -n --arg head "$BR" --arg base "main" --arg title "Sync from Lovable" --arg body "Automated mirror from Lovable repo → external main. Review and merge." '{title:$title, head:$head, base:$base, body:$body}')" | tee /dev/null

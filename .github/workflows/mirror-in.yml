@@ -28,9 +28,9 @@ jobs:
           MIRROR_TOKEN: ${{ secrets.MIRROR_TOKEN }}
         run: |
           if [ -n "$MIRROR_TOKEN" ]; then
-            REMOTE="https://x-access-token:${MIRROR_TOKEN}@github.com/The-new-ben/project.git"
+            REMOTE="https://x-access-token:${MIRROR_TOKEN}@github.com/The-new-ben/lawyer-opportunity-hub.git"
           else
-            REMOTE="https://github.com/The-new-ben/project.git"
+            REMOTE="https://github.com/The-new-ben/lawyer-opportunity-hub.git"
           fi
           git remote remove external 2>/dev/null || true
           git remote add external "$REMOTE"
@@ -56,7 +56,7 @@ jobs:
           git add -A
           if [[ -n "$(git status --porcelain)" ]]; then
             EXT_SHA=$(git rev-parse external/main)
-            git commit -m "chore(sync): import The-new-ben/project@${EXT_SHA} into upstream-main"
+            git commit -m "chore(sync): import The-new-ben/lawyer-opportunity-hub@${EXT_SHA} into upstream-main"
             echo "changed=true" >> $GITHUB_OUTPUT
           else
             echo "No changes to commit"
@@ -81,8 +81,8 @@ jobs:
               head: `${context.repo.owner}:${branch}`,
               base: 'main'
             });
-            const title = 'Sync external: The-new-ben/project → upstream-main';
-            const body = 'This PR imports the current state of https://github.com/The-new-ben/project (branch: main) into the subfolder `upstream-main`. Review and cherry-pick as needed.';
+             const title = 'Sync external: The-new-ben/lawyer-opportunity-hub → upstream-main';
+             const body = 'This PR imports the current state of https://github.com/The-new-ben/lawyer-opportunity-hub (branch: main) into the subfolder `upstream-main`. Review and cherry-pick as needed.';
             if (prs && prs.length > 0) {
               const pr = prs[0];
               await github.rest.pulls.update({ owner: context.repo.owner, repo: context.repo.repo, pull_number: pr.number, title, body });
