@@ -6,68 +6,68 @@ export function WorkflowInfographic() {
   const steps = [
     {
       id: 1,
-      title: "קליטת ליד",
-      subtitle: "WhatsApp / אתר",
+      title: "Lead Intake",
+      subtitle: "WhatsApp / Website",
       icon: MessageSquare,
       color: "bg-primary/10 border-primary/20 text-primary",
-      description: "הליד נקלט דרך WhatsApp או טופס באתר"
+      description: "Lead captured via WhatsApp or website form"
     },
     {
       id: 2,
-      title: "עיבוד AI",
-      subtitle: "ניקוד ומיון",
+      title: "AI Processing",
+      subtitle: "Scoring and Sorting",
       icon: TrendingUp,
       color: "bg-accent/10 border-accent/20 text-accent-foreground",
-      description: "מערכת AI מנתחת ומנקדת את הליד"
+      description: "AI system analyzes and scores the lead"
     },
     {
       id: 3,
-      title: "התאמה",
-      subtitle: "מנוע התאמות",
+      title: "Matching",
+      subtitle: "Matching Engine",
       icon: Users,
       color: "bg-success/10 border-success/20 text-success",
-      description: "מיון עורכי דין מתאימים לפי התמחות ויכולת"
+      description: "Filters suitable lawyers by specialization and capacity"
     },
     {
       id: 4,
-      title: "הצעה",
-      subtitle: "עורך דין מגיב",
+      title: "Proposal",
+      subtitle: "Lawyer Responds",
       icon: FileText,
       color: "bg-warning/10 border-warning/20 text-warning",
-      description: "עורך דין שולח הצעת מחיר ותנאים"
+      description: "Lawyer sends quote and terms"
     },
     {
       id: 5,
-      title: "חוזה",
-      subtitle: "חתימה דיגיטלית",
+      title: "Contract",
+      subtitle: "Digital Signature",
       icon: CheckCircle,
       color: "bg-secondary/10 border-secondary/20 text-secondary-foreground",
-      description: "חתימה על חוזה דיגיטלי"
+      description: "Sign digital contract"
     },
     {
       id: 6,
-      title: "תשלום",
+      title: "Payment",
       subtitle: "WooCommerce",
       icon: CreditCard,
       color: "bg-destructive/10 border-destructive/20 text-destructive",
-      description: "עמלה ותשלום דרך המערכת"
+      description: "Commission and payment through the system"
     },
     {
       id: 7,
-      title: "ביצוע",
-      subtitle: "ניהול פרויקט",
+      title: "Execution",
+      subtitle: "Project Management",
       icon: Award,
       color: "bg-primary-muted/10 border-primary-muted/20 text-primary-muted",
-      description: "מעקב SLA, NPS וביצוע העבודה"
+      description: "Track SLA, NPS and work completion"
     }
   ]
 
   return (
     <Card className="w-full">
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl text-primary">זרימת עבודה - מליד ועד לביצוע</CardTitle>
+        <CardTitle className="text-2xl text-primary">Workflow - From Lead to Completion</CardTitle>
         <p className="text-muted-foreground">
-          תהליך אוטומטי מלא מקליטת הליד ועד לביצוע העבודה והניקוד
+          A fully automated process from lead capture to work completion and scoring
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -112,14 +112,14 @@ export function WorkflowInfographic() {
         })}
 
         <div className="mt-8 p-4 bg-muted/50 rounded-lg">
-          <h4 className="font-semibold text-primary mb-2">מדדי KPI וניקוד חודשי</h4>
+          <h4 className="font-semibold text-primary mb-2">KPI Metrics and Monthly Scoring</h4>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm text-muted-foreground">
-            <div>📈 אחוז קבלת לידים (60-90%)</div>
-            <div>⏰ עמידה ב-SLA (≥95%)</div>
-            <div>⭐ ציון NPS ממוצע (≥8)</div>
-            <div>💰 יחס החזרים (≤3%)</div>
-            <div>🎯 שעות פרו-בונו (≥20/שנה)</div>
-            <div>🏆 דרגות: ברונזה → כסף → זהב → פלטינום</div>
+            <div>📈 Lead acceptance rate (60-90%)</div>
+            <div>⏰ SLA compliance (≥95%)</div>
+            <div>⭐ Average NPS score (≥8)</div>
+            <div>💰 Refund ratio (≤3%)</div>
+            <div>🎯 Pro bono hours (≥20/year)</div>
+            <div>🏆 Tiers: Bronze → Silver → Gold → Platinum</div>
           </div>
         </div>
       </CardContent>

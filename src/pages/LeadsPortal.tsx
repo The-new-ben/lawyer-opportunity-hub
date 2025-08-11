@@ -207,7 +207,7 @@ export default function LeadsPortal() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex flex-col overflow-x-hidden" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex flex-col overflow-x-hidden">
       {/* Header */}
       <div className="bg-white/80 backdrop-blur-sm border-b sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 py-4">
@@ -392,7 +392,7 @@ export default function LeadsPortal() {
 
       {/* Lead Details Dialog */}
       <Dialog open={!!selectedLead} onOpenChange={() => setSelectedLead(null)}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" dir="rtl">
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           {selectedLead && (
             <>
               <DialogHeader>
@@ -468,7 +468,7 @@ export default function LeadsPortal() {
 
       {/* Registration Dialog */}
       <Dialog open={showRegistration} onOpenChange={setShowRegistration}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" dir="rtl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
