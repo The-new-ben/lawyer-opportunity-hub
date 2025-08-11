@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 
 const Landing = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5 flex flex-col overflow-x-hidden" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5 flex flex-col overflow-x-hidden">
       {/* Header */}
       <header className="container mx-auto px-4 py-6">
         <div className="flex justify-between items-center">
@@ -15,10 +15,10 @@ const Landing = () => {
           </div>
           <div className="flex gap-4">
             <Button variant="ghost" asChild>
-              <Link to="/auth">התחברות</Link>
+              <Link to="/auth">Login</Link>
             </Button>
             <Button asChild>
-              <Link to="/auth">הרשמה</Link>
+              <Link to="/auth">Register</Link>
             </Button>
           </div>
         </div>
@@ -27,13 +27,13 @@ const Landing = () => {
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-20 text-center">
         <h2 className="text-4xl md:text-6xl font-bold mb-6 text-foreground">
-          מערכת ניהול משרד עורכי דין מתקדמת
+          Advanced Law Firm Management System
         </h2>
         <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-          נהל לקוחות, תיקים, תשלומים ועמלות במקום אחד. מערכת שנבנתה במיוחד למשרדי עורכי דין בישראל
+          Manage clients, cases, payments, and commissions in one place. Built specifically for law firms in Israel.
         </p>
         <Button size="lg" asChild>
-          <Link to="/auth">התחל עכשיו בחינם</Link>
+          <Link to="/auth">Start for Free</Link>
         </Button>
       </section>
 
@@ -43,9 +43,9 @@ const Landing = () => {
           <Card>
             <CardHeader>
               <Users className="h-10 w-10 text-primary mb-2" />
-              <CardTitle>ניהול לקוחות</CardTitle>
+              <CardTitle>Client Management</CardTitle>
               <CardDescription>
-                מעקב אחר פרטי לקוחות, היסטוריית קשר וסטטוס תיקים
+                Track client details, contact history and case status
               </CardDescription>
             </CardHeader>
           </Card>
@@ -53,9 +53,9 @@ const Landing = () => {
           <Card>
             <CardHeader>
               <Scale className="h-10 w-10 text-primary mb-2" />
-              <CardTitle>ניהול תיקים</CardTitle>
+              <CardTitle>Case Management</CardTitle>
               <CardDescription>
-                ארגון תיקים משפטיים, מעקב סטטוס ותזמון דיונים
+                Organize legal cases, track status and schedule hearings
               </CardDescription>
             </CardHeader>
           </Card>
@@ -63,9 +63,9 @@ const Landing = () => {
           <Card>
             <CardHeader>
               <Shield className="h-10 w-10 text-primary mb-2" />
-              <CardTitle>ניהול תשלומים</CardTitle>
+              <CardTitle>Payment Management</CardTitle>
               <CardDescription>
-                מעקב אחר חשבוניות, תשלומים ויתרות חובה
+                Track invoices, payments and balances
               </CardDescription>
             </CardHeader>
           </Card>
@@ -73,9 +73,9 @@ const Landing = () => {
           <Card>
             <CardHeader>
               <ChartBar className="h-10 w-10 text-primary mb-2" />
-              <CardTitle>דוחות ואנליטיקס</CardTitle>
+              <CardTitle>Reports & Analytics</CardTitle>
               <CardDescription>
-                דוחות מפורטים על ביצועים ורווחיות המשרד
+                Detailed reports on performance and profitability
               </CardDescription>
             </CardHeader>
           </Card>

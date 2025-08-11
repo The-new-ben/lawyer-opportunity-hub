@@ -76,9 +76,9 @@ export default function Dashboard() {
     setIsLoadingSummary(true);
     try {
       await refetchSummary();
-      toast.success("סיכום עודכן בהצלחה");
+      toast.success("Summary updated successfully");
     } catch (error) {
-      toast.error("שגיאה בעדכון הסיכום");
+      toast.error("Error updating summary");
     } finally {
       setIsLoadingSummary(false);
     }
@@ -95,30 +95,30 @@ export default function Dashboard() {
 
   const stats = [
     {
-      title: "סה״כ לידים",
+      title: "Total Leads",
       value: leadStats.totalLeads,
-      change: `${leadStats.newLeads} חדשים`,
+      change: `${leadStats.newLeads} new`,
       icon: UserPlus,
       trend: "up" as const
     },
     {
-      title: "לידים גבוהי עדיפות",
+      title: "High Priority Leads",
       value: leadStats.highPriorityLeads,
-      change: `${leadStats.convertedLeads} הומרו`,
+      change: `${leadStats.convertedLeads} converted`,
       icon: TrendingUp,
       trend: "up" as const
     },
     {
-      title: "סה״כ תשלומים",
+      title: "Total Payments",
       value: `₪${totalPayments.toLocaleString()}`,
-      change: `${payments?.length || 0} תשלומים`,
+      change: `${payments?.length || 0} payments`,
       icon: DollarSign,
       trend: "up" as const
     },
     {
-      title: "פגישות היום",
+      title: "Meetings Today",
       value: todayMeetings.length,
-      change: `${meetings?.length || 0} סה״כ פגישות`,
+      change: `${meetings?.length || 0} total meetings`,
       icon: Calendar,
       trend: "neutral" as const
     }
@@ -138,10 +138,10 @@ export default function Dashboard() {
     const hasMeeting = lead.meetings && lead.meetings.length > 0;
     const hasDeposit = lead.deposits && lead.deposits.length > 0;
     
-    if (hasDeposit) return { status: "מונטז", icon: CheckCircle, color: "text-green-600" };
-    if (hasMeeting) return { status: "פגישה נקבעה", icon: Calendar, color: "text-blue-600" };
-    if (hasQuote) return { status: "הצעת מחיר נשלחה", icon: FileText, color: "text-orange-600" };
-    return { status: "בהמתנה", icon: Clock, color: "text-gray-600" };
+    if (hasDeposit) return { status: "Monetized", icon: CheckCircle, color: "text-green-600" };
+    if (hasMeeting) return { status: "Meeting Scheduled", icon: Calendar, color: "text-blue-600" };
+    if (hasQuote) return { status: "Quote Sent", icon: FileText, color: "text-orange-600" };
+    return { status: "Pending", icon: Clock, color: "text-gray-600" };
   };
 
   const getPriorityVariant = (priority: string) => {
@@ -164,13 +164,13 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-3 sm:p-4 md:p-6 space-y-4 md:space-y-6 animate-fade-in flex flex-col overflow-x-hidden" dir="rtl">
+    <div className="w-full max-w-7xl mx-auto p-3 sm:p-4 md:p-6 space-y-4 md:space-y-6 animate-fade-in flex flex-col overflow-x-hidden">
       {/* Header */}
       <div className="flex flex-col sm:flex-row gap-4 sm:justify-between sm:items-center animate-slide-in-right">
         <div className="space-y-1">
-          <h1 className="text-2xl sm:text-3xl font-bold text-primary animate-fade-in">דשבורד ראשי</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-primary animate-fade-in">Main Dashboard</h1>
           <p className="text-sm sm:text-base text-muted-foreground animate-fade-in" style={{ animationDelay: '100ms' }}>
-            סקירה כללית של פעילות המשרד - עדכון אוטומטי
+            Overview of firm activity - automatic updates
           </p>
         </div>
         <div className="flex gap-2 flex-col sm:flex-row">
@@ -179,14 +179,14 @@ export default function Dashboard() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="today">היום</SelectItem>
-              <SelectItem value="week">השבוע</SelectItem>
-              <SelectItem value="month">החודש</SelectItem>
+              <SelectItem value="today">Today</SelectItem>
+              <SelectItem value="week">This Week</SelectItem>
+              <SelectItem value="month">This Month</SelectItem>
             </SelectContent>
           </Select>
           <Button className="gap-2 w-full sm:w-auto hover-scale animate-scale-in" style={{ animationDelay: '200ms' }}>
             <Plus className="h-4 w-4" />
-            ליד חדש
+            New Lead
           </Button>
         </div>
       </div>
@@ -210,7 +210,7 @@ export default function Dashboard() {
           <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Brain className="h-5 w-5 animate-pulse" />
-              סיכום AI של המשרד
+              Firm AI Summary
             </CardTitle>
             <Button 
               variant="outline" 
@@ -220,11 +220,11 @@ export default function Dashboard() {
               className="gap-2 w-full sm:w-auto hover-scale"
             >
               <RefreshCw className={`h-4 w-4 ${isLoadingSummary ? 'animate-spin' : ''}`} />
-              רענן
+              Refresh
             </Button>
           </div>
           <CardDescription className="text-sm">
-            ניתוח אוטומטי של נתוני המשרד עם תובנות והמלצות
+            Automatic analysis of firm data with insights and recommendations
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-0">
@@ -235,7 +235,7 @@ export default function Dashboard() {
               </div>
               {aiSummary.timestamp && (
                 <p className="text-xs text-muted-foreground">
-                  עודכן לאחרונה: {new Date(aiSummary.timestamp).toLocaleString('he-IL')}
+                  Last updated: {new Date(aiSummary.timestamp).toLocaleString('en-US')}
                 </p>
               )}
             </div>
@@ -243,7 +243,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-center p-6 sm:p-8 text-muted-foreground">
               <div className="text-center space-y-2 animate-fade-in">
                 <Brain className="h-8 w-8 mx-auto opacity-50 animate-pulse" />
-                <p className="text-sm">לחץ על "רענן" לקבלת סיכום AI</p>
+                <p className="text-sm">Click "Refresh" to get AI summary</p>
               </div>
             </div>
           )}
@@ -257,10 +257,10 @@ export default function Dashboard() {
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
               <UserPlus className="h-5 w-5" />
-              לידים אחרונים
+              Recent Leads
             </CardTitle>
             <CardDescription className="text-sm">
-              לידים שהתקבלו לאחרונה עם סטטוס פייפליין
+              Recently received leads with pipeline status
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-0">
@@ -300,10 +300,10 @@ export default function Dashboard() {
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Activity className="h-5 w-5" />
-              פעילות פייפליין אוטומטי
+              Automated Pipeline Activity
             </CardTitle>
             <CardDescription className="text-sm">
-              מעקב אחר תהליכים אוטומטיים
+              Tracking automated processes
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-0">
@@ -324,7 +324,7 @@ export default function Dashboard() {
                     <div className="flex-1 space-y-1">
                       <div className="font-medium text-sm sm:text-base">{lead.customer_name}</div>
                       <div className="text-xs sm:text-sm text-muted-foreground">
-                        {lead.legal_category} • {new Date(lead.created_at).toLocaleDateString('he-IL')}
+                        {lead.legal_category} • {new Date(lead.created_at).toLocaleDateString('en-US')}
                       </div>
                     </div>
                   </div>
@@ -342,10 +342,10 @@ export default function Dashboard() {
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Calendar className="h-5 w-5" />
-              פגישות היום
+              Today's Meetings
             </CardTitle>
             <CardDescription className="text-sm">
-              פגישות שנקבעו להיום
+              Meetings scheduled for today
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-0">
@@ -358,13 +358,13 @@ export default function Dashboard() {
                   >
                     <div className="flex items-center gap-2 text-primary font-medium text-sm">
                       <Clock className="h-4 w-4" />
-                      {new Date(meeting.scheduled_at).toLocaleTimeString('he-IL', { 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
+                      {new Date(meeting.scheduled_at).toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit'
                       })}
                     </div>
                     <div className="flex-1 space-y-1">
-                      <div className="font-medium text-sm sm:text-base">פגישה עם לקוח</div>
+                      <div className="font-medium text-sm sm:text-base">Meeting with client</div>
                       <div className="text-xs sm:text-sm text-muted-foreground">{meeting.meeting_type}</div>
                     </div>
                   </div>
@@ -372,7 +372,7 @@ export default function Dashboard() {
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   <Calendar className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">אין פגישות מתוכננות להיום</p>
+                  <p className="text-sm">No meetings scheduled for today</p>
                 </div>
               )}
             </div>

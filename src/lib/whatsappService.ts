@@ -27,8 +27,8 @@ function validateWhatsAppConfig() {
   
   if (!phoneId || !token) {
     toast({
-      title: 'WhatsApp לא מוגדר',
-      description: 'אנא הגדר את פרטי WhatsApp בעמוד ההגדרות',
+      title: 'WhatsApp not configured',
+      description: 'Please configure WhatsApp details on the settings page',
       variant: 'destructive'
     });
     return false;
@@ -128,8 +128,8 @@ export async function sendWhatsAppCustomTemplate(
   
   if (!template) {
     toast({
-      title: 'שגיאה בתבנית',
-      description: `תבנית '${String(templateKey)}' לא נמצאה`,
+      title: 'Template error',
+      description: `Template '${String(templateKey)}' not found`,
       variant: 'destructive'
     });
     return;
@@ -214,7 +214,7 @@ export function getWhatsAppStatus(): {
   enabled: boolean;
   configured: boolean;
   withinBusinessHours: boolean;
-  settings: any;
+  settings: WhatsAppSettings;
 } {
   const settings = WhatsAppConfigManager.loadSettings();
   const { phoneId, token, enabled } = getWhatsAppConfig();
