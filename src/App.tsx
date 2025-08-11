@@ -7,6 +7,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Layout } from "@/components/Layout";
 import { QueryProvider } from "@/providers/QueryProvider";
+import { NotificationCenter } from "@/components/NotificationCenter";
 import Dashboard from "./pages/Dashboard";
 import Leads from "./pages/Leads";
 import Auth from "./pages/Auth";
@@ -41,6 +42,7 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
+          <NotificationCenter />
           <Router>
             <Routes>
                 {/* Public Routes */}

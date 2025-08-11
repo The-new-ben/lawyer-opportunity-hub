@@ -6,6 +6,12 @@ export const addCourtReminder = async (payload: { caseId: string; remindAt: stri
   return data;
 };
 
+export const syncNote = async (payload: { caseId: string; content: string }) => {
+  const { data, error } = await supabase.functions.invoke('notes-sync', { body: payload });
+  if (error) throw error;
+  return data;
+};
+
 export const uploadCourtDocument = async (payload: { caseId: string; documentUrl: string; description?: string }) => {
   const { data, error } = await supabase.functions.invoke('court-document-upload', { body: payload });
   if (error) throw error;
