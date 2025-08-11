@@ -38,7 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(session?.user ?? null);
         setLoading(false);
 
-        // Create profile for new users - מונע לולאות
+        // Create profile for new users - prevents loops
         if (event === 'SIGNED_IN' && session?.user && !user) {
           setTimeout(() => {
             if (isMounted) {
@@ -61,7 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isMounted = false;
       subscription.unsubscribe();
     };
-  }, []); // רק פעם אחת בהתחלה
+  }, []); // run only once at initialization
 
   const createUserProfile = async (user: User) => {
     try {
@@ -121,26 +121,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (error) {
-        let errorMessage = "אירעה שגיאה ברישום. אנא נסה שוב.";
-        
+        let errorMessage = "An error occurred during registration. Please try again.";
+
         if (error.message === 'User already registered') {
-          errorMessage = "המשתמש כבר רשום במערכת";
+          errorMessage = "User is already registered";
         } else if (error.message.includes('Password')) {
-          errorMessage = "הסיסמה חייבת להכיל לפחות 6 תווים";
+          errorMessage = "Password must be at least 6 characters";
         } else if (error.message.includes('Email')) {
-          errorMessage = "כתובת האימייל לא תקינה";
+          errorMessage = "Invalid email address";
         }
-        
+
         return { error: { message: errorMessage } };
       }
 
       // User registered successfully
       if (data.user) {
         toast({
-          title: "נרשמת בהצלחה!",
-          description: data.user.email_confirmed_at 
-            ? "ברוך הבא למערכת" 
-            : "בדוק את האימייל שלך לאימות החשבון",
+          title: "Registration successful!",
+          description: data.user.email_confirmed_at
+            ? "Welcome to the system"
+            : "Check your email to verify your account",
         });
       }
 
@@ -151,7 +151,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         description: err instanceof Error ? err.message : String(err),
         variant: 'destructive'
       });
-      return { error: { message: "אירעה שגיאה לא צפויה. אנא נסה שוב." } };
+      return { error: { message: "An unexpected error occurred. Please try again." } };
     }
   };
 
@@ -163,16 +163,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (error) {
       toast({
-        title: "שגיאה בהתחברות",
-        description: error.message === 'Invalid login credentials' 
-          ? "פרטי התחברות שגויים" 
-          : "אירעה שגיאה בהתחברות. אנא נסה שוב.",
+        title: "Sign-in error",
+        description: error.message === 'Invalid login credentials'
+          ? "Incorrect login details"
+          : "An error occurred during sign-in. Please try again.",
         variant: "destructive",
       });
     } else {
       toast({
-        title: "התחברות מוצלחת",
-        description: "ברוך הבא למערכת",
+        title: "Signed in successfully",
+        description: "Welcome to the system",
       });
     }
 
@@ -183,8 +183,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { error } = await supabase.auth.signOut();
     if (!error) {
       toast({
-        title: "התנתקת בהצלחה",
-        description: "להתראות!",
+        title: "Signed out successfully",
+        description: "Goodbye!",
       });
     }
   };

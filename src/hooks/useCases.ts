@@ -54,10 +54,10 @@ export const useCases = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cases'] });
-      toast({ title: 'תיק חדש נוצר בהצלחה' });
+      toast({ title: 'Case created successfully' });
     },
     onError: (error) => {
-      toast({ title: 'שגיאה ביצירת תיק', variant: 'destructive', description: error instanceof Error ? error.message : String(error) });
+      toast({ title: 'Error creating case', variant: 'destructive', description: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -75,10 +75,10 @@ export const useCases = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cases'] });
-      toast({ title: 'התיק עודכן בהצלחה' });
+      toast({ title: 'Case updated successfully' });
     },
     onError: () => {
-      toast({ title: 'שגיאה בעדכון התיק', variant: 'destructive' });
+      toast({ title: 'Error updating case', variant: 'destructive' });
     }
   });
 
@@ -96,10 +96,10 @@ export const useCases = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cases'] });
-      toast({ title: 'התיק נסגר בהצלחה' });
+      toast({ title: 'Case closed successfully' });
     },
     onError: () => {
-      toast({ title: 'שגיאה בסגירת התיק', variant: 'destructive' });
+      toast({ title: 'Error closing case', variant: 'destructive' });
     }
   });
 

@@ -64,10 +64,10 @@ export const useClients = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clients'] });
-      toast({ title: 'לקוח חדש נוסף בהצלחה' });
+      toast({ title: 'Client added successfully' });
     },
     onError: (error) => {
-      toast({ title: 'שגיאה בהוספת לקוח', variant: 'destructive', description: error instanceof Error ? error.message : String(error) });
+      toast({ title: 'Error adding client', variant: 'destructive', description: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -85,10 +85,10 @@ export const useClients = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clients'] });
-      toast({ title: 'פרטי הלקוח עודכנו בהצלחה' });
+      toast({ title: 'Client details updated successfully' });
     },
     onError: () => {
-      toast({ title: 'שגיאה בעדכון פרטי הלקוח', variant: 'destructive' });
+      toast({ title: 'Error updating client details', variant: 'destructive' });
     }
   });
 
@@ -103,10 +103,10 @@ export const useClients = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clients'] });
-      toast({ title: 'הלקוח נמחק בהצלחה' });
+      toast({ title: 'Client deleted successfully' });
     },
     onError: () => {
-      toast({ title: 'שגיאה במחיקת הלקוח', variant: 'destructive' });
+      toast({ title: 'Error deleting client', variant: 'destructive' });
     }
   });
 

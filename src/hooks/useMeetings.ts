@@ -37,8 +37,8 @@ export const useMeetings = () => {
     onSuccess: async (data) => {
       queryClient.invalidateQueries({ queryKey: ['meetings'] });
       toast({
-        title: "פגישה נקבעה בהצלחה",
-        description: "הפגישה נוספה ליומן",
+        title: "Meeting scheduled successfully",
+        description: "The meeting was added to the calendar",
       });
       
       // Send meeting notifications
@@ -55,7 +55,7 @@ export const useMeetings = () => {
     },
     onError: (error) => {
       toast({
-        title: "שגיאה בקביעת פגישה",
+        title: "Error scheduling meeting",
         description: error.message,
         variant: "destructive",
       });
@@ -77,13 +77,13 @@ export const useMeetings = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['meetings'] });
       toast({
-        title: "פגישה עודכנה בהצלחה",
-        description: "פרטי הפגישה נשמרו",
+        title: "Meeting updated successfully",
+        description: "Meeting details saved",
       });
     },
     onError: (error) => {
       toast({
-        title: "שגיאה בעדכון פגישה",
+        title: "Error updating meeting",
         description: error.message,
         variant: "destructive",
       });
@@ -102,13 +102,13 @@ export const useMeetings = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['meetings'] });
       toast({
-        title: "פגישה בוטלה",
-        description: "הפגישה הוסרה מהיומן",
+        title: "Meeting canceled",
+        description: "The meeting was removed from the calendar",
       });
     },
     onError: (error) => {
       toast({
-        title: "שגיאה בביטול פגישה",
+        title: "Error canceling meeting",
         description: error.message,
         variant: "destructive",
       });

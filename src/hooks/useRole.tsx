@@ -28,13 +28,13 @@ export function useRole(): UserRoleData {
       return;
     }
 
-    // עיכוב קצר למניעת טעינות מיותרות
+    // Short delay to prevent unnecessary loads
     const timeoutId = setTimeout(() => {
       fetchUserRole();
     }, 100);
 
     return () => clearTimeout(timeoutId);
-  }, [user?.id]); // רק כשה-user id משתנה
+  }, [user?.id]); // only when the user id changes
 
   const fetchUserRole = async () => {
     if (!user?.id) {
@@ -45,7 +45,7 @@ export function useRole(): UserRoleData {
     try {
       setLoading(true);
       
-      // יעיל יותר - רק בקשה אחת לprofiles
+      // More efficient - only one request to profiles
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('role')
