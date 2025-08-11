@@ -6,6 +6,7 @@ import HearingScheduler from "@/components/court/HearingScheduler";
 import SimulationArena from "@/components/court/SimulationArena";
 import ProcedureGuide from "@/components/court/ProcedureGuide";
 import ProfessionalsCatalog from "@/components/court/ProfessionalsCatalog";
+import EvidencePrep from "@/components/court/EvidencePrep";
 
 const GlobalCourt = () => {
   useEffect(() => {
@@ -73,6 +74,15 @@ const GlobalCourt = () => {
           </CardHeader>
           <CardContent>
             <SimulationArena />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Evidence Preparation (Collaborative)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <EvidencePrep />
           </CardContent>
         </Card>
 

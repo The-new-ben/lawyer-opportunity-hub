@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import ReputationBadge from "./ReputationBadge";
+import BiasReportButton from "./BiasReportButton";
 
 const roles = [
   { id: "observer", label: "Observer" },
@@ -17,6 +20,8 @@ const SimulationArena = () => {
     setPoints((p) => p + 5);
   };
 
+  const progress = Math.min(100, (points % 100));
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
@@ -29,15 +34,22 @@ const SimulationArena = () => {
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-4 space-y-2">
             <p className="text-sm">Your role: {role ?? "—"}</p>
-            <p className="text-sm text-muted-foreground">Points: {points}</p>
+            <ReputationBadge points={points} />
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">Level progress</p>
+              <Progress value={progress} />
+            </div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
             <p className="text-sm font-medium">Live Feed</p>
             <p className="text-xs text-muted-foreground">Arguments, evidence, and rulings will appear here.</p>
+            <div className="mt-2">
+              <BiasReportButton context="simulation" />
+            </div>
           </CardContent>
         </Card>
         <Card>
