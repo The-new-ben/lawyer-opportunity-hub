@@ -24,8 +24,16 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       - name: Add external remote and fetch
+        env:
+          MIRROR_TOKEN: ${{ secrets.MIRROR_TOKEN }}
         run: |
-          git remote add external https://github.com/The-new-ben/project.git || true
+          if [ -n "$MIRROR_TOKEN" ]; then
+            REMOTE="https://x-access-token:${MIRROR_TOKEN}@github.com/The-new-ben/project.git"
+          else
+            REMOTE="https://github.com/The-new-ben/project.git"
+          fi
+          git remote remove external 2>/dev/null || true
+          git remote add external "$REMOTE"
           git fetch external main
           git rev-parse external/main
 
