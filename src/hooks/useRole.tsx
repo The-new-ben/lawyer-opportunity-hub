@@ -3,16 +3,15 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 
-type UserRole = 'admin' | 'lawyer' | 'client' | 'supplier' | 'customer';
+export type UserRole = 'admin' | 'lead_provider' | 'lawyer' | 'customer';
 
 interface UserRoleData {
   role: UserRole | null;
   loading: boolean;
   hasPermission: (requiredRole: UserRole | UserRole[]) => boolean;
   isAdmin: boolean;
+  isLeadProvider: boolean;
   isLawyer: boolean;
-  isClient: boolean;
-  isSupplier: boolean;
   isCustomer: boolean;
 }
 
@@ -93,9 +92,8 @@ export function useRole(): UserRoleData {
     loading,
     hasPermission,
     isAdmin: role === 'admin',
+    isLeadProvider: role === 'lead_provider',
     isLawyer: role === 'lawyer',
-    isClient: role === 'client',
-    isSupplier: role === 'supplier',
     isCustomer: role === 'customer'
   };
 }

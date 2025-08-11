@@ -10,6 +10,10 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+  const role = (req as Request & { auth?: { user?: { role?: string } } }).auth?.user?.role;
+  if (role !== 'admin') {
+    return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: corsHeaders });
+  }
 
   try {
     const token = req.headers.get('Authorization')?.replace('Bearer ', '');

@@ -7,6 +7,8 @@ import { useClients } from "@/hooks/useClients";
 import { useCases } from "@/hooks/useCases";
 import { useMeetings } from "@/hooks/useMeetings";
 import { useLeadDeposits } from "@/hooks/useDeposits";
+import { RoleBasedRoute } from "@/components/RoleBasedRoute";
+import type { UserRole } from "@/hooks/useRole";
 
 export default function AdminDashboard() {
   const { getLeadStats } = useLeads();
@@ -22,17 +24,18 @@ export default function AdminDashboard() {
   const depositStats = getDepositStats();
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Admin Panel</h1>
-          <p className="text-muted-foreground">Overview of system activity</p>
+    <RoleBasedRoute allowedRoles={["admin"] as UserRole[]}>
+      <div className="p-6 space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">Admin Panel</h1>
+            <p className="text-muted-foreground">Overview of system activity</p>
+          </div>
+          <Button variant="outline">
+            <Settings className="h-4 w-4 mr-2" />
+            System Settings
+          </Button>
         </div>
-        <Button variant="outline">
-          <Settings className="h-4 w-4 mr-2" />
-          System Settings
-        </Button>
-      </div>
 
       {/* Key Metrics */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -187,5 +190,6 @@ export default function AdminDashboard() {
         </CardContent>
       </Card>
     </div>
+    </RoleBasedRoute>
   );
 }
