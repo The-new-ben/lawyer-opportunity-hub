@@ -133,6 +133,7 @@ const GlobalCourt = () => {
             <RoleMatchFinder />
           </CardContent>
         </Card>
+    </section>
     </main>
   );
 };
