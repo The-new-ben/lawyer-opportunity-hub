@@ -27,11 +27,12 @@ export default function CaseDetails() {
 
   useEffect(() => {
     if (caseData) {
-      setEditData({
+      setEditData(prev => ({
+        ...prev,
         status: caseData.status,
         priority: caseData.priority,
         notes: caseData.notes || ''
-      });
+      }));
     }
   }, [caseData]);
 

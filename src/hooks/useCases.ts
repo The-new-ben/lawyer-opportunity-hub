@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 
@@ -102,6 +103,32 @@ export const useCases = () => {
       toast({ title: 'שגיאה בסגירת התיק', variant: 'destructive' });
     }
   });
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('cases')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cases' }, (payload) => {
+        queryClient.setQueryData(['cases'], (current: Case[] = []) => {
+          const newCase = payload.new as Case;
+          const oldCase = payload.old as Case;
+          switch (payload.eventType) {
+            case 'INSERT':
+              return [newCase, ...current];
+            case 'UPDATE':
+              return current.map(c => (c.id === newCase.id ? { ...c, ...newCase } : c));
+            case 'DELETE':
+              return current.filter(c => c.id !== oldCase.id);
+            default:
+              return current;
+          }
+        });
+      });
+
+    channel.subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   // Get case statistics
   const getCaseStats = () => {
