@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import Tesseract from "https://esm.sh/tesseract.js@4.0.2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -29,34 +28,13 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    const { caseId, fileName, fileContent, contentType, description } = await req.json();
-    const bytes = Uint8Array.from(atob(fileContent), c => c.charCodeAt(0));
-    const path = `${user.id}/${crypto.randomUUID()}-${fileName}`;
-
-    const { error: uploadError } = await client.storage.from('evidence').upload(path, bytes, { contentType });
-    if (uploadError) {
-      return new Response(JSON.stringify({ error: uploadError.message }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-    }
-
-    let text = '';
-    try {
-      const { data: ocr } = await Tesseract.recognize(bytes, 'eng');
-      text = ocr.text;
-    } catch (_) {
-      text = '';
-    }
+    const { query } = await req.json();
 
     const { data, error } = await client
       .from('evidence_versions')
-      .insert({
-        user_id: user.id,
-        case_id: caseId,
-        document_url: path,
-        description,
-        evidence_text: text
-      })
-      .select()
-      .single();
+      .select('id, document_url, description, evidence_text')
+      .ilike('evidence_text', `%${query}%`)
+      .limit(20);
 
     if (error) {
       return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
