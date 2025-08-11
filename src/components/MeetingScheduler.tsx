@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Calendar, Clock, MapPin, Video, Phone } from 'lucide-react';
+import { Calendar, MapPin, Video, Phone } from 'lucide-react';
 import { useMeetings, type NewMeeting } from '@/hooks/useMeetings';
+import { supabase } from '@/integrations/supabase/client';
 
 interface MeetingSchedulerProps {
   leadId?: string;
@@ -36,7 +36,32 @@ export function MeetingScheduler({ leadId, caseId, lawyerId, clientId }: Meeting
       return;
     }
 
-    await addMeeting.mutateAsync(meeting as NewMeeting);
+    const created = await addMeeting.mutateAsync(meeting as NewMeeting);
+
+    try {
+      const session = await supabase.auth.getSession();
+      const accessToken = session.data.session?.provider_token;
+      if (accessToken) {
+        const start = new Date(meeting.scheduled_at);
+        const end = new Date(start.getTime() + 60 * 60 * 1000);
+        await supabase.functions.invoke('google-calendar-sync', {
+          body: {
+            action: 'create',
+            hearingId: created.id,
+            accessToken,
+            event: {
+              title: meeting.notes || 'Meeting',
+              start_time: start.toISOString(),
+              end_time: end.toISOString(),
+              location: meeting.location || '',
+            },
+          },
+        });
+      }
+    } catch (err) {
+      console.error('google calendar sync failed', err);
+    }
+
     setIsOpen(false);
     setMeeting({
       lead_id: leadId,
