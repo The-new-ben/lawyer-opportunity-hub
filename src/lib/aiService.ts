@@ -6,6 +6,7 @@
 
 import axios from "axios";
 import { toast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 const OPENAI_BASE_URL = "https://api.openai.com/v1";
@@ -99,5 +100,22 @@ export async function generateClientResponse(
       variant: 'destructive'
     });
     return "";
+  }
+}
+
+export async function getCaseResearch(caseId: string, query: string) {
+  try {
+    const { data, error } = await supabase.functions.invoke("ai-court-orchestrator", {
+      body: { action: "research", context: { case_id: caseId, query } }
+    });
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    toast({
+      title: 'AI research failed',
+      description: error instanceof Error ? error.message : String(error),
+      variant: 'destructive'
+    });
+    return { results: [] };
   }
 }

@@ -151,10 +151,16 @@ Write a 3-4 sentence summary with key insights and action recommendations.
 
     const aiResponse = await response.json();
     const summary = aiResponse.choices[0].message.content;
+    const citations = [
+      { type: 'leads', url: `${supabaseUrl}/rest/v1/leads` },
+      { type: 'cases', url: `${supabaseUrl}/rest/v1/cases` },
+      { type: 'lawyers', url: `${supabaseUrl}/rest/v1/lawyers` }
+    ];
 
-    return new Response(JSON.stringify({ 
+    return new Response(JSON.stringify({
       summary,
       data: dataSummary,
+      citations,
       timestamp: new Date().toISOString()
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
