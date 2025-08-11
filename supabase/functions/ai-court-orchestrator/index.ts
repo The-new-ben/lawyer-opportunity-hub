@@ -49,7 +49,18 @@ interface RoleMatchPayload {
   model?: string;
 }
 
-type RequestBody = IntakePayload | PartyInterrogationPayload | CaseBuilderPayload | RoleMatchPayload;
+interface IntakeExtractPayload {
+  action: "intake_extract";
+  locale?: string;
+  context?: {
+    history?: Array<{ role: string; content: string }>;
+    required_fields?: string[];
+    current_fields?: Record<string, unknown>;
+  };
+  model?: string;
+}
+
+type RequestBody = IntakePayload | PartyInterrogationPayload | CaseBuilderPayload | RoleMatchPayload | IntakeExtractPayload;
 
 const MODEL_URL = Deno.env.get("MODEL_SERVER_URL");
 const MODEL_API_KEY = Deno.env.get("MODEL_API_KEY");
@@ -143,6 +154,40 @@ Respond in STRICT JSON with:
 }`;
 }
 
+function buildIntakeExtractPrompt(
+  locale: string,
+  history: Array<{ role: string; content: string }>,
+  required: string[],
+  current?: Record<string, unknown>
+) {
+  return `You are an intake orchestrator for court preparation. Locale: ${locale}.
+Your job: From the chat history and current fields, extract and infer the structured fields needed to prepare a case.
+Return STRICT JSON with exactly these keys:
+{
+  "updated_fields": {
+    "title"?: string,
+    "summary"?: string,
+    "jurisdiction"?: string,
+    "category"?: string,
+    "goal"?: string,
+    "parties"?: Array<{"role": string, "name": string, "email"?: string, "phone"?: string}>,
+    "evidence"?: Array<{"title": string, "url"?: string, "notes"?: string, "category"?: string}>,
+    "startDate"?: string
+  },
+  "missing_fields": string[],
+  "next_question": string | null,
+  "summary": string
+}
+Rules:
+- Only include fields you can confidently infer.
+- If missing_fields is not empty, propose a single clear next_question to collect the most critical missing field.
+- Dates must be ISO-8601 if provided.
+
+Current fields: ${JSON.stringify(current || {})}
+Chat history (role:content):\n${history.map((m) => `${m.role}: ${m.content}`).join("\n")}
+Required fields: ${required.join(", ")}`;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -210,6 +255,31 @@ Consider context: ${JSON.stringify(body.context || {})}`;
             { id: `q${idx + 1}-2`, text: "List any documents supporting your claims.", type: "text" },
           ],
         })),
+      };
+      return new Response(JSON.stringify(fallback), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    if ((body as any).action === "intake_extract") {
+      const b = body as IntakeExtractPayload;
+      const history = b.context?.history ?? [];
+      const required = b.context?.required_fields ?? ["summary", "jurisdiction", "category", "goal", "parties", "evidence", "startDate"];
+      const current = b.context?.current_fields ?? {};
+      const prompt = buildIntakeExtractPrompt(locale, history as any, required, current);
+      const gen = await callModelViaHF(prompt, b.model);
+      if (gen) {
+        try {
+          const parsed = typeof gen === "string" ? JSON.parse(gen) : gen;
+          return new Response(JSON.stringify(parsed), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        } catch (e) {
+          console.warn("Intake extract JSON parse failed, returning heuristic fallback:", e);
+        }
+      }
+      const lastUser = [...history].reverse().find((m) => m.role === "user")?.content || "";
+      const fallback = {
+        updated_fields: { summary: (current as any).summary ?? lastUser },
+        missing_fields: required.filter((k) => !(current as any)[k] && k !== "summary"),
+        next_question: "Please specify the applicable jurisdiction.",
+        summary: ((current as any).summary ?? lastUser).slice(0, 600),
       };
       return new Response(JSON.stringify(fallback), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
