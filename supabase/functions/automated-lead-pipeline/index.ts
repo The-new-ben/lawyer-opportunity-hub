@@ -166,24 +166,39 @@ serve(async (req) => {
 
     // Step 5: create payment link and WhatsApp message
     const meetingLink = `https://mlnwpocuvjnelttvscja.supabase.co/meeting-scheduler?quote_id=${quote.id}&token=${generateSecureToken()}`;
-    
+
     const whatsappMessage = generateWhatsAppMessage(lead, bestLawyer, quote, meetingLink);
-    
+
     // Send WhatsApp message
     try {
-      await sendWhatsAppMessage(lead.customer_phone, whatsappMessage);
-      console.log('📱 WhatsApp message sent to customer');
-
-      // Mark that WhatsApp message was sent
-      await supabase.from('leads').update({
-        case_details: {
-          ...lead.case_details,
-          pipeline_stage: 'whatsapp_sent',
-          whatsapp_sent_at: new Date().toISOString(),
-          meeting_link: meetingLink
+      let sendToCustomer = true;
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('phone', lead.customer_phone)
+        .maybeSingle();
+      if (profile) {
+        const { data: pref } = await supabase
+          .from('notification_preferences')
+          .select('whatsapp')
+          .eq('profile_id', profile.id)
+          .maybeSingle();
+        if (pref && pref.whatsapp === false) {
+          sendToCustomer = false;
         }
-      }).eq('id', leadId);
-      
+      }
+      if (sendToCustomer) {
+        await sendWhatsAppMessage(lead.customer_phone, whatsappMessage);
+        console.log('📱 WhatsApp message sent to customer');
+        await supabase.from('leads').update({
+          case_details: {
+            ...lead.case_details,
+            pipeline_stage: 'whatsapp_sent',
+            whatsapp_sent_at: new Date().toISOString(),
+            meeting_link: meetingLink
+          }
+        }).eq('id', leadId);
+      }
     } catch (whatsappError) {
       console.error(`❌ Error sending WhatsApp: ${whatsappError}`);
 
