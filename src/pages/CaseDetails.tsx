@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { FileText, Calendar, User, DollarSign, Clock, ArrowRight, Edit } from 'lucide-react';
 import { MeetingScheduler } from '@/components/MeetingScheduler';
 import { RatingDialog } from '@/components/RatingDialog';
@@ -248,6 +249,21 @@ export default function CaseDetails() {
               )}
             </CardContent>
           </Card>
+
+          {caseData.summary && (
+            <Card>
+              <CardHeader>
+                <CardTitle>סיכום דיון</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="whitespace-pre-line">{caseData.summary}</p>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="reviewed">Mark Reviewed</Label>
+                  <Switch id="reviewed" checked={caseData.reviewed} onCheckedChange={(checked) => updateCase.mutateAsync({ id: caseData.id, values: { reviewed: checked } })} />
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Actions */}
