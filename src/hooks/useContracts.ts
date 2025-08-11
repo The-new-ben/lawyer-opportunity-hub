@@ -72,10 +72,10 @@ export const useContracts = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['digital-contracts'] });
-      toast({ title: 'חוזה דיגיטלי נוצר בהצלחה' });
+      toast({ title: 'Digital contract created successfully' });
     },
     onError: (error) => {
-      toast({ title: 'שגיאה ביצירת החוזה', variant: 'destructive', description: error instanceof Error ? error.message : String(error) });
+      toast({ title: 'Error creating contract', variant: 'destructive', description: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -122,10 +122,10 @@ export const useContracts = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['digital-contracts'] });
-      toast({ title: 'החוזה נחתם בהצלחה' });
+      toast({ title: 'Contract signed successfully' });
     },
     onError: () => {
-      toast({ title: 'שגיאה בחתימת החוזה', variant: 'destructive' });
+      toast({ title: 'Error signing contract', variant: 'destructive' });
     }
   });
 
@@ -143,10 +143,10 @@ export const useContracts = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['digital-contracts'] });
-      toast({ title: 'החוזה עודכן בהצלחה' });
+      toast({ title: 'Contract updated successfully' });
     },
     onError: () => {
-      toast({ title: 'שגיאה בעדכון החוזה', variant: 'destructive' });
+      toast({ title: 'Error updating contract', variant: 'destructive' });
     }
   });
 

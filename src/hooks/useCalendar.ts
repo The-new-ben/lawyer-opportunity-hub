@@ -76,10 +76,10 @@ export const useCalendar = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
-      toast({ title: 'אירוע חדש נוצר בהצלחה' });
+      toast({ title: 'Event created successfully' });
     },
     onError: (error) => {
-      toast({ title: 'שגיאה ביצירת אירוע', variant: 'destructive', description: error instanceof Error ? error.message : String(error) });
+      toast({ title: 'Error creating event', variant: 'destructive', description: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -97,10 +97,10 @@ export const useCalendar = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
-      toast({ title: 'האירוע עודכן בהצלחה' });
+      toast({ title: 'Event updated successfully' });
     },
     onError: () => {
-      toast({ title: 'שגיאה בעדכון האירוע', variant: 'destructive' });
+      toast({ title: 'Error updating event', variant: 'destructive' });
     }
   });
 
@@ -115,10 +115,10 @@ export const useCalendar = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
-      toast({ title: 'האירוע נמחק בהצלחה' });
+      toast({ title: 'Event deleted successfully' });
     },
     onError: () => {
-      toast({ title: 'שגיאה במחיקת האירוע', variant: 'destructive' });
+      toast({ title: 'Error deleting event', variant: 'destructive' });
     }
   });
 

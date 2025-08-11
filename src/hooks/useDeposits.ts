@@ -39,7 +39,7 @@ export const useLeadDeposits = () => {
     mutationFn: async (newDeposit: NewLeadDeposit) => {
       const { data, error } = await supabase
         .from('deposits')
-        .insert(newDeposit as any)
+        .insert(newDeposit)
         .select()
         .single();
       
@@ -48,22 +48,23 @@ export const useLeadDeposits = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['deposits'] });
-      toast({ title: 'פיקדון נוצר בהצלחה' });
+      toast({ title: 'Deposit created successfully' });
     },
     onError: (error) => {
-      toast({ 
-        title: 'שגיאה ביצירת פיקדון', 
-        variant: 'destructive', 
-        description: error instanceof Error ? error.message : String(error) 
+      toast({
+        title: 'Error creating deposit',
+        variant: 'destructive',
+        description: error instanceof Error ? error.message : String(error)
       });
     }
   });
 
   const updateDeposit = useMutation({
     mutationFn: async ({ id, values }: { id: string; values: Partial<LeadDeposit> }) => {
+      const updateData: Partial<LeadDeposit> = { ...values, updated_at: new Date().toISOString() };
       const { data, error } = await supabase
         .from('deposits')
-        .update({ ...values, updated_at: new Date().toISOString() } as any)
+        .update(updateData)
         .eq('id', id)
         .select()
         .single();
@@ -73,10 +74,10 @@ export const useLeadDeposits = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['deposits'] });
-      toast({ title: 'הפיקדון עודכן בהצלחה' });
+      toast({ title: 'Deposit updated successfully' });
     },
     onError: () => {
-      toast({ title: 'שגיאה בעדכון הפיקדון', variant: 'destructive' });
+      toast({ title: 'Error updating deposit', variant: 'destructive' });
     }
   });
 

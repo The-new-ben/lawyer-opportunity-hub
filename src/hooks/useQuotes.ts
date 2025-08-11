@@ -51,10 +51,10 @@ export const useQuotes = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quotes'] });
-      toast({ title: 'הצעת מחיר נשלחה בהצלחה' });
+      toast({ title: 'Quote sent successfully' });
     },
     onError: (error) => {
-      toast({ title: 'שגיאה בשליחת הצעת מחיר', variant: 'destructive', description: error instanceof Error ? error.message : String(error) });
+      toast({ title: 'Error sending quote', variant: 'destructive', description: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -72,10 +72,10 @@ export const useQuotes = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quotes'] });
-      toast({ title: 'הצעת מחיר עודכנה בהצלחה' });
+      toast({ title: 'Quote updated successfully' });
     },
     onError: () => {
-      toast({ title: 'שגיאה בעדכון הצעת מחיר', variant: 'destructive' });
+      toast({ title: 'Error updating quote', variant: 'destructive' });
     }
   });
 
@@ -93,10 +93,10 @@ export const useQuotes = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quotes'] });
-      toast({ title: 'הצעת המחיר אושרה בהצלחה' });
+      toast({ title: 'Quote approved successfully' });
     },
     onError: () => {
-      toast({ title: 'שגיאה באישור הצעת מחיר', variant: 'destructive' });
+      toast({ title: 'Error approving quote', variant: 'destructive' });
     }
   });
 
@@ -114,10 +114,10 @@ export const useQuotes = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quotes'] });
-      toast({ title: 'הצעת המחיר נדחתה' });
+      toast({ title: 'Quote rejected' });
     },
     onError: () => {
-      toast({ title: 'שגיאה בדחיית הצעת מחיר', variant: 'destructive' });
+      toast({ title: 'Error rejecting quote', variant: 'destructive' });
     }
   });
 

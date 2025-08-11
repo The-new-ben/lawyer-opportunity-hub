@@ -68,10 +68,10 @@ export const useMatching = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['lawyer-specializations'] });
-      toast.success('התמחות נוספה בהצלחה');
+      toast.success('Specialization added successfully');
     },
     onError: () => {
-      toast.error('שגיאה בהוספת התמחות');
+      toast.error('Error adding specialization');
     }
   });
 
@@ -90,10 +90,10 @@ export const useMatching = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['lawyer-specializations'] });
-      toast.success('התמחות עודכנה בהצלחה');
+      toast.success('Specialization updated successfully');
     },
     onError: () => {
-      toast.error('שגיאה בעדכון התמחות');
+      toast.error('Error updating specialization');
     }
   });
 
@@ -109,10 +109,10 @@ export const useMatching = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['lawyer-specializations'] });
-      toast.success('התמחות נמחקה בהצלחה');
+      toast.success('Specialization deleted successfully');
     },
     onError: () => {
-      toast.error('שגיאה במחיקת התמחות');
+      toast.error('Error deleting specialization');
     }
   });
 

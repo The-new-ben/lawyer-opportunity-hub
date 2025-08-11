@@ -45,13 +45,13 @@ export const useRatings = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ratings'] });
       toast({
-        title: "דירוג נשלח בהצלחה",
-        description: "תודה על המשוב שלך!",
+        title: "Rating submitted successfully",
+        description: "Thank you for your feedback!",
       });
     },
     onError: (error) => {
       toast({
-        title: "שגיאה בשליחת דירוג",
+        title: "Error submitting rating",
         description: error.message,
         variant: "destructive",
       });
