@@ -11,6 +11,7 @@ import { FileText, Calendar, User, DollarSign, Clock, ArrowRight, Edit } from 'l
 import { MeetingScheduler } from '@/components/MeetingScheduler';
 import { RatingDialog } from '@/components/RatingDialog';
 import { toast } from '@/components/ui/use-toast';
+import { syncNote } from '@/lib/api';
 
 export default function CaseDetails() {
   const { id } = useParams<{ id: string }>();
@@ -59,10 +60,10 @@ export default function CaseDetails() {
         id: caseData.id,
         values: {
           status: editData.status,
-          priority: editData.priority,
-          notes: editData.notes
+          priority: editData.priority
         }
       });
+      await syncNote({ caseId: caseData.id, content: editData.notes });
       setIsEditing(false);
     } catch (error) {
       toast({
