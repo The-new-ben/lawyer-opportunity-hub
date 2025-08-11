@@ -56,14 +56,36 @@ serve(async (req) => {
       if (lawyerError || !lawyer) {
         throw lawyerError || new Error('Lawyer not found');
       }
+      let sendToLead = true;
+      const { data: leadProfile } = await supabaseAdmin
+        .from('profiles')
+        .select('id')
+        .eq('phone', lead.customer_phone)
+        .maybeSingle();
+      if (leadProfile) {
+        const { data: leadPref } = await supabaseAdmin
+          .from('notification_preferences')
+          .select('whatsapp')
+          .eq('profile_id', leadProfile.id)
+          .maybeSingle();
+        if (leadPref && leadPref.whatsapp === false) {
+          sendToLead = false;
+        }
+      }
+      if (sendToLead) {
+        await sendWhatsAppMessage(
+          lead.customer_phone,
+          `Hello ${lead.customer_name}, your lead has been assigned to lawyer ${lawyer.profiles.full_name}`
+        );
+      }
 
-      await sendWhatsAppMessage(
-        lead.customer_phone,
-        `Hello ${lead.customer_name}, your lead has been assigned to lawyer ${lawyer.profiles.full_name}`
-      );
-
+      const { data: lawyerPref } = await supabaseAdmin
+        .from('notification_preferences')
+        .select('whatsapp')
+        .eq('profile_id', lawyer.profile_id)
+        .maybeSingle();
       const lawyerPhone = lawyer.profiles.whatsapp_number || lawyer.profiles.phone;
-      if (lawyerPhone) {
+      if (lawyerPhone && lawyerPref?.whatsapp !== false) {
         await sendWhatsAppMessage(
           lawyerPhone,
           `New lead: ${lead.customer_name} Phone: ${lead.customer_phone}`
@@ -116,13 +138,16 @@ serve(async (req) => {
       if (meeting?.lawyers?.profiles) {
         const lawyerProfile = meeting.lawyers.profiles;
         const whatsappNumber = lawyerProfile.whatsapp_number || lawyerProfile.phone;
-        
-        if (whatsappNumber) {
+        const { data: pref } = await supabaseAdmin
+          .from('notification_preferences')
+          .select('whatsapp')
+          .eq('profile_id', meeting.lawyers.profile_id)
+          .maybeSingle();
+        if (whatsappNumber && pref?.whatsapp !== false) {
           const lawyerMessage = `New meeting scheduled:
 📅 Date: ${meetingDate}
 🕐 Time: ${meetingTime}
 📍 Location: ${meeting.location || 'Not specified'}`;
-
           await sendWhatsAppMessage(whatsappNumber, lawyerMessage);
           logStep("Meeting notification sent to lawyer");
         }
@@ -131,21 +156,42 @@ serve(async (req) => {
       // Send to client
       let clientPhone = null;
       let clientName = '';
+      let clientProfileId = null;
 
       if (meeting.cases?.profiles) {
         clientPhone = meeting.cases.profiles.whatsapp_number || meeting.cases.profiles.phone;
         clientName = meeting.cases.profiles.full_name;
+        clientProfileId = meeting.cases.client_id;
       } else if (meeting.leads) {
         clientPhone = meeting.leads.customer_phone;
         clientName = meeting.leads.customer_name;
+        const { data: profile } = await supabaseAdmin
+          .from('profiles')
+          .select('id')
+          .eq('phone', meeting.leads.customer_phone)
+          .maybeSingle();
+        if (profile) {
+          clientProfileId = profile.id;
+        }
       }
 
-      if (clientPhone) {
+      let sendToClient = true;
+      if (clientProfileId) {
+        const { data: clientPref } = await supabaseAdmin
+          .from('notification_preferences')
+          .select('whatsapp')
+          .eq('profile_id', clientProfileId)
+          .maybeSingle();
+        if (clientPref && clientPref.whatsapp === false) {
+          sendToClient = false;
+        }
+      }
+
+      if (clientPhone && sendToClient) {
         const clientMessage = `Hello ${clientName}, a meeting has been scheduled for you:
 📅 Date: ${meetingDate}
 🕐 Time: ${meetingTime}
 📍 Location: ${meeting.location || 'To be sent separately'}`;
-
         await sendWhatsAppMessage(clientPhone, clientMessage);
         logStep("Meeting notification sent to client");
       }

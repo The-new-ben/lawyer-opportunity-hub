@@ -11,6 +11,7 @@ import { toast } from "@/components/ui/use-toast"
 import { useState, useEffect } from "react"
 import { useRole } from "@/hooks/useRole"
 import { WhatsAppConfigManager, ROLE_WHATSAPP_FEATURES, type WhatsAppSettings } from "@/lib/whatsappConfig"
+import { supabase } from "@/integrations/supabase/client"
 
 const Settings = () => {
   const { role } = useRole();
@@ -18,10 +19,49 @@ const Settings = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const roleFeatures = WhatsAppConfigManager.getRoleFeatures(role || 'customer');
+  const [notificationPrefs, setNotificationPrefs] = useState({
+    email: true,
+    whatsapp: true,
+    inApp: true,
+    digest: 'realtime'
+  });
+  const [isSavingPrefs, setIsSavingPrefs] = useState(false);
 
   useEffect(() => {
     // Load saved WhatsApp settings
     setWhatsappSettings(WhatsAppConfigManager.loadSettings());
+  }, []);
+
+  useEffect(() => {
+    const loadPrefs = async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      const user = userData?.user;
+      if (!user) {
+        return;
+      }
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+      if (!profile) {
+        return;
+      }
+      const { data: prefs } = await supabase
+        .from('notification_preferences')
+        .select('email, whatsapp, in_app, digest_frequency')
+        .eq('profile_id', profile.id)
+        .maybeSingle();
+      if (prefs) {
+        setNotificationPrefs({
+          email: prefs.email ?? true,
+          whatsapp: prefs.whatsapp ?? true,
+          inApp: prefs.in_app ?? true,
+          digest: prefs.digest_frequency ?? 'realtime'
+        });
+      }
+    };
+    loadPrefs();
   }, []);
 
   const saveWhatsAppSettings = async () => {
@@ -58,6 +98,42 @@ const Settings = () => {
       });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const saveNotificationPrefs = async () => {
+    setIsSavingPrefs(true);
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const user = userData?.user;
+      if (!user) {
+        return;
+      }
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+      if (!profile) {
+        return;
+      }
+      const { error } = await supabase
+        .from('notification_preferences')
+        .upsert({
+          profile_id: profile.id,
+          email: notificationPrefs.email,
+          whatsapp: notificationPrefs.whatsapp,
+          in_app: notificationPrefs.inApp,
+          digest_frequency: notificationPrefs.digest
+        });
+      if (error) {
+        throw error;
+      }
+      toast({ title: 'העדפות נשמרו', description: 'הגדרות ההודעות עודכנו' });
+    } catch {
+      toast({ title: 'שגיאה בשמירה', description: 'לא ניתן לעדכן העדפות', variant: 'destructive' });
+    } finally {
+      setIsSavingPrefs(false);
     }
   };
 
@@ -202,39 +278,46 @@ const Settings = () => {
             </div>
             <CardDescription>התאם את העדפות ההודעות שלך</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="emailNotifications">הודעות במייל</Label>
-                <p className="text-sm text-muted-foreground">קבל הודעות על לידים חדשים במייל</p>
-              </div>
-              <Switch id="emailNotifications" defaultChecked />
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="prefEmail">Email</Label>
+              <p className="text-sm text-muted-foreground">Receive updates by email</p>
             </div>
-            <Separator />
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="smsNotifications">הודעות SMS</Label>
-                <p className="text-sm text-muted-foreground">קבל הודעות דחופות ב-SMS</p>
-              </div>
-              <Switch id="smsNotifications" defaultChecked />
+            <Switch id="prefEmail" checked={notificationPrefs.email} onCheckedChange={(v) => setNotificationPrefs(p => ({ ...p, email: v }))} />
+          </div>
+          <Separator />
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="prefWhatsapp">WhatsApp</Label>
+              <p className="text-sm text-muted-foreground">Messages via WhatsApp</p>
             </div>
-            <Separator />
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="pushNotifications">הודעות דחיפה</Label>
-                <p className="text-sm text-muted-foreground">הודעות במערכת</p>
-              </div>
-              <Switch id="pushNotifications" defaultChecked />
+            <Switch id="prefWhatsapp" checked={notificationPrefs.whatsapp} onCheckedChange={(v) => setNotificationPrefs(p => ({ ...p, whatsapp: v }))} />
+          </div>
+          <Separator />
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="prefInApp">In-app</Label>
+              <p className="text-sm text-muted-foreground">Show notifications inside the app</p>
             </div>
-            <Separator />
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="weeklyReport">דוח שבועי</Label>
-                <p className="text-sm text-muted-foreground">קבל סיכום שבועי במייל</p>
-              </div>
-              <Switch id="weeklyReport" />
-            </div>
-          </CardContent>
+            <Switch id="prefInApp" checked={notificationPrefs.inApp} onCheckedChange={(v) => setNotificationPrefs(p => ({ ...p, inApp: v }))} />
+          </div>
+          <Separator />
+          <div className="space-y-2">
+            <Label htmlFor="digestFreq">Digest frequency</Label>
+            <Select value={notificationPrefs.digest} onValueChange={(v) => setNotificationPrefs(p => ({ ...p, digest: v }))}>
+              <SelectTrigger id="digestFreq">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="realtime">Immediate</SelectItem>
+                <SelectItem value="daily">Daily</SelectItem>
+                <SelectItem value="weekly">Weekly</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <Button onClick={saveNotificationPrefs} disabled={isSavingPrefs}>Save</Button>
+        </CardContent>
         </Card>
 
         {/* WhatsApp Integration */}
