@@ -7,6 +7,9 @@ import SimulationArena from "@/components/court/SimulationArena";
 import ProcedureGuide from "@/components/court/ProcedureGuide";
 import ProfessionalsCatalog from "@/components/court/ProfessionalsCatalog";
 import EvidencePrep from "@/components/court/EvidencePrep";
+import PartyInterrogation from "@/components/court/PartyInterrogation";
+import CaseBuilder from "@/components/court/CaseBuilder";
+import RoleMatchFinder from "@/components/court/RoleMatchFinder";
 
 const GlobalCourt = () => {
   useEffect(() => {
@@ -103,7 +106,33 @@ const GlobalCourt = () => {
             <ProcedureGuide />
           </CardContent>
         </Card>
-      </section>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Party Interrogation (AI)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <PartyInterrogation />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Case Builder (IRAC + Timeline)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CaseBuilder />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Role Match Finder (AI)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RoleMatchFinder />
+          </CardContent>
+        </Card>
     </main>
   );
 };

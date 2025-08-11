@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { HfInference } from "https://esm.sh/@huggingface/inference@2.3.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,9 +11,137 @@ interface IntakePayload {
   action: "intake";
   locale?: string;
   context?: Record<string, unknown>;
+  model?: string;
 }
 
-type RequestBody = IntakePayload;
+interface PartyInterrogationPayload {
+  action: "party_interrogation";
+  locale?: string;
+  context?: {
+    summary?: string;
+    parties?: Array<{ name?: string; role?: string }>;
+    jurisdiction?: string;
+  };
+  model?: string;
+}
+
+interface CaseBuilderPayload {
+  action: "case_builder";
+  locale?: string;
+  context?: {
+    summary?: string;
+    goal?: string;
+    jurisdiction?: string;
+    category?: string;
+  };
+  model?: string;
+}
+
+interface RoleMatchPayload {
+  action: "role_match";
+  locale?: string;
+  context?: {
+    summary?: string;
+    category?: string;
+    location?: string;
+    languages?: string[];
+  };
+  model?: string;
+}
+
+type RequestBody = IntakePayload | PartyInterrogationPayload | CaseBuilderPayload | RoleMatchPayload;
+
+const MODEL_URL = Deno.env.get("MODEL_SERVER_URL");
+const MODEL_API_KEY = Deno.env.get("MODEL_API_KEY");
+const HF_TOKEN = Deno.env.get("HUGGING_FACE_ACCESS_TOKEN");
+const HF_DEFAULT_MODEL = Deno.env.get("HF_DEFAULT_TEXT_MODEL") || "google/gemma-2-2b-it";
+
+async function callModelViaProxy(task: string, locale: string, context: Record<string, unknown>) {
+  if (!(MODEL_URL && MODEL_API_KEY)) return null;
+  try {
+    const resp = await fetch(MODEL_URL, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${MODEL_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ task, locale, context }),
+    });
+    if (!resp.ok) throw new Error(`Model server error: ${resp.status}`);
+    return await resp.json();
+  } catch (err) {
+    console.error("Model proxy failed:", err);
+    return null;
+  }
+}
+
+async function callModelViaHF(prompt: string, model?: string) {
+  if (!HF_TOKEN) return null;
+  try {
+    const hf = new HfInference(HF_TOKEN);
+    const res = await hf.textGeneration({
+      model: model || HF_DEFAULT_MODEL,
+      inputs: prompt,
+      parameters: { max_new_tokens: 600, temperature: 0.3, return_full_text: false }
+    });
+    // res.generated_text may contain extra text; we return raw and let caller parse JSON if needed
+    // @ts-ignore - types vary across models
+    return typeof res === "string" ? res : res.generated_text ?? JSON.stringify(res);
+  } catch (err) {
+    console.error("HF generation failed:", err);
+    return null;
+  }
+}
+
+function buildInterrogationPrompt(locale: string, ctx: PartyInterrogationPayload["context"]) {
+  const summary = ctx?.summary || "";
+  const parties = (ctx?.parties || [{ name: "Plaintiff", role: "Plaintiff" }, { name: "Defendant", role: "Defendant" }])
+    .map(p => `${p.role || "Party"}: ${p.name || "N/A"}`).join("; ");
+  return `You are a legal assistant creating structured interrogation questions for a court case. Locale: ${locale}.
+Case summary: ${summary}
+Parties: ${parties}
+Return STRICT JSON with: { "parties": [ { "role": string, "name": string, "questions": [ { "id": string, "text": string, "type": "text" | "choice", "options"?: string[] } ] } ] }`;
+}
+
+function buildCasePlanPrompt(locale: string, ctx: CaseBuilderPayload["context"]) {
+  const summary = ctx?.summary || "";
+  const goal = ctx?.goal || "Fair resolution";
+  const jurisdiction = ctx?.jurisdiction || "Global";
+  const category = ctx?.category || "General";
+  return `You are a senior legal analyst. Build a concise case plan in ${locale}. Input:
+- Jurisdiction: ${jurisdiction}
+- Category: ${category}
+- Goal: ${goal}
+- Summary: ${summary}
+Respond in STRICT JSON with keys:
+{
+  "irac": {"issue": string, "rule": string, "application": string, "conclusion": string},
+  "evidence_checklist": [ {"name": string, "required": boolean, "notes": string} ],
+  "timeline": [ {"milestone": string, "due_in_days": number} ],
+  "risks": string[]
+}`;
+}
+
+function buildRoleMatchPrompt(locale: string, ctx: RoleMatchPayload["context"]) {
+  const summary = ctx?.summary || "";
+  const category = ctx?.category || "General";
+  const location = ctx?.location || "Global";
+  const langs = (ctx?.languages || ["English"]).join(", ");
+  return `You help match legal professionals (lawyers, mediators, judges, jurors) to a case.
+Input: {category: ${category}, location: ${location}, languages: ${langs}, summary: ${summary}}
+Respond in STRICT JSON with:
+{
+  "filters": {
+    "specializations": string[],
+    "min_experience": number,
+    "jurisdictions": string[],
+    "languages": string[],
+    "qualities": string[]
+  },
+  "search_prompt": string,
+  "roles": { "lawyer": string[], "mediator": string[], "judge": string[], "juror": string[] }
+}`;
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -21,31 +150,26 @@ serve(async (req) => {
 
   try {
     const body = (await req.json()) as RequestBody;
+    const locale = (body as any).locale ?? "en";
 
     if (body.action === "intake") {
-      // OSS model proxy (optional)
-      const MODEL_URL = Deno.env.get("MODEL_SERVER_URL");
-      const MODEL_API_KEY = Deno.env.get("MODEL_API_KEY");
+      // Try OSS proxy first (backwards-compatible with existing UI)
+      const proxied = await callModelViaProxy("intake_questions", locale, body.context ?? {});
+      if (proxied) {
+        return new Response(JSON.stringify(proxied), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
 
-      if (MODEL_URL && MODEL_API_KEY) {
+      // Try HF fallback
+      const prompt = `Create an IRAC-based intake in ${locale}.
+Return STRICT JSON with keys: intro, method, questions (array of {id,text,type,options?}), disclaimer.
+Consider context: ${JSON.stringify(body.context || {})}`;
+      const gen = await callModelViaHF(prompt, (body as any).model);
+      if (gen) {
         try {
-          const resp = await fetch(MODEL_URL, {
-            method: "POST",
-            headers: {
-              "Authorization": `Bearer ${MODEL_API_KEY}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              task: "intake_questions",
-              locale: body.locale ?? "en",
-              context: body.context ?? {},
-            }),
-          });
-          if (!resp.ok) throw new Error(`Model server error: ${resp.status}`);
-          const data = await resp.json();
-          return new Response(JSON.stringify(data), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        } catch (err) {
-          console.error("Model call failed, falling back to mock:", err);
+          const parsed = typeof gen === "string" ? JSON.parse(gen) : gen;
+          return new Response(JSON.stringify(parsed), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        } catch {
+          // If model returned non-JSON, fall through to mock
         }
       }
 
@@ -62,14 +186,102 @@ serve(async (req) => {
         disclaimer: "AI assistance is not legal advice. Please consult qualified counsel.",
       };
 
-      return new Response(JSON.stringify(mock), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(JSON.stringify(mock), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    if (body.action === "party_interrogation") {
+      const b = body as PartyInterrogationPayload;
+      const prompt = buildInterrogationPrompt(locale, b.context);
+      const gen = await callModelViaHF(prompt, b.model);
+      if (gen) {
+        try {
+          const parsed = typeof gen === "string" ? JSON.parse(gen) : gen;
+          return new Response(JSON.stringify(parsed), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        } catch (e) {
+          console.warn("Interrogation JSON parse failed, returning template:", e);
+        }
+      }
+      const fallback = {
+        parties: (b.context?.parties || [{ name: "Plaintiff", role: "Plaintiff" }, { name: "Defendant", role: "Defendant" }]).map((p, idx) => ({
+          role: p.role || "Party",
+          name: p.name || `Party ${idx + 1}`,
+          questions: [
+            { id: `q${idx + 1}-1`, text: "Please state your relationship to the dispute.", type: "text" },
+            { id: `q${idx + 1}-2`, text: "List any documents supporting your claims.", type: "text" },
+          ],
+        })),
+      };
+      return new Response(JSON.stringify(fallback), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    if (body.action === "case_builder") {
+      const b = body as CaseBuilderPayload;
+      const prompt = buildCasePlanPrompt(locale, b.context);
+      const gen = await callModelViaHF(prompt, b.model);
+      if (gen) {
+        try {
+          const parsed = typeof gen === "string" ? JSON.parse(gen) : gen;
+          return new Response(JSON.stringify(parsed), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        } catch (e) {
+          console.warn("Case plan JSON parse failed, returning template:", e);
+        }
+      }
+      const fallback = {
+        irac: {
+          issue: "What is the primary legal question in dispute?",
+          rule: "Cite the applicable statutes, regulations, or precedents.",
+          application: "Apply rules to facts, noting strengths/weaknesses.",
+          conclusion: "Concise likely outcome under current facts/rules.",
+        },
+        evidence_checklist: [
+          { name: "Contracts/Agreements", required: true, notes: "Signed copies, amendments" },
+          { name: "Communications", required: true, notes: "Email, chat logs, letters" },
+          { name: "Witness Statements", required: false, notes: "Signed summaries" },
+        ],
+        timeline: [
+          { milestone: "File initial claim/response", due_in_days: 14 },
+          { milestone: "Exchange discovery/evidence", due_in_days: 30 },
+          { milestone: "Pre-hearing conference", due_in_days: 45 },
+        ],
+        risks: ["Jurisdictional challenges", "Insufficient documentation"],
+      };
+      return new Response(JSON.stringify(fallback), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    if (body.action === "role_match") {
+      const b = body as RoleMatchPayload;
+      const prompt = buildRoleMatchPrompt(locale, b.context);
+      const gen = await callModelViaHF(prompt, b.model);
+      if (gen) {
+        try {
+          const parsed = typeof gen === "string" ? JSON.parse(gen) : gen;
+          return new Response(JSON.stringify(parsed), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        } catch (e) {
+          console.warn("Role match JSON parse failed, returning template:", e);
+        }
+      }
+      const fallback = {
+        filters: {
+          specializations: ["International Law", "Arbitration"],
+          min_experience: 5,
+          jurisdictions: [b.context?.location || "Global"],
+          languages: b.context?.languages || ["English"],
+          qualities: ["Impartiality", "Clear communication"],
+        },
+        search_prompt: "Experienced international arbitration counsel near Global, multilingual.",
+        roles: {
+          lawyer: ["International arbitration counsel"],
+          mediator: ["Cross-border commercial mediator"],
+          judge: ["Arbitrator with public international law background"],
+          juror: ["Community representative with no conflicts"],
+        },
+      };
+      return new Response(JSON.stringify(fallback), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     return new Response(JSON.stringify({ error: "Unsupported action" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (error) {
     console.error("ai-court-orchestrator error:", error);
-    return new Response(JSON.stringify({ error: error.message ?? "Unknown error" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ error: (error as Error).message ?? "Unknown error" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });
