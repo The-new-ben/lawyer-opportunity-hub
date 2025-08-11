@@ -7,117 +7,27 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders })
 
   try {
-    // Create Supabase client with service role key for admin access
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return new Response(JSON.stringify({ error: 'Supabase configuration missing' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY')
+
+    if (!supabaseUrl || !supabaseServiceKey || !openaiApiKey) {
+      return new Response(JSON.stringify({ error: 'Missing configuration' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    const { caseId, notes } = await req.json()
 
-    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openaiApiKey) {
-      return new Response(JSON.stringify({ error: 'OpenAI API key not configured' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+    if (!caseId || !notes) {
+      return new Response(JSON.stringify({ error: 'caseId and notes required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
-    // Get data from database
-    const [leadsResult, casesResult, lawyersResult] = await Promise.all([
-      supabase.from('leads').select('*').order('created_at', { ascending: false }).limit(50),
-      supabase.from('cases').select('*').order('created_at', { ascending: false }).limit(30),
-      supabase.from('lawyers').select('*').eq('is_active', true).limit(20)
-    ]);
+    const prompt = `You are a legal assistant. From the hearing notes below, create minutes and a list of action items in JSON format with keys "minutes" and "action_items".\n\n${notes}`
 
-    if (leadsResult.error || casesResult.error || lawyersResult.error) {
-      console.error('Database error:', { leadsResult, casesResult, lawyersResult });
-      return new Response(JSON.stringify({ error: 'Failed to fetch data' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    const leads = leadsResult.data || [];
-    const cases = casesResult.data || [];
-    const lawyers = lawyersResult.data || [];
-
-    // Prepare data summary for AI
-    const dataSummary = {
-      leads: {
-        total: leads.length,
-        new: leads.filter(l => l.status === 'new').length,
-        converted: leads.filter(l => l.status === 'converted').length,
-        highPriority: leads.filter(l => l.urgency_level === 'high').length,
-        categories: leads.reduce((acc, lead) => {
-          acc[lead.legal_category] = (acc[lead.legal_category] || 0) + 1;
-          return acc;
-        }, {} as Record<string, number>),
-        sources: leads.reduce((acc, lead) => {
-          acc[lead.source] = (acc[lead.source] || 0) + 1;
-          return acc;
-        }, {} as Record<string, number>)
-      },
-      cases: {
-        total: cases.length,
-        open: cases.filter(c => c.status === 'open').length,
-        closed: cases.filter(c => c.status === 'closed').length,
-        inProgress: cases.filter(c => c.status === 'in_progress').length,
-        categories: cases.reduce((acc, case_) => {
-          acc[case_.legal_category] = (acc[case_.legal_category] || 0) + 1;
-          return acc;
-        }, {} as Record<string, number>)
-      },
-      lawyers: {
-        total: lawyers.length,
-        available: lawyers.filter(l => l.availability_status === 'available').length,
-        busy: lawyers.filter(l => l.availability_status === 'busy').length,
-        specializations: lawyers.flatMap(l => l.specializations || []).reduce((acc, spec) => {
-          acc[spec] = (acc[spec] || 0) + 1;
-          return acc;
-        }, {} as Record<string, number>)
-      }
-    };
-
-    // Generate AI summary
-    const prompt = `
-You are an AI assistant for a law firm. Analyze the following data and write a concise, actionable summary in English:
-
-Lead data:
-- Total: ${dataSummary.leads.total}
-- New: ${dataSummary.leads.new}
-- Converted: ${dataSummary.leads.converted}
-- High priority: ${dataSummary.leads.highPriority}
-- Categories: ${JSON.stringify(dataSummary.leads.categories)}
-- Sources: ${JSON.stringify(dataSummary.leads.sources)}
-
-Case data:
-- Total: ${dataSummary.cases.total}
-- Open: ${dataSummary.cases.open}
-- Closed: ${dataSummary.cases.closed}
-- In progress: ${dataSummary.cases.inProgress}
-- Categories: ${JSON.stringify(dataSummary.cases.categories)}
-
-Lawyer data:
-- Total: ${dataSummary.lawyers.total}
-- Available: ${dataSummary.lawyers.available}
-- Busy: ${dataSummary.lawyers.busy}
-- Specializations: ${JSON.stringify(dataSummary.lawyers.specializations)}
-
-Write a 3-4 sentence summary with key insights and action recommendations.
-`;
-
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const aiRes = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${openaiApiKey}`,
@@ -126,45 +36,39 @@ Write a 3-4 sentence summary with key insights and action recommendations.
       body: JSON.stringify({
         model: 'gpt-4o-mini',
         messages: [
-          {
-            role: 'system',
-            content: 'You are a business advisor for a law firm. Provide concise, practical insights in English.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
+          { role: 'system', content: 'Return JSON with minutes and action_items.' },
+          { role: 'user', content: prompt }
         ],
-        max_tokens: 300,
-        temperature: 0.3
+        max_tokens: 500,
+        temperature: 0.2
       }),
-    });
+    })
 
-    if (!response.ok) {
-      const error = await response.text();
-      console.error('OpenAI API error:', error);
-      return new Response(JSON.stringify({ error: 'AI summary failed' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+    if (!aiRes.ok) {
+      const text = await aiRes.text()
+      return new Response(JSON.stringify({ error: text }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
-    const aiResponse = await response.json();
-    const summary = aiResponse.choices[0].message.content;
+    const aiJson = await aiRes.json()
+    let content = aiJson.choices[0].message.content
+    let minutes = ''
+    let actionItems: string[] = []
+    try {
+      const parsed = JSON.parse(content)
+      minutes = parsed.minutes || ''
+      actionItems = parsed.action_items || []
+    } catch {
+      minutes = content
+    }
 
-    return new Response(JSON.stringify({ 
-      summary,
-      data: dataSummary,
-      timestamp: new Date().toISOString()
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    const combined = `Minutes:\n${minutes}\n\nAction Items:\n${actionItems.map(i => '- ' + i).join('\n')}`
+    const { error } = await supabase.from('cases').update({ summary: combined, reviewed: false }).eq('id', caseId)
+    if (error) {
+      return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
 
-  } catch (error) {
-    console.error('Error in ai-summary function:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    return new Response(JSON.stringify({ minutes, action_items: actionItems }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+  } catch (err) {
+    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
   }
 })

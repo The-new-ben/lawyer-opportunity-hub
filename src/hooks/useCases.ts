@@ -14,11 +14,13 @@ export type Case = {
   notes?: string;
   estimated_budget?: number;
   legal_category: string;
+  summary?: string | null;
+  reviewed: boolean;
   created_at: string;
   updated_at: string;
 };
 
-export type NewCase = Omit<Case, 'id' | 'created_at' | 'updated_at'>;
+export type NewCase = Omit<Case, 'id' | 'created_at' | 'updated_at' | 'summary' | 'reviewed'>;
 
 export const useCases = () => {
   const queryClient = useQueryClient();
