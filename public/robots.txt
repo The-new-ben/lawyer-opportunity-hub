@@ -12,3 +12,6 @@ Allow: /
 
 User-agent: *
 Allow: /
+
+Sitemap: https://jus-tice.com/sitemap.xml
+Host: jus-tice.com

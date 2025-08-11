@@ -32,7 +32,22 @@ const leadSchema = z
 app.use(express.json());
 app.use(
   cors({
-    origin: process.env.CLIENT_ORIGIN || '*',
+    origin: (origin, callback) => {
+      const allowed = [
+        'https://jus-tice.com',
+        'https://www.jus-tice.com',
+        process.env.CLIENT_ORIGIN,
+        process.env.NETLIFY_URL,
+        process.env.DEPLOY_URL,
+        'http://localhost:3000',
+        'http://localhost:5173',
+      ].filter(Boolean);
+      if (!origin || allowed.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true,
   })
 );
 
