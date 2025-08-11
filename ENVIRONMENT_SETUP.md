@@ -12,6 +12,17 @@ This guide covers the complete environment setup for the Lawyer Opportunity Hub 
 
 ## Environment Configuration
 
+### Environment Variables
+
+1. Copy `.env.example` to `.env.local`.
+2. Provide values for:
+   - `SUPABASE_URL`
+   - `SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `NETLIFY_AUTH_TOKEN`
+3. In Netlify, add these variables in **Site settings > Build & deploy > Environment**.
+4. In GitHub, create repository secrets with the same names under **Settings > Secrets and variables > Actions** so CI and Netlify builds use identical configuration.
+
 ### 1. Supabase Configuration
 
 The Supabase client is pre-configured in `src/integrations/supabase/client.ts`:
