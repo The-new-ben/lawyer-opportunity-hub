@@ -59,4 +59,13 @@ export default defineConfig(({ mode }) => ({
       "@tanstack/react-query",
     ],
   },
+  test: {
+    environment: "jsdom",
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "json", "html"],
+      include: ["src/components/ThemeToggle.tsx", "src/hooks/use-mobile.tsx"],
+      thresholds: { lines: 80, statements: 80, branches: 80, functions: 80 },
+    },
+  },
 }));

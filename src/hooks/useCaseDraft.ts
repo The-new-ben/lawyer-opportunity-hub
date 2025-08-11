@@ -46,7 +46,7 @@ export function useCaseDraft() {
 
   useEffect(() => {
     const onUpdate = (e: Event) => {
-      // @ts-ignore detail exists
+      // @ts-expect-error detail exists
       const next = (e as CustomEvent).detail as CaseDraft | undefined;
       setDraft(next ?? readCaseDraft());
     };
