@@ -56,12 +56,10 @@ const GlobalCourt = () => {
             {showAdditionalTools ? (
               <>
                 <ChevronUp className="w-4 h-4 mr-2" />
-                Hide Additional Tools
               </>
             ) : (
               <>
                 <ChevronDown className="w-4 h-4 mr-2" />
-                Show Additional Tools
               </>
             )}
           </Button>

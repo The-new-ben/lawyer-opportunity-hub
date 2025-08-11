@@ -400,7 +400,7 @@ const SmartIntakePortal = () => {
               <Lock className="w-8 h-8 text-primary" />
             </div>
             <CardTitle className="text-2xl">Access Required</CardTitle>
-            <p className="text-muted-foreground">Enter password to access the Smart Legal Portal</p>
+            <p className="text-muted-foreground">Password required</p>
           </CardHeader>
           <CardContent className="space-y-4">
             <Input
