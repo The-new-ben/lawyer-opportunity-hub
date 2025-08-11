@@ -49,3 +49,6 @@ verify_jwt = false
 
 [functions.stripe-webhook]
 verify_jwt = false
+
+[functions.ai-court-orchestrator]
+verify_jwt = false

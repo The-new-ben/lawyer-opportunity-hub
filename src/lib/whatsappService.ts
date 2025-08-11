@@ -214,7 +214,12 @@ export function getWhatsAppStatus(): {
   enabled: boolean;
   configured: boolean;
   withinBusinessHours: boolean;
-  settings: WhatsAppSettings;
+  settings: {
+    hasToken: boolean;
+    hasPhoneId: boolean;
+    autoRespond: boolean;
+    businessHoursEnabled: boolean;
+  };
 } {
   const settings = WhatsAppConfigManager.loadSettings();
   const { phoneId, token, enabled } = getWhatsAppConfig();
