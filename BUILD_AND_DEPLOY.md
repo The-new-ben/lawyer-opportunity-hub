@@ -110,6 +110,19 @@ After deployment, test these key features:
 2. **API Errors**: Check Supabase Secrets configuration
 3. **Performance**: Monitor Edge Function logs
 
+## Repository Sync
+
+Manual steps to update the `upstream-main` folder from the external mirror:
+
+1. Trigger the **sync-from-external** workflow in GitHub Actions.
+2. Verify a pull request titled `Sync external: The-new-ben/lawyer-opportunity-hub → upstream-main` is created.
+3. Review the PR and merge or cherry-pick changes as required.
+
+### Sync Troubleshooting
+
+- **No Pull Request created:** Ensure the `MIRROR_TOKEN` secret is configured in repository settings.
+- **Conflicts while merging:** Re-run the workflow after resolving conflicts locally.
+
 ## Security Checklist
 
 - ✅ No API keys in source code
