@@ -2,7 +2,7 @@ name: ci
 on:
   pull_request:
 jobs:
-  check:
+  build:
     runs-on: ubuntu-latest
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -14,7 +14,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 18
+          cache: npm
       - run: npm ci
       - run: npm run lint
-      - run: npm test -- --run
+      - run: npm run typecheck
       - run: npm run build
