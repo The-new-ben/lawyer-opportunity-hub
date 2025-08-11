@@ -7,22 +7,33 @@
 
 import axios from "axios";
 import { toast } from "@/components/ui/use-toast";
+import { WhatsAppConfigManager, type WhatsAppSettings } from "./whatsappConfig";
 
 const WHATSAPP_BASE_URL = "https://graph.facebook.com/v19.0";
-// Read configuration from environment variables (Vite or Node)
-const PHONE_NUMBER_ID =
-  (import.meta as { env: Record<string, string | undefined> }).env
-    .VITE_WHATSAPP_PHONE_ID || "";
-const ACCESS_TOKEN =
-  (import.meta as { env: Record<string, string | undefined> }).env
-    .VITE_WHATSAPP_TOKEN || "";
 
-if (!PHONE_NUMBER_ID || !ACCESS_TOKEN) {
-  toast({
-    title: 'WhatsApp environment variables missing',
-    description: 'Messaging disabled',
-    variant: 'destructive'
-  });
+// Helper functions to get WhatsApp configuration
+function getWhatsAppConfig() {
+  const settings = WhatsAppConfigManager.loadSettings();
+  return { phoneId: settings.phoneId, token: settings.token, enabled: settings.enabled };
+}
+
+function validateWhatsAppConfig() {
+  const { phoneId, token, enabled } = getWhatsAppConfig();
+  
+  if (!enabled) {
+    console.log('WhatsApp service is disabled');
+    return false;
+  }
+  
+  if (!phoneId || !token) {
+    toast({
+      title: 'WhatsApp not configured',
+      description: 'Please configure WhatsApp details on the settings page',
+      variant: 'destructive'
+    });
+    return false;
+  }
+  return true;
 }
 
 // Send a simple text message to a recipient phone number. You must ensure that the
@@ -32,15 +43,12 @@ export async function sendWhatsAppTextMessage(
   to: string,
   text: string
 ): Promise<void> {
-  if (!PHONE_NUMBER_ID || !ACCESS_TOKEN) {
-    toast({
-      title: 'WhatsApp message skipped',
-      description: 'Environment variables missing',
-      variant: 'destructive'
-    });
-    return; // Skip silently
+  if (!validateWhatsAppConfig()) {
+    return; // Skip silently if not configured
   }
-  const url = `${WHATSAPP_BASE_URL}/${PHONE_NUMBER_ID}/messages`;
+  
+  const { phoneId, token } = getWhatsAppConfig();
+  const url = `${WHATSAPP_BASE_URL}/${phoneId}/messages`;
   const payload = {
     messaging_product: "whatsapp",
     recipient_type: "individual",
@@ -51,7 +59,7 @@ export async function sendWhatsAppTextMessage(
   try {
     await axios.post(url, payload, {
       headers: {
-        Authorization: `Bearer ${ACCESS_TOKEN}`,
+        Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
     });
@@ -73,15 +81,12 @@ export async function sendWhatsAppTemplateMessage(
   templateName: string,
   language: string = "he" // default to Hebrew
 ): Promise<void> {
-  if (!PHONE_NUMBER_ID || !ACCESS_TOKEN) {
-    toast({
-      title: 'WhatsApp template message skipped',
-      description: 'Environment variables missing',
-      variant: 'destructive'
-    });
-    return;
+  if (!validateWhatsAppConfig()) {
+    return; // Skip silently if not configured
   }
-  const url = `${WHATSAPP_BASE_URL}/${PHONE_NUMBER_ID}/messages`;
+  
+  const { phoneId, token } = getWhatsAppConfig();
+  const url = `${WHATSAPP_BASE_URL}/${phoneId}/messages`;
   const payload = {
     messaging_product: "whatsapp",
     to,
@@ -94,7 +99,7 @@ export async function sendWhatsAppTemplateMessage(
   try {
     await axios.post(url, payload, {
       headers: {
-        Authorization: `Bearer ${ACCESS_TOKEN}`,
+        Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
     });
@@ -106,4 +111,123 @@ export async function sendWhatsAppTemplateMessage(
     });
     throw error;
   }
+}
+
+// Send a custom template message with variables
+export async function sendWhatsAppCustomTemplate(
+  to: string,
+  templateKey: keyof WhatsAppSettings['templates'],
+  variables: Record<string, string> = {}
+): Promise<void> {
+  if (!validateWhatsAppConfig()) {
+    return;
+  }
+
+  const settings = WhatsAppConfigManager.loadSettings();
+  const template = settings.templates[templateKey];
+  
+  if (!template) {
+    toast({
+      title: 'Template error',
+      description: `Template '${String(templateKey)}' not found`,
+      variant: 'destructive'
+    });
+    return;
+  }
+
+  const messageText = WhatsAppConfigManager.formatTemplate(template, variables);
+  await sendWhatsAppTextMessage(to, messageText);
+}
+
+// Send new lead acknowledgment
+export async function sendNewLeadAcknowledgment(to: string): Promise<void> {
+  await sendWhatsAppCustomTemplate(to, 'newLead');
+}
+
+// Send lead assignment notification
+export async function sendLeadAssignmentNotification(
+  to: string,
+  customerName: string,
+  lawyerName: string,
+  lawyerPhone: string
+): Promise<void> {
+  await sendWhatsAppCustomTemplate(to, 'leadAssigned', {
+    customerName,
+    lawyerName,
+    lawyerPhone
+  });
+}
+
+// Send meeting scheduled notification
+export async function sendMeetingScheduledNotification(
+  to: string,
+  date: string,
+  time: string,
+  location: string
+): Promise<void> {
+  await sendWhatsAppCustomTemplate(to, 'meetingScheduled', {
+    date,
+    time,
+    location
+  });
+}
+
+// Send payment confirmation
+export async function sendPaymentConfirmation(
+  to: string,
+  amount: string,
+  orderId: string
+): Promise<void> {
+  await sendWhatsAppCustomTemplate(to, 'paymentConfirmation', {
+    amount,
+    orderId
+  });
+}
+
+// Send case update notification
+export async function sendCaseUpdateNotification(
+  to: string,
+  caseTitle: string,
+  updateMessage: string,
+  contactInfo: string
+): Promise<void> {
+  await sendWhatsAppCustomTemplate(to, 'caseUpdate', {
+    caseTitle,
+    updateMessage,
+    contactInfo
+  });
+}
+
+// Check if WhatsApp service is enabled and within business hours
+export function isWhatsAppAvailable(): boolean {
+  const settings = WhatsAppConfigManager.loadSettings();
+  
+  if (!settings.enabled) {
+    return false;
+  }
+
+  return WhatsAppConfigManager.isWithinBusinessHours(settings);
+}
+
+// Get WhatsApp service status
+export function getWhatsAppStatus(): {
+  enabled: boolean;
+  configured: boolean;
+  withinBusinessHours: boolean;
+  settings: WhatsAppSettings;
+} {
+  const settings = WhatsAppConfigManager.loadSettings();
+  const { phoneId, token, enabled } = getWhatsAppConfig();
+  
+  return {
+    enabled,
+    configured: !!(phoneId && token),
+    withinBusinessHours: WhatsAppConfigManager.isWithinBusinessHours(settings),
+    settings: {
+      hasToken: !!token,
+      hasPhoneId: !!phoneId,
+      autoRespond: settings.autoRespond,
+      businessHoursEnabled: settings.businessHours.enabled
+    }
+  };
 }

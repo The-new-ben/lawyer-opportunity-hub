@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const logStep = (step: string, details?: any) => {
+const logStep = (step: string, details?: Record<string, unknown>) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[ASSIGNMENT-NOTIFICATION] ${step}${detailsStr}`);
 };
@@ -59,14 +59,14 @@ serve(async (req) => {
 
       await sendWhatsAppMessage(
         lead.customer_phone,
-        `שלום ${lead.customer_name}, הליד שלך הוקצה לעורך דין ${lawyer.profiles.full_name}`
+        `Hello ${lead.customer_name}, your lead has been assigned to lawyer ${lawyer.profiles.full_name}`
       );
 
       const lawyerPhone = lawyer.profiles.whatsapp_number || lawyer.profiles.phone;
       if (lawyerPhone) {
         await sendWhatsAppMessage(
           lawyerPhone,
-          `ליד חדש: ${lead.customer_name} טלפון: ${lead.customer_phone}`
+          `New lead: ${lead.customer_name} Phone: ${lead.customer_phone}`
         );
       }
     }
@@ -118,10 +118,10 @@ serve(async (req) => {
         const whatsappNumber = lawyerProfile.whatsapp_number || lawyerProfile.phone;
         
         if (whatsappNumber) {
-          const lawyerMessage = `פגישה חדשה נקבעה:
-📅 תאריך: ${meetingDate}
-🕐 שעה: ${meetingTime}
-📍 מיקום: ${meeting.location || 'לא צוין'}`;
+          const lawyerMessage = `New meeting scheduled:
+📅 Date: ${meetingDate}
+🕐 Time: ${meetingTime}
+📍 Location: ${meeting.location || 'Not specified'}`;
 
           await sendWhatsAppMessage(whatsappNumber, lawyerMessage);
           logStep("Meeting notification sent to lawyer");
@@ -141,10 +141,10 @@ serve(async (req) => {
       }
 
       if (clientPhone) {
-        const clientMessage = `שלום ${clientName}, נקבעה לך פגישה:
-📅 תאריך: ${meetingDate}
-🕐 שעה: ${meetingTime}
-📍 מיקום: ${meeting.location || 'יישלח אליך בנפרד'}`;
+        const clientMessage = `Hello ${clientName}, a meeting has been scheduled for you:
+📅 Date: ${meetingDate}
+🕐 Time: ${meetingTime}
+📍 Location: ${meeting.location || 'To be sent separately'}`;
 
         await sendWhatsAppMessage(clientPhone, clientMessage);
         logStep("Meeting notification sent to client");
@@ -170,7 +170,11 @@ async function sendWhatsAppMessage(phoneNumber: string, message: string) {
   const whatsappPhoneId = Deno.env.get('WHATSAPP_PHONE_ID');
 
   if (!whatsappToken || !whatsappPhoneId) {
-    throw new Error('WhatsApp credentials not configured');
+    console.warn(
+      `[ASSIGNMENT-NOTIFICATION] Missing WhatsApp credentials, skipping message`,
+      { phoneNumber },
+    );
+    return;
   }
 
   const cleanedPhone = phoneNumber.replace(/\D/g, '');

@@ -91,30 +91,30 @@ serve(async (req) => {
 
     // Generate AI summary
     const prompt = `
-אתה עוזר AI למשרד עורכי דין. נתח את הנתונים הבאים וכתב סיכום קצר ומעשי בעברית:
+You are an AI assistant for a law firm. Analyze the following data and write a concise, actionable summary in English:
 
-נתוני לידים:
-- סה"כ: ${dataSummary.leads.total}
-- חדשים: ${dataSummary.leads.new}
-- הומרו: ${dataSummary.leads.converted}
-- עדיפות גבוהה: ${dataSummary.leads.highPriority}
-- קטגוריות: ${JSON.stringify(dataSummary.leads.categories)}
-- מקורות: ${JSON.stringify(dataSummary.leads.sources)}
+Lead data:
+- Total: ${dataSummary.leads.total}
+- New: ${dataSummary.leads.new}
+- Converted: ${dataSummary.leads.converted}
+- High priority: ${dataSummary.leads.highPriority}
+- Categories: ${JSON.stringify(dataSummary.leads.categories)}
+- Sources: ${JSON.stringify(dataSummary.leads.sources)}
 
-נתוני תיקים:
-- סה"כ: ${dataSummary.cases.total}
-- פתוחים: ${dataSummary.cases.open}
-- סגורים: ${dataSummary.cases.closed}
-- בטיפול: ${dataSummary.cases.inProgress}
-- קטגוריות: ${JSON.stringify(dataSummary.cases.categories)}
+Case data:
+- Total: ${dataSummary.cases.total}
+- Open: ${dataSummary.cases.open}
+- Closed: ${dataSummary.cases.closed}
+- In progress: ${dataSummary.cases.inProgress}
+- Categories: ${JSON.stringify(dataSummary.cases.categories)}
 
-נתוני עורכי דין:
-- סה"כ: ${dataSummary.lawyers.total}
-- זמינים: ${dataSummary.lawyers.available}
-- עסוקים: ${dataSummary.lawyers.busy}
-- התמחויות: ${JSON.stringify(dataSummary.lawyers.specializations)}
+Lawyer data:
+- Total: ${dataSummary.lawyers.total}
+- Available: ${dataSummary.lawyers.available}
+- Busy: ${dataSummary.lawyers.busy}
+- Specializations: ${JSON.stringify(dataSummary.lawyers.specializations)}
 
-כתב סיכום של 3-4 משפטים עם תובנות מפתח והמלצות לפעולה.
+Write a 3-4 sentence summary with key insights and action recommendations.
 `;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -128,7 +128,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'אתה יועץ עסקי למשרד עורכי דין. תן תובנות מעשיות וקצרות בעברית.'
+            content: 'You are a business advisor for a law firm. Provide concise, practical insights in English.'
           },
           {
             role: 'user',

@@ -30,17 +30,17 @@ export const useLeads = () => {
     try {
       const parsed = JSON.parse(text);
       return {
-        legal_category: parsed.legal_category || 'אזרחי',
+        legal_category: parsed.legal_category || 'civil',
         urgency_level: parsed.urgency_level || 'medium'
       };
     } catch {
-      return { legal_category: 'אזרחי', urgency_level: 'medium' };
+      return { legal_category: 'civil', urgency_level: 'medium' };
     }
   };
 
   const addLead = useMutation({
     mutationFn: async (newLead: Partial<NewLead>) => {
-      let classification = { legal_category: 'אזרחי', urgency_level: 'medium' };
+      let classification = { legal_category: 'civil', urgency_level: 'medium' };
       
       if (newLead.case_description) {
         try {
@@ -80,7 +80,7 @@ export const useLeads = () => {
     },
     onSuccess: async (data) => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });
-      toast({ title: 'ליד חדש נוצר בהצלחה' });
+      toast({ title: 'Lead created successfully' });
       
       // Trigger automated pipeline
       try {
@@ -88,12 +88,12 @@ export const useLeads = () => {
           body: { leadId: data.id }
         });
         toast({
-          title: 'Pipeline אוטומטי הופעל עבור ליד',
+          title: 'Automatic pipeline triggered for lead',
           description: String(data.id)
         });
       } catch (error) {
         toast({
-          title: 'Pipeline אוטומטי נכשל',
+          title: 'Automatic pipeline failed',
           description: error instanceof Error ? error.message : String(error),
           variant: 'destructive'
         });
@@ -103,7 +103,7 @@ export const useLeads = () => {
           try {
             await sendWhatsAppTextMessage(
               data.customer_phone,
-              `שלום ${data.customer_name}, בקשתך התקבלה במערכת ואנו נחזור אליך בהקדם. תחום: ${data.legal_category}`
+              `Hello ${data.customer_name}, your request has been received and we will get back to you soon. Category: ${data.legal_category}`
             );
           } catch (error) {
             toast({
@@ -116,7 +116,7 @@ export const useLeads = () => {
       }
     },
     onError: (error) => {
-      toast({ title: 'שגיאה ביצירת ליד', variant: 'destructive', description: error instanceof Error ? error.message : String(error) });
+      toast({ title: 'Error creating lead', variant: 'destructive', description: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -134,10 +134,10 @@ export const useLeads = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });
-      toast({ title: 'הליד עודכן בהצלחה' });
+      toast({ title: 'Lead updated successfully' });
     },
     onError: () => {
-      toast({ title: 'שגיאה בעדכון הליד', variant: 'destructive' });
+      toast({ title: 'Error updating lead', variant: 'destructive' });
     }
   });
 
@@ -166,7 +166,7 @@ export const useLeads = () => {
         .insert({
           client_id: client.id,
           assigned_lawyer_id: lead.assigned_lawyer_id,
-          title: `טיפול ב${lead.legal_category} עבור ${lead.customer_name}`,
+          title: `Handling ${lead.legal_category} for ${lead.customer_name}`,
           legal_category: lead.legal_category,
           estimated_budget: lead.estimated_budget,
           status: 'open',
@@ -194,15 +194,15 @@ export const useLeads = () => {
       queryClient.invalidateQueries({ queryKey: ['clients'] });
       queryClient.invalidateQueries({ queryKey: ['cases'] });
       toast({ 
-        title: 'הליד הומר ללקוח בהצלחה',
-        description: `נוצר תיק חדש: ${data.case.title}`
+        title: 'Lead converted to client successfully',
+        description: `Created new case: ${data.case.title}`
       });
     },
     onError: (error) => {
-      toast({ 
-        title: 'שגיאה בהמרת הליד ללקוח', 
-        variant: 'destructive', 
-        description: error instanceof Error ? error.message : String(error) 
+      toast({
+        title: 'Error converting lead to client',
+        variant: 'destructive',
+        description: error instanceof Error ? error.message : String(error)
       });
     }
   });

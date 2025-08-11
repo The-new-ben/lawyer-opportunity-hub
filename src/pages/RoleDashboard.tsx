@@ -9,7 +9,7 @@ export default function RoleDashboard() {
 
   useEffect(() => {
     if (loading) return
-    if (role === "admin") navigate("/dashboard/admin", { replace: true })
+    if (role === "admin") navigate("/court", { replace: true })
     else if (role === "lawyer") navigate("/dashboard/lawyer", { replace: true })
     else if (role === "client") navigate("/cases", { replace: true })
     else if (role === "supplier") navigate("/supplier/leads", { replace: true })

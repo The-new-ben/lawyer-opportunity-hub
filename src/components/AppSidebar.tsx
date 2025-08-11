@@ -31,26 +31,26 @@ interface AppSidebarProps {
   onOpenChange: (open: boolean) => void
 }
 
-// הגדרת פריטי תפריט לפי תפקיד - מבטיח מפתחות ייחודיים
+// Define menu items per role - ensures unique keys
 const getMenuItems = (role: string | null) => {
-  // מפתחות ייחודיים עם prefix לכל קטגוריה
+  // Unique keys with prefix for each category
   const allMenuItems: MenuItem[] = [
-    { title: "דשבורד", url: "/dashboard", icon: Home, roles: ["admin", "lawyer", "customer", "supplier"] },
-    { title: "לידים", url: "/leads", icon: Target, roles: ["lawyer", "admin"] },
-    { title: "לידים", url: "/supplier/leads", icon: Target, roles: ["supplier", "admin"] },
-    { title: "לקוחות", url: "/clients", icon: Users, roles: ["lawyer", "admin"] },
-    { title: "תיקים", url: "/cases", icon: FileText, roles: ["lawyer", "admin", "customer"] },
-    { title: "התאמות", url: "/matching", icon: Search, roles: ["lawyer", "admin"] },
-    { title: "לוח זמנים", url: "/calendar", icon: Calendar, roles: ["lawyer", "admin", "customer"] },
-    { title: "פורטל לידים", url: "/leads-portal", icon: Package, roles: ["supplier", "admin"] },
-    { title: "ניהול מערכת", url: "/admin", icon: Shield, roles: ["admin"] },
+    { title: "Dashboard", url: "/dashboard", icon: Home, roles: ["admin", "lawyer", "customer", "supplier"] },
+    { title: "Leads", url: "/leads", icon: Target, roles: ["lawyer", "admin"] },
+    { title: "Leads", url: "/supplier/leads", icon: Target, roles: ["supplier", "admin"] },
+    { title: "Clients", url: "/clients", icon: Users, roles: ["lawyer", "admin"] },
+    { title: "Cases", url: "/cases", icon: FileText, roles: ["lawyer", "admin", "customer"] },
+    { title: "Matching", url: "/matching", icon: Search, roles: ["lawyer", "admin"] },
+    { title: "Calendar", url: "/calendar", icon: Calendar, roles: ["lawyer", "admin", "customer"] },
+    { title: "Leads Portal", url: "/leads-portal", icon: Package, roles: ["supplier", "admin"] },
+    { title: "System Management", url: "/admin", icon: Shield, roles: ["admin"] },
   ]
 
   const businessItems: MenuItem[] = [
-    { title: "תשלומים", url: "/payments", icon: CreditCard, roles: ["lawyer", "admin", "customer"] },
-    { title: "עמלות", url: "/commissions", icon: DollarSign, roles: ["lawyer", "admin"] },
-    { title: "דוחות", url: "/reports", icon: BarChart3, roles: ["lawyer", "admin"] },
-    { title: "פיצ'רים", url: "/features", icon: FileText, roles: ["admin"] },
+    { title: "Payments", url: "/payments", icon: CreditCard, roles: ["lawyer", "admin", "customer"] },
+    { title: "Commissions", url: "/commissions", icon: DollarSign, roles: ["lawyer", "admin"] },
+    { title: "Reports", url: "/reports", icon: BarChart3, roles: ["lawyer", "admin"] },
+    { title: "Features", url: "/features", icon: FileText, roles: ["admin"] },
   ]
 
   const mainItems = allMenuItems.filter((item) => !role || item.roles.includes(role))
@@ -65,7 +65,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ open, onOpenChange }) =>
   const { mainItems, businessItems } = getMenuItems(role)
 
   const navCls = (active: boolean) =>
-    `flex items-center gap-2 rounded-md p-2 text-right transition-colors ${
+    `flex items-center gap-2 rounded-md p-2 text-left transition-colors ${
       active
         ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
         : "hover:bg-sidebar-accent/50"
@@ -74,27 +74,27 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ open, onOpenChange }) =>
   const renderLinks = (items: MenuItem[]) =>
     items.map(({ title, url, icon: Icon }) => (
       <NavLink key={`${url}-${title}`} to={url} end className={({ isActive }) => navCls(isActive)}>
-        <Icon className="h-4 w-4 md:h-5 md:w-5 ml-2" />
+        <Icon className="h-4 w-4 md:h-5 md:w-5 mr-2" />
         <span className="flex-1">{title}</span>
       </NavLink>
     ))
 
   const content = (
-    <div className="h-full w-64 bg-sidebar text-sidebar-foreground p-4 space-y-6" dir="rtl">
+    <div className="h-full w-64 bg-sidebar text-sidebar-foreground p-4 space-y-6">
       <div className="space-y-2">
-        <h2 className="text-sm font-semibold">ניהול ראשי</h2>
+        <h2 className="text-sm font-semibold">Main Management</h2>
         <nav className="space-y-1">{renderLinks(mainItems)}</nav>
       </div>
 
       <div className="space-y-2">
-        <h2 className="text-sm font-semibold">עסקי ופיננסי</h2>
+        <h2 className="text-sm font-semibold">Business & Finance</h2>
         <nav className="space-y-1">{renderLinks(businessItems)}</nav>
       </div>
 
       <div className="mt-auto space-y-1">
         <NavLink to="/settings" className={({ isActive }) => navCls(isActive)}>
-          <Settings className="h-4 w-4 md:h-5 md:w-5 ml-2" />
-          <span className="flex-1">הגדרות</span>
+          <Settings className="h-4 w-4 md:h-5 md:w-5 mr-2" />
+          <span className="flex-1">Settings</span>
         </NavLink>
       </div>
     </div>
@@ -111,7 +111,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ open, onOpenChange }) =>
   }
 
   return (
-    <aside className="hidden md:block border-l" dir="rtl">
+    <aside className="hidden md:block border-l">
       {content}
     </aside>
   )

@@ -73,8 +73,8 @@ serve(async (req) => {
           price_data: {
             currency: "ils",
             product_data: { 
-              name: description || `${paymentType === 'deposit' ? 'פיקדון' : 'תשלום'} לתיק משפטי`,
-              description: `${paymentType === 'deposit' ? 'פיקדון' : 'תשלום'} עבור ${caseId ? `תיק ${caseId}` : `ליד ${leadId}`}`
+              name: description || `${paymentType === 'deposit' ? 'Deposit' : 'Payment'} for legal case`,
+              description: `${paymentType === 'deposit' ? 'Deposit' : 'Payment'} for ${caseId ? `case ${caseId}` : `lead ${leadId}`}`
             },
             unit_amount: Math.round(amount * 100), // Convert to agorot
           },

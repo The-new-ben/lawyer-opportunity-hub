@@ -5,9 +5,134 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
-import { User, Bell, Shield, Globe, CreditCard, Database, MessageSquare, Bot } from "lucide-react"
+import { Textarea } from "@/components/ui/textarea"
+import { User, Bell, Shield, Globe, CreditCard, Database, MessageSquare, Bot, Settings as SettingsIcon, CheckCircle, Loader2 } from "lucide-react"
+import { toast } from "@/components/ui/use-toast"
+import { useState, useEffect } from "react"
+import { useRole } from "@/hooks/useRole"
+import { WhatsAppConfigManager, ROLE_WHATSAPP_FEATURES, type WhatsAppSettings } from "@/lib/whatsappConfig"
 
 const Settings = () => {
+  const { role } = useRole();
+  const [whatsappSettings, setWhatsappSettings] = useState<WhatsAppSettings>(WhatsAppConfigManager.loadSettings());
+  const [isSaving, setIsSaving] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
+  const roleFeatures = WhatsAppConfigManager.getRoleFeatures(role || 'customer');
+
+  useEffect(() => {
+    // Load saved WhatsApp settings
+    setWhatsappSettings(WhatsAppConfigManager.loadSettings());
+  }, []);
+
+  const saveWhatsAppSettings = async () => {
+    setIsSaving(true);
+    
+    try {
+      console.log('שומר הגדרות WhatsApp:', whatsappSettings);
+      
+      const validation = WhatsAppConfigManager.validateSettings(whatsappSettings);
+      
+      if (!validation.valid) {
+        toast({
+          title: "❌ שגיאות בהגדרות",
+          description: validation.errors.join(', '),
+          variant: "destructive"
+        });
+        setIsSaving(false);
+        return;
+      }
+
+      WhatsAppConfigManager.saveSettings(whatsappSettings);
+      console.log('הגדרות WhatsApp נשמרו בהצלחה');
+      
+      toast({
+        title: "✅ הגדרות WhatsApp נשמרו בהצלחה!",
+        description: "ההגדרות החדשות יחולו מיידית ונשמרו בזיכרון המקומי",
+      });
+    } catch (error) {
+      console.error('שגיאה בשמירת הגדרות WhatsApp:', error);
+      toast({
+        title: "❌ שגיאה בשמירה",
+        description: "לא ניתן לשמור את ההגדרות. נסה שוב.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const testWhatsAppConnection = async () => {
+    if (!whatsappSettings.token || !whatsappSettings.phoneId) {
+      toast({
+        title: "❌ חסרים פרטים",
+        description: "אנא הזן את Token ו-Phone ID לפני בדיקת החיבור",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsTesting(true);
+    console.log('בודק חיבור WhatsApp...');
+    console.log('Token length:', whatsappSettings.token.length);
+    console.log('Phone ID:', whatsappSettings.phoneId);
+    
+    try {
+      await WhatsAppConfigManager.testConnection(
+        whatsappSettings.token, 
+        whatsappSettings.phoneId
+      );
+
+      console.log('✅ חיבור WhatsApp הצליח');
+      toast({
+        title: "✅ חיבור WhatsApp תקין!",
+        description: "החיבור לשירות WhatsApp Business הצליח בהצלחה. ה-API Token ו-Phone ID תקינים.",
+      });
+    } catch (error: any) {
+      console.error('❌ שגיאה בבדיקת חיבור WhatsApp:', error);
+      
+      // מציג הודעת שגיאה מפורטת בהתאם לסוג הבעיה
+      let errorTitle = "❌ כשל בחיבור WhatsApp";
+      let errorDescription = "שגיאה לא ידועה";
+      
+      if (error?.message) {
+        errorDescription = error.message;
+        
+        // הוספת הנחיות ספציפיות לפי סוג השגיאה
+        if (error.message.includes('API Token')) {
+          errorTitle = "❌ בעיה ב-API Token";
+          errorDescription = `${error.message}\n\nהשגת Token:\n1. היכנס ל-Meta Business Manager\n2. בחר את האפליקציה שלך\n3. לך ל-WhatsApp > Configuration\n4. העתק את ה-Token`;
+        } else if (error.message.includes('Phone Number ID')) {
+          errorTitle = "❌ בעיה ב-Phone Number ID";
+          errorDescription = `${error.message}\n\nהשגת Phone ID:\n1. היכנס ל-Meta Business Manager\n2. לך ל-WhatsApp > API Setup\n3. העתק את ה-Phone Number ID (מספרי בלבד)`;
+        } else if (error.message.includes('401')) {
+          errorTitle = "❌ אימות נכשל";
+          errorDescription = "ה-API Token לא תקין או פג תוקף. אנא בדוק שהעתקת את ה-Token המלא והנכון.";
+        } else if (error.message.includes('404')) {
+          errorTitle = "❌ Phone ID לא נמצא";
+          errorDescription = "ה-Phone Number ID לא קיים במערכת. אנא וודא שהזנת את המספר הנכון.";
+        } else if (error.message.includes('403')) {
+          errorTitle = "❌ חסרות הרשאות";
+          errorDescription = "לא מוגדרות הרשאות מתאימות ב-WhatsApp Business. בדוק הגדרות ההרשאות באפליקציה.";
+        }
+      }
+      
+      // בדיקה אם זו שגיאת רשת
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        errorTitle = "❌ בעיית חיבור לאינטרנט";
+        errorDescription = "לא ניתן להתחבר לשרתי Facebook. אנא בדוק את חיבור האינטרנט ונסה שוב.";
+      }
+      
+      toast({
+        title: errorTitle,
+        description: errorDescription,
+        variant: "destructive",
+        duration: 8000 // זמן ארוך יותר להודעות שגיאה מפורטות
+      });
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
   return (
     <div className="p-6 space-y-6 flex flex-col overflow-x-hidden">
       <div className="flex justify-between items-center">
@@ -117,29 +242,206 @@ const Settings = () => {
           <CardHeader>
             <div className="flex items-center gap-2">
               <MessageSquare className="h-5 w-5" />
-              <CardTitle>אינטגרציית WhatsApp</CardTitle>
+              <CardTitle>אינטגרציית WhatsApp Business</CardTitle>
             </div>
-            <CardDescription>הגדרת חיבור לשירות WhatsApp Business</CardDescription>
+            <CardDescription>
+              הגדרת חיבור לשירות WhatsApp Business עבור {role === 'admin' ? 'אדמינים' : role === 'lawyer' ? 'עורכי דין' : 'לקוחות'}
+            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="whatsappToken">WhatsApp API Token</Label>
-                <Input id="whatsappToken" type="password" placeholder="הכנס את ה-token שלך" />
+          <CardContent className="space-y-6">
+            {/* Basic Configuration */}
+            <div className="space-y-4">
+              <h4 className="text-sm font-medium">הגדרות בסיס</h4>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="whatsappToken">WhatsApp API Token</Label>
+                  <Input 
+                    id="whatsappToken" 
+                    type="password" 
+                    placeholder="הכנס את ה-token שלך"
+                    value={whatsappSettings.token}
+                    onChange={(e) => setWhatsappSettings(prev => ({ ...prev, token: e.target.value }))}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    ניתן לקבל מ-Meta Business Manager
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="whatsappPhoneId">Phone Number ID</Label>
+                  <Input 
+                    id="whatsappPhoneId" 
+                    placeholder="הכנס את ה-Phone ID"
+                    value={whatsappSettings.phoneId}
+                    onChange={(e) => setWhatsappSettings(prev => ({ ...prev, phoneId: e.target.value }))}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    מזהה מספר הטלפון במטא
+                  </p>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="whatsappPhoneId">Phone Number ID</Label>
-                <Input id="whatsappPhoneId" placeholder="הכנס את ה-Phone ID" />
+              
+              <div className="flex gap-2">
+                <Button 
+                  onClick={saveWhatsAppSettings} 
+                  disabled={isSaving}
+                  className="min-w-[140px]"
+                >
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      שומר...
+                    </>
+                  ) : (
+                    '💾 שמור הגדרות WhatsApp'
+                  )}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={testWhatsAppConnection}
+                  disabled={isTesting}
+                  className="min-w-[120px]"
+                >
+                  {isTesting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      בודק...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      🔍 בדוק חיבור
+                    </>
+                  )}
+                </Button>
               </div>
             </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="whatsappEnabled">הפעל WhatsApp</Label>
-                <p className="text-sm text-muted-foreground">שלח הודעות אוטומטיות ללקוחות</p>
+
+            <Separator />
+
+            {/* Advanced Settings for Admins and Lawyers */}
+            {(role === 'admin' || role === 'lawyer') && (
+              <div className="space-y-4">
+                <h4 className="text-sm font-medium">הגדרות מתקדמות</h4>
+                
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="whatsappEnabled">הפעל שירות WhatsApp</Label>
+                      <p className="text-sm text-muted-foreground">הפעל/השבת שליחת הודעות אוטומטיות</p>
+                    </div>
+                    <Switch 
+                      id="whatsappEnabled" 
+                      checked={whatsappSettings.enabled}
+                      onCheckedChange={(checked) => setWhatsappSettings(prev => ({ ...prev, enabled: checked }))}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="autoRespond">מענה אוטומטי</Label>
+                      <p className="text-sm text-muted-foreground">השב אוטומטית להודעות נכנסות</p>
+                    </div>
+                    <Switch 
+                      id="autoRespond" 
+                      checked={whatsappSettings.autoRespond}
+                      onCheckedChange={(checked) => setWhatsappSettings(prev => ({ ...prev, autoRespond: checked }))}
+                    />
+                  </div>
+
+                  {role === 'admin' && (
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label htmlFor="autoAssignLeads">השמה אוטומטית של לידים</Label>
+                        <p className="text-sm text-muted-foreground">הקצה לידים חדשים מווטצאפ לעורכי דין זמינים</p>
+                      </div>
+                      <Switch 
+                        id="autoAssignLeads" 
+                        checked={whatsappSettings.autoAssignLeads}
+                        onCheckedChange={(checked) => setWhatsappSettings(prev => ({ ...prev, autoAssignLeads: checked }))}
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
-              <Switch id="whatsappEnabled" />
-            </div>
-            <Button>שמור הגדרות WhatsApp</Button>
+            )}
+
+            <Separator />
+
+            {/* Message Templates */}
+            {(role === 'admin' || role === 'lawyer') && (
+              <div className="space-y-4">
+                <h4 className="text-sm font-medium">תבניות הודעות</h4>
+                
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="newLeadTemplate">תבנית ללקוח חדש</Label>
+                    <Textarea 
+                      id="newLeadTemplate"
+                      placeholder="הודעה שתישלח ללקוח חדש שפנה דרך WhatsApp"
+                      value={whatsappSettings.templates.newLead}
+                      onChange={(e) => setWhatsappSettings(prev => ({
+                        ...prev,
+                        templates: { ...prev.templates, newLead: e.target.value }
+                      }))}
+                      rows={3}
+                    />
+                  </div>
+
+                  {role === 'admin' && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="leadAssignedTemplate">תבנית להשמת לקוח לעורך דין</Label>
+                        <Textarea 
+                          id="leadAssignedTemplate"
+                          placeholder="הודעה שתישלח כשלקוח מושם לעורך דין. משתנים זמינים: {customerName}, {lawyerName}, {lawyerPhone}"
+                          value={whatsappSettings.templates.leadAssigned}
+                          onChange={(e) => setWhatsappSettings(prev => ({
+                            ...prev,
+                            templates: { ...prev.templates, leadAssigned: e.target.value }
+                          }))}
+                          rows={3}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="meetingTemplate">תבנית לקביעת פגישה</Label>
+                        <Textarea 
+                          id="meetingTemplate"
+                          placeholder="הודעה שתישלח כשפגישה נקבעת. משתנים זמינים: {date}, {time}, {location}"
+                          value={whatsappSettings.templates.meetingScheduled}
+                          onChange={(e) => setWhatsappSettings(prev => ({
+                            ...prev,
+                            templates: { ...prev.templates, meetingScheduled: e.target.value }
+                          }))}
+                          rows={3}
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Customer View */}
+            {role === 'customer' && (
+              <div className="p-4 bg-muted/50 rounded-lg">
+                <h4 className="text-sm font-medium mb-2">WhatsApp עבור לקוחות</h4>
+                <p className="text-sm text-muted-foreground">
+                  כלקוח, תוכל לקבל הודעות עדכון דרך WhatsApp על מצב התיק שלך, פגישות שנקבעו ועדכונים חשובים אחרים.
+                  ההגדרות מתנהלות על ידי עורך הדין או המשרד.
+                </p>
+                <div className="mt-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">קבלת הודעות עדכון</span>
+                    <Switch defaultChecked />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">תזכורות לפגישות</span>
+                    <Switch defaultChecked />
+                  </div>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 

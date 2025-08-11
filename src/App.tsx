@@ -29,6 +29,8 @@ import LeadsPortal from "./pages/LeadsPortal";
 import MeetingScheduler from "./pages/MeetingScheduler";
 import RoleDashboard from "./pages/RoleDashboard";
 import SupplierLeads from "./pages/SupplierLeads";
+import CourtDashboard from "./pages/court/CourtDashboard";
+import CourtSessionDetails from "./pages/court/CourtSessionDetails";
 import { RoleBasedRoute } from "./components/RoleBasedRoute";
 
 const App = () => (
@@ -121,16 +123,26 @@ const App = () => (
                               <Features />
                             </RoleBasedRoute>
                           } />
-                          <Route path="/matching" element={
-                            <RoleBasedRoute allowedRoles={['lawyer', 'admin']}>
-                              <Matching />
-                            </RoleBasedRoute>
-                          } />
-                          <Route path="/meeting-scheduler" element={<MeetingScheduler />} />
-                          <Route path="*" element={<NotFound />} />
-                        </Routes>
-                      </Layout>
-                    </ProtectedRoute>
+                            <Route path="/matching" element={
+                              <RoleBasedRoute allowedRoles={['lawyer', 'admin']}>
+                                <Matching />
+                              </RoleBasedRoute>
+                            } />
+                            <Route path="/court" element={
+                              <RoleBasedRoute allowedRoles={['admin']}>
+                                <CourtDashboard />
+                              </RoleBasedRoute>
+                            } />
+                            <Route path="/court/session/:id" element={
+                              <RoleBasedRoute allowedRoles={['admin']}>
+                                <CourtSessionDetails />
+                              </RoleBasedRoute>
+                            } />
+                            <Route path="/meeting-scheduler" element={<MeetingScheduler />} />
+                            <Route path="*" element={<NotFound />} />
+                          </Routes>
+                        </Layout>
+                      </ProtectedRoute>
                   }
                 />
               </Routes>
