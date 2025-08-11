@@ -1,0 +1,45 @@
+name: mirror-to-external
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  mirror:
+    if: ${{ secrets.MIRROR_TOKEN != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Push to external or open PR
+        env:
+          MIRROR_TOKEN: ${{ secrets.MIRROR_TOKEN }}
+        run: |
+          set -e
+          set -o pipefail
+          git remote add mirror https://x-access-token:${MIRROR_TOKEN}@github.com/The-new-ben/project.git
+
+          echo "Attempting fast-forward push to external main..."
+          if git push mirror HEAD:main; then
+            echo "Mirror push succeeded"
+            exit 0
+          fi
+
+          echo "Fast-forward push failed (diverged). Creating PR on external..."
+          BR="from-lovable-$(git rev-parse --short HEAD)"
+          git push mirror HEAD:$BR
+
+          echo "Opening PR on external repository..."
+          curl -s -X POST \
+            -H "Authorization: token ${MIRROR_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/The-new-ben/project/pulls \
+            -d "$(jq -n --arg head "$BR" --arg base "main" --arg title "Sync from Lovable" --arg body "Automated mirror from Lovable repo → external main. Review and merge." '{title:$title, head:$head, base:$base, body:$body}')" | tee /dev/null
