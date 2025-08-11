@@ -11,10 +11,10 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  console.log('🚀 התחלת הדמיה מלאה של שרשרת פעולות');
+  console.log('🚀 Starting full demo workflow');
 
   try {
-    // יצירת לקוח Supabase עם service role key
+    // Create Supabase client with service role key
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -26,25 +26,25 @@ serve(async (req) => {
       summary: { successful: 0, total: 0 }
     };
 
-    // שלב 1: הדמיית הודעת WhatsApp נכנסת
-    console.log('📱 שלב 1: הדמיית הודעת WhatsApp');
+    // Step 1: simulate incoming WhatsApp message
+    console.log('📱 Step 1: simulate WhatsApp message');
     const demoMessage = {
       from: "+972501234567",
-      content: "שלום, אני צריך עורך דין לטיפול בתיק גירושין דחוף! יש לי תקציב של 20,000 שקל",
-      customerName: "יוסי דמו"
+      content: "Hello, I need a lawyer for an urgent divorce case! My budget is 20,000 shekels",
+      customerName: "Yossi Demo"
     };
     
     results.steps.push({
       step: 1,
-      name: "הודעת WhatsApp נכנסת",
+      name: "Incoming WhatsApp message",
       status: "success",
       data: demoMessage
     });
     results.summary.successful++;
     results.summary.total++;
 
-    // שלב 2: יצירת ליד במאגר
-    console.log('📝 שלב 2: יצירת ליד');
+    // Step 2: create lead in database
+    console.log('📝 Step 2: create lead');
     let leadCreated = false;
     let leadId = null;
     
@@ -55,38 +55,38 @@ serve(async (req) => {
       });
       
       if (error) {
-        console.error('שגיאה ביצירת ליד:', error);
+        console.error('Error creating lead:', error);
         results.steps.push({
           step: 2,
-          name: "יצירת ליד",
+          name: "Create lead",
           status: "failed",
           error: error.message
         });
       } else {
         leadId = data;
         leadCreated = true;
-        console.log('✅ ליד נוצר בהצלחה:', leadId);
+        console.log('✅ Lead created successfully:', leadId);
         results.steps.push({
           step: 2,
-          name: "יצירת ליד",
+          name: "Create lead",
           status: "success",
           lead_id: leadId
         });
         results.summary.successful++;
       }
     } catch (error) {
-      console.error('שגיאה ביצירת ליד:', error);
+      console.error('Error creating lead:', error);
       results.steps.push({
         step: 2,
-        name: "יצירת ליד",
+        name: "Create lead",
         status: "failed", 
         error: error.message
       });
     }
     results.summary.total++;
 
-    // שלב 3: סיווג AI
-    console.log('🤖 שלב 3: סיווג AI');
+    // Step 3: AI classification
+    console.log('🤖 Step 3: AI classification');
     const openaiKey = Deno.env.get('OPENAI_API_KEY');
     let aiClassification = null;
     
@@ -101,8 +101,8 @@ serve(async (req) => {
           body: JSON.stringify({
             model: 'gpt-4o-mini',
             messages: [
-              { role: 'system', content: 'אתה מומחה לסיווג פניות משפטיות. החזר רק: קטגוריה|רמת_דחיפות' },
-              { role: 'user', content: `סווג: "${demoMessage.content}"` }
+              { role: 'system', content: 'You are an expert at classifying legal inquiries. Return only: category|urgency_level' },
+              { role: 'user', content: `Classify: "${demoMessage.content}"` }
             ],
             max_tokens: 50,
             temperature: 0.3
@@ -112,23 +112,23 @@ serve(async (req) => {
         if (response.ok) {
           const aiResponse = await response.json();
           aiClassification = aiResponse.choices[0].message.content.trim();
-          console.log('✅ סיווג AI הושלם:', aiClassification);
+          console.log('✅ AI classification completed:', aiClassification);
           
           results.steps.push({
             step: 3,
-            name: "סיווג AI",
+            name: "AI classification",
             status: "success",
             classification: aiClassification
           });
           results.summary.successful++;
         } else {
-          throw new Error(`OpenAI API שגיאה: ${response.status}`);
+          throw new Error(`OpenAI API error: ${response.status}`);
         }
       } catch (error) {
-        console.error('שגיאה בסיווג AI:', error);
+        console.error('Error in AI classification:', error);
         results.steps.push({
           step: 3,
-          name: "סיווג AI", 
+          name: "AI classification",
           status: "failed",
           error: error.message
         });
@@ -136,43 +136,43 @@ serve(async (req) => {
     } else {
       results.steps.push({
         step: 3,
-        name: "סיווג AI",
+        name: "AI classification",
         status: "skipped",
-        reason: "מפתח OpenAI לא נמצא"
+        reason: "OpenAI key not found"
       });
     }
     results.summary.total++;
 
-    // שלב 4: הודעת אישור (הדמיה)
-    console.log('📲 שלב 4: הודעת אישור WhatsApp');
+    // Step 4: confirmation message (simulation)
+    console.log('📲 Step 4: WhatsApp confirmation message');
     const whatsappToken = Deno.env.get('WHATSAPP_TOKEN');
     const phoneId = Deno.env.get('WHATSAPP_PHONE_ID');
     
     if (whatsappToken && phoneId) {
-      // בהדמיה לא נשלח הודעה אמיתית, רק נבדוק שהחיבור אפשרי
-      const confirmationMessage = 'תודה על פנייתך! קיבלנו את הודעתך ועורך דין יחזור אليך בהקדם. מספר ליד: ' + (leadId || 'DEMO');
-      
-      console.log('✅ הודעת אישור מוכנה:', confirmationMessage);
+      // In the simulation, no real message is sent; we just check the connection
+      const confirmationMessage = 'Thank you for your inquiry! We received your message and a lawyer will contact you soon. Lead number: ' + (leadId || 'DEMO');
+
+      console.log('✅ Confirmation message prepared:', confirmationMessage);
       results.steps.push({
         step: 4,
-        name: "הודעת אישור WhatsApp",
+        name: "WhatsApp confirmation message",
         status: "success",
         message: confirmationMessage,
-        note: "הדמיה - הודעה לא נשלחה בפועל"
+        note: "Simulation - message not actually sent"
       });
       results.summary.successful++;
     } else {
       results.steps.push({
         step: 4,
-        name: "הודעת אישור WhatsApp",
+        name: "WhatsApp confirmation message",
         status: "failed",
-        error: "מפתחות WhatsApp חסרים"
+        error: "WhatsApp keys missing"
       });
     }
     results.summary.total++;
 
-    // שלב 5: אימות הליד במאגר
-    console.log('🔍 שלב 5: אימות ליד במאגר');
+    // Step 5: verify lead in database
+    console.log('🔍 Step 5: verify lead in database');
     if (leadId) {
       try {
         const { data: lead, error } = await supabase
@@ -185,10 +185,10 @@ serve(async (req) => {
           throw error;
         }
 
-        console.log('✅ ליד אומת במאגר:', lead.id);
+        console.log('✅ Lead verified in database:', lead.id);
         results.steps.push({
           step: 5,
-          name: "אימות ליד במאגר",
+          name: "Verify lead in database",
           status: "success",
           lead_data: {
             id: lead.id,
@@ -199,10 +199,10 @@ serve(async (req) => {
         });
         results.summary.successful++;
       } catch (error) {
-        console.error('שגיאה באימות ליד:', error);
+        console.error('Error verifying lead:', error);
         results.steps.push({
           step: 5,
-          name: "אימות ליד במאגר",
+          name: "Verify lead in database",
           status: "failed",
           error: error.message
         });
@@ -210,18 +210,18 @@ serve(async (req) => {
     } else {
       results.steps.push({
         step: 5,
-        name: "אימות ליד במאגר",
+        name: "Verify lead in database",
         status: "skipped",
-        reason: "לא נוצר ליד בשלב 2"
+        reason: "Lead not created in step 2"
       });
     }
     results.summary.total++;
 
-    // סיכום
+    // Summary
     const successRate = Math.round((results.summary.successful / results.summary.total) * 100);
-    console.log(`🎯 סיכום: ${results.summary.successful}/${results.summary.total} שלבים הצליחו (${successRate}%)`);
-    
-    results.overall_status = successRate >= 80 ? "הצלחה" : successRate >= 50 ? "הצלחה חלקית" : "כשל";
+    console.log(`🎯 Summary: ${results.summary.successful}/${results.summary.total} steps succeeded (${successRate}%)`);
+
+    results.overall_status = successRate >= 80 ? "success" : successRate >= 50 ? "partial success" : "failure";
     results.success_rate = `${successRate}%`;
 
     return new Response(JSON.stringify(results, null, 2), {
@@ -229,7 +229,7 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('❌ שגיאה כללית בהדמיה:', error);
+    console.error('❌ General simulation error:', error);
     return new Response(JSON.stringify({ 
       error: error.message,
       timestamp: new Date().toISOString()

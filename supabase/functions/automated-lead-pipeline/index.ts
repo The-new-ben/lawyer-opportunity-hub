@@ -32,9 +32,9 @@ serve(async (req) => {
 
   try {
     const { leadId } = await req.json();
-    console.log(`🚀 התחלת pipeline אוטומטי עבור ליד: ${leadId}`);
+    console.log(`🚀 Starting automated pipeline for lead: ${leadId}`);
 
-    // שלב 1: עדכון שהתחיל התהליך
+    // Step 1: mark that the process started
     await supabase.from('leads').update({
       case_details: {
         pipeline_started: new Date().toISOString(),
@@ -42,7 +42,7 @@ serve(async (req) => {
       }
     }).eq('id', leadId);
 
-    // שליפת נתוני הליד
+    // Fetch lead data
     const { data: lead, error: leadError } = await supabase
       .from('leads')
       .select('*')
@@ -50,12 +50,12 @@ serve(async (req) => {
       .single();
 
     if (leadError || !lead) {
-      throw new Error(`שגיאה בשליפת הליד: ${leadError?.message}`);
+      throw new Error(`Error fetching lead: ${leadError?.message}`);
     }
 
-    console.log(`📄 ליד נמצא: ${lead.customer_name} - ${lead.legal_category}`);
+    console.log(`📄 Lead found: ${lead.customer_name} - ${lead.legal_category}`);
 
-    // עדכון שהליד אומת
+    // Mark lead as validated
     await supabase.from('leads').update({
       case_details: {
         ...lead.case_details,
@@ -64,7 +64,7 @@ serve(async (req) => {
       }
     }).eq('id', leadId);
 
-    // שלב 2: מציאת עורך דין מתאים בצורה אוטומטית
+    // Step 2: automatically find a suitable lawyer
     const { data: matchedLawyers, error: matchError } = await supabase
       .rpc('get_matched_lawyers', { 
         p_lead_id: leadId,
@@ -72,30 +72,30 @@ serve(async (req) => {
       });
 
     if (matchError || !matchedLawyers?.length) {
-      console.log(`⚠️ לא נמצאו עורכי דין מתאימים`);
-      
-      // עדכון שהתהליך נכשל בחיפוש עורכי דין
+      console.log('⚠️ No matching lawyers found');
+
+      // Mark that the search for lawyers failed
       await supabase.from('leads').update({
         case_details: {
           ...lead.case_details,
           pipeline_stage: 'lawyers_search_failed',
-          error_message: 'לא נמצאו עורכי דין זמינים'
+          error_message: 'No available lawyers found'
         }
       }).eq('id', leadId);
-      
-      return new Response(JSON.stringify({ 
-        success: false, 
-        message: 'לא נמצאו עורכי דין זמינים' 
+
+      return new Response(JSON.stringify({
+        success: false,
+        message: 'No available lawyers found'
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // בחירת העורך דין הטוב ביותר (הציון הגבוה ביותר)
+    // Choose the best lawyer (highest score)
     const bestLawyer = matchedLawyers[0];
-    console.log(`👨‍💼 עורך דין נבחר: ${bestLawyer.lawyer_name} (ציון: ${bestLawyer.matching_score})`);
+    console.log(`👨‍💼 Lawyer selected: ${bestLawyer.lawyer_name} (score: ${bestLawyer.matching_score})`);
 
-    // עדכון שנמצא עורך דין
+    // Mark that a lawyer was found
     await supabase.from('leads').update({
       case_details: {
         ...lead.case_details,
@@ -105,7 +105,7 @@ serve(async (req) => {
       }
     }).eq('id', leadId);
 
-    // שלב 3: עדכון הליד עם עורך הדין המשוייך
+    // Step 3: update the lead with the assigned lawyer
     const { error: assignError } = await supabase
       .from('leads')
       .update({ 
@@ -115,10 +115,10 @@ serve(async (req) => {
       .eq('id', leadId);
 
     if (assignError) {
-      throw new Error(`שגיאה בשיוך עורך דין: ${assignError.message}`);
+      throw new Error(`Error assigning lawyer: ${assignError.message}`);
     }
 
-    // עדכון שהשיוך הושלם
+    // Mark that assignment was completed
     await supabase.from('leads').update({
       case_details: {
         ...lead.case_details,
@@ -127,30 +127,30 @@ serve(async (req) => {
       }
     }).eq('id', leadId);
 
-    // שלב 4: יצירת quote אוטומטי
+    // Step 4: create an automatic quote
     const basePrice = calculateBasePrice(lead.legal_category);
     const { data: quote, error: quoteError } = await supabase
       .from('quotes')
       .insert({
         lead_id: leadId,
         lawyer_id: bestLawyer.lawyer_id,
-        service_description: `ייעוץ משפטי ב${lead.legal_category}`,
+        service_description: `Legal consultation in ${lead.legal_category}`,
         quote_amount: basePrice,
         estimated_duration_days: getEstimatedDuration(lead.legal_category),
-        payment_terms: 'תשלום מראש של 50% לפני תחילת העבודה',
+        payment_terms: '50% upfront payment before work begins',
         status: 'pending',
-        valid_until: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // שבוע מהיום
+        valid_until: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // one week from now
       })
       .select()
       .single();
 
     if (quoteError) {
-      throw new Error(`שגיאה ביצירת הצעת מחיר: ${quoteError.message}`);
+      throw new Error(`Error creating quote: ${quoteError.message}`);
     }
 
-    console.log(`💰 הצעת מחיר נוצרה: ${quote.quote_amount}₪`);
+    console.log(`💰 Quote created: ${quote.quote_amount}₪`);
 
-    // עדכון שהצעת מחיר נוצרה
+    // Mark that quote was created
     await supabase.from('leads').update({
       case_details: {
         ...lead.case_details,
@@ -164,17 +164,17 @@ serve(async (req) => {
       }
     }).eq('id', leadId);
 
-    // שלב 5: יצירת לינק תשלום והודעת וואטסאפ
+    // Step 5: create payment link and WhatsApp message
     const meetingLink = `https://mlnwpocuvjnelttvscja.supabase.co/meeting-scheduler?quote_id=${quote.id}&token=${generateSecureToken()}`;
     
     const whatsappMessage = generateWhatsAppMessage(lead, bestLawyer, quote, meetingLink);
     
-    // שליחת הודעת וואטסאפ
+    // Send WhatsApp message
     try {
       await sendWhatsAppMessage(lead.customer_phone, whatsappMessage);
-      console.log(`📱 הודעת וואטסאפ נשלחה ללקוח`);
-      
-      // עדכון שהודעת וואטסאפ נשלחה
+      console.log('📱 WhatsApp message sent to customer');
+
+      // Mark that WhatsApp message was sent
       await supabase.from('leads').update({
         case_details: {
           ...lead.case_details,
@@ -185,20 +185,20 @@ serve(async (req) => {
       }).eq('id', leadId);
       
     } catch (whatsappError) {
-      console.error(`❌ שגיאה בשליחת וואטסאפ: ${whatsappError}`);
-      
-      // עדכון ששליחת וואטסאפ נכשלה
+      console.error(`❌ Error sending WhatsApp: ${whatsappError}`);
+
+      // Mark that WhatsApp send failed
       await supabase.from('leads').update({
         case_details: {
           ...lead.case_details,
           pipeline_stage: 'whatsapp_failed',
           whatsapp_error: whatsappError.message,
-          meeting_link: meetingLink // עדיין שומר את הלינק למקרה שהלקוח יצטרך אותו
+          meeting_link: meetingLink // still store the link in case the customer needs it
         }
       }).eq('id', leadId);
     }
 
-    // שלב 6: רישום הפעילות במערכת
+    // Step 6: log the activity in the system
     const { error: logError } = await supabase
       .from('lead_assignments')
       .insert({
@@ -206,15 +206,15 @@ serve(async (req) => {
         lawyer_id: bestLawyer.lawyer_id,
         assignment_type: 'automatic',
         status: 'completed',
-        notes: `שיוך אוטומטי - ציון התאמה: ${bestLawyer.matching_score}`,
+        notes: `Automatic assignment - match score: ${bestLawyer.matching_score}`,
         response_deadline: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
       });
 
     if (logError) {
-      console.warn(`שגיאה ברישום הפעילות: ${logError.message}`);
+      console.warn(`Error logging activity: ${logError.message}`);
     }
 
-    // עדכון סופי - תהליך הושלם בהצלחה
+    // Final update - process completed successfully
     await supabase.from('leads').update({
       case_details: {
         ...lead.case_details,
@@ -224,11 +224,11 @@ serve(async (req) => {
       }
     }).eq('id', leadId);
 
-    console.log(`✅ Pipeline הושלם בהצלחה עבור ליד: ${leadId}`);
+    console.log(`✅ Pipeline completed successfully for lead: ${leadId}`);
 
     return new Response(JSON.stringify({
       success: true,
-      message: 'Pipeline אוטומטי הושלם בהצלחה',
+      message: 'Automated pipeline completed successfully',
       data: {
         leadId,
         assignedLawyer: bestLawyer.lawyer_name,
@@ -241,9 +241,9 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('❌ שגיאה ב-pipeline אוטומטי:', error);
-    
-    // עדכון שהתהליך נכשל
+    console.error('❌ Error in automated pipeline:', error);
+
+    // Mark that the process failed
     try {
       const { leadId } = await req.json();
       await supabase.from('leads').update({
@@ -255,7 +255,7 @@ serve(async (req) => {
         }
       }).eq('id', leadId);
     } catch (updateError) {
-      console.error('שגיאה בעדכון סטטוס כשל:', updateError);
+      console.error('Error updating failure status:', updateError);
     }
     
     return new Response(JSON.stringify({
@@ -268,7 +268,7 @@ serve(async (req) => {
   }
 });
 
-// פונקציות עזר
+// Helper functions
 function calculateBasePrice(legalCategory: string): number {
   const basePrices: Record<string, number> = {
     'גירושין': 5000,
@@ -324,29 +324,29 @@ function generateWhatsAppMessage(
   quote: MessageQuote,
   meetingLink: string
 ): string {
-  return `שלום ${lead.customer_name}! 👋
+  return `Hello ${lead.customer_name}! 👋
 
-קיבלנו את פנייתך בנושא: ${lead.legal_category}
+We received your inquiry about: ${lead.legal_category}
 
-🎯 שוייכנו אותך לעורך הדין הטוב ביותר:
+🎯 We've matched you with the best lawyer:
 👨‍💼 ${lawyer.lawyer_name}
-⭐ דירוג: ${lawyer.rating}/5
-💼 התמחות: ${lead.legal_category}
+⭐ Rating: ${lawyer.rating}/5
+💼 Specialty: ${lead.legal_category}
 
-💰 הצעת מחיר ראשונית: ${quote.quote_amount}₪
-⏱️ זמן ביצוע משוער: ${quote.estimated_duration_days} ימים
+💰 Initial quote: ${quote.quote_amount}₪
+⏱️ Estimated duration: ${quote.estimated_duration_days} days
 
-🔗 לקביעת פגישה ראשונית (ללא עלות):
+🔗 Schedule a free initial meeting:
 ${meetingLink}
 
-הפגישה הראשונית כוללת:
-✅ ייעוץ ראשוני ללא תשלום
-✅ הערכת התיק והסיכויים
-✅ הסבר על התהליך והעלויות
+The initial meeting includes:
+✅ Free initial consultation
+✅ Case evaluation and prospects
+✅ Explanation of the process and costs
 
-❗ חשוב: הצעת המחיר תקפה למשך שבוע
+❗ Important: The quote is valid for one week
 
-יש לך שאלות? פשוט השב להודעה הזו 💬`;
+Have questions? Just reply to this message 💬`;
 }
 
 async function sendWhatsAppMessage(phoneNumber: string, message: string) {
@@ -369,6 +369,6 @@ async function sendWhatsAppMessage(phoneNumber: string, message: string) {
 
   if (!response.ok) {
     const error = await response.text();
-    throw new Error(`שגיאה בשליחת וואטסאפ: ${error}`);
+    throw new Error(`Error sending WhatsApp: ${error}`);
   }
 }

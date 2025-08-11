@@ -52,7 +52,7 @@ serve(async (req) => {
         const from = message.from; // Phone number
         const text = message.text?.body || '';
         const contacts = value?.contacts?.[0];
-        const customerName = contacts?.profile?.name || 'לקוח חדש';
+        const customerName = contacts?.profile?.name || 'New customer';
 
         // Process incoming lead using the database function
         const { data, error } = await supabase.rpc('process_incoming_lead', {
@@ -86,8 +86,8 @@ serve(async (req) => {
             body: JSON.stringify({
               messaging_product: 'whatsapp',
               to: from,
-              text: { 
-                body: 'תודה על פנייתך! קיבלנו את הודעתך ועורך דין יחזור אליך בהקדם.' 
+              text: {
+                body: 'Thank you for your inquiry! We received your message and a lawyer will contact you soon.'
               }
             })
           });
