@@ -31,6 +31,7 @@ import RoleDashboard from "./pages/RoleDashboard";
 import SupplierLeads from "./pages/SupplierLeads";
 import CourtDashboard from "./pages/court/CourtDashboard";
 import CourtSessionDetails from "./pages/court/CourtSessionDetails";
+import LegalConsultation from "./pages/LegalConsultation";
 import { RoleBasedRoute } from "./components/RoleBasedRoute";
 
 const App = () => (
@@ -126,6 +127,11 @@ const App = () => (
                             <Route path="/matching" element={
                               <RoleBasedRoute allowedRoles={['lawyer', 'admin']}>
                                 <Matching />
+                              </RoleBasedRoute>
+                            } />
+                            <Route path="/legal-consultation" element={
+                              <RoleBasedRoute allowedRoles={['lawyer', 'admin']}>
+                                <LegalConsultation />
                               </RoleBasedRoute>
                             } />
                             <Route path="/court" element={

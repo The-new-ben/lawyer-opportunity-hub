@@ -12,6 +12,7 @@ import {
   Search,
   Shield,
   Package,
+  Gavel,
   LucideIcon,
 } from "lucide-react"
 import { NavLink } from "react-router-dom"
@@ -42,6 +43,7 @@ const getMenuItems = (role: string | null) => {
     { title: "תיקים", url: "/cases", icon: FileText, roles: ["lawyer", "admin", "customer"] },
     { title: "התאמות", url: "/matching", icon: Search, roles: ["lawyer", "admin"] },
     { title: "לוח זמנים", url: "/calendar", icon: Calendar, roles: ["lawyer", "admin", "customer"] },
+    { title: "התייעצות משפטית", url: "/legal-consultation", icon: Gavel, roles: ["lawyer", "admin"] },
     { title: "פורטל לידים", url: "/leads-portal", icon: Package, roles: ["supplier", "admin"] },
     { title: "ניהול מערכת", url: "/admin", icon: Shield, roles: ["admin"] },
   ]
