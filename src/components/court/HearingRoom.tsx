@@ -22,7 +22,7 @@ export default function HearingRoom({ inviteToken, hearingId, serverUrl, recordi
   }, [inviteToken, hearingId])
   if (!liveKitToken) return <div className="p-4 text-center">Waiting for host</div>
   return (
-    <LiveKitRoom token={liveKitToken} serverUrl={serverUrl} roomOptions={{ recorder: recording }}>
+    <LiveKitRoom token={liveKitToken} serverUrl={serverUrl}>
       <VideoConference />
     </LiveKitRoom>
   )

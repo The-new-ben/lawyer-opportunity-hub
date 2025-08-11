@@ -15,7 +15,7 @@ export type Case = {
   estimated_budget?: number;
   legal_category: string;
   summary?: string | null;
-  reviewed: boolean;
+  reviewed?: boolean;
   created_at: string;
   updated_at: string;
 };

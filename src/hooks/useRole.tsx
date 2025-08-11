@@ -3,7 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 
-export type UserRole = 'admin' | 'lead_provider' | 'lawyer' | 'customer';
+export type UserRole = 'admin' | 'lead_provider' | 'lawyer' | 'customer' | 'client' | 'supplier' | 'judge' | 'witness' | 'audience';
 
 interface UserRoleData {
   role: UserRole | null;
