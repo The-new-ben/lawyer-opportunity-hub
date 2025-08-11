@@ -1,40 +1,40 @@
 -- Insert sample profiles with correct roles and valid UUIDs
 INSERT INTO public.profiles (id, user_id, full_name, phone, company_name, role, whatsapp_number) VALUES
-  ('11111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', 'עו"ד דן כהן', '0501234567', 'משרד עורכי דין כהן ושות', 'supplier', '972501234567'),
-  ('22222222-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222', 'עו"ד שרה לוי', '0509876543', 'משרד לוי ושות', 'supplier', '972509876543'),
-  ('33333333-3333-3333-3333-333333333333', '33333333-3333-3333-3333-333333333333', 'יוסי ישראלי', '0507654321', 'חברת ישראלי בע"מ', 'customer', '972507654321'),
-  ('44444444-4444-4444-4444-444444444444', '44444444-4444-4444-4444-444444444444', 'מיכל אברהם', '0503456789', 'אברהם ושות', 'customer', '972503456789'),
-  ('55555555-5555-5555-5555-555555555555', '55555555-5555-5555-5555-555555555555', 'עו"ד רון מזרחי', '0502345678', 'משרד מזרחי', 'supplier', '972502345678'),
-  ('66666666-6666-6666-6666-666666666666', '66666666-6666-6666-6666-666666666666', 'מנהל מערכת', '0501111222', 'חברת המערכת', 'admin', '972501111222')
+  ('11111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', 'Attorney Dan Cohen', '0501234567', 'Cohen & Partners Law Firm', 'supplier', '972501234567'),
+  ('22222222-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222', 'Attorney Sarah Levy', '0509876543', 'Levy & Partners', 'supplier', '972509876543'),
+  ('33333333-3333-3333-3333-333333333333', '33333333-3333-3333-3333-333333333333', 'Yossi Israeli', '0507654321', 'Israeli Ltd.', 'customer', '972507654321'),
+  ('44444444-4444-4444-4444-444444444444', '44444444-4444-4444-4444-444444444444', 'Michal Avraham', '0503456789', 'Avraham & Partners', 'customer', '972503456789'),
+  ('55555555-5555-5555-5555-555555555555', '55555555-5555-5555-5555-555555555555', 'Attorney Ron Mizrahi', '0502345678', 'Mizrahi Firm', 'supplier', '972502345678'),
+  ('66666666-6666-6666-6666-666666666666', '66666666-6666-6666-6666-666666666666', 'System Administrator', '0501111222', 'System Company', 'admin', '972501111222')
 ON CONFLICT (id) DO NOTHING;
 
 -- Insert sample lawyers (suppliers in this context)
 INSERT INTO public.lawyers (id, profile_id, specializations, years_experience, hourly_rate, rating, bio, law_firm, location, license_number, verification_status, is_active, availability_status, total_cases) VALUES
-  ('aaaaaaaa-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', ARRAY['דיני משפחה', 'דיני עבודה'], 15, 500, 4.8, 'עורך דין מנוסה המתמחה בדיני משפחה ועבודה', 'משרד עורכי דין כהן ושות', 'תל אביב', '12345', 'verified', true, 'available', 45),
-  ('bbbbbbbb-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222', ARRAY['דיני חוזים', 'דיני נזקין'], 12, 450, 4.6, 'מומחית בדיני חוזים ונזקין', 'משרד לוי ושות', 'חיפה', '67890', 'verified', true, 'available', 38),
-  ('cccccccc-3333-3333-3333-333333333333', '55555555-5555-5555-5555-555555555555', ARRAY['דיני חברות', 'דיני מקרקעין'], 8, 400, 4.4, 'עורך דין צעיר ומבטיח', 'משרד מזרחי', 'ירושלים', '54321', 'verified', true, 'available', 22)
+  ('aaaaaaaa-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', ARRAY['Family Law', 'Labor Law'], 15, 500, 4.8, 'Experienced lawyer specializing in family and labor law', 'Cohen & Partners Law Firm', 'Tel Aviv', '12345', 'verified', true, 'available', 45),
+  ('bbbbbbbb-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222', ARRAY['Contract Law', 'Tort Law'], 12, 450, 4.6, 'Expert in contract and tort law', 'Levy & Partners', 'Haifa', '67890', 'verified', true, 'available', 38),
+  ('cccccccc-3333-3333-3333-333333333333', '55555555-5555-5555-5555-555555555555', ARRAY['Corporate Law', 'Real Estate Law'], 8, 400, 4.4, 'Promising young lawyer', 'Mizrahi Firm', 'Jerusalem', '54321', 'verified', true, 'available', 22)
 ON CONFLICT (id) DO NOTHING;
 
 -- Insert sample leads
 INSERT INTO public.leads (id, customer_name, customer_phone, customer_email, legal_category, case_description, urgency_level, estimated_budget, preferred_location, source, status, assigned_lawyer_id) VALUES
-  ('eeeeeeee-1111-1111-1111-111111111111', 'אמיר כהן', '0501111111', 'amir@example.com', 'דיני משפחה', 'תיק גירושין מורכב עם ילדים קטינים', 'high', 15000, 'תל אביב', 'website', 'assigned', 'aaaaaaaa-1111-1111-1111-111111111111'),
-  ('eeeeeeee-2222-2222-2222-222222222222', 'רחל דוד', '0502222222', 'rachel@example.com', 'דיני עבודה', 'פיטורים לא חוקיים מהעבודה', 'medium', 8000, 'חיפה', 'referral', 'new', NULL),
-  ('eeeeeeee-3333-3333-3333-333333333333', 'משה לוי', '0503333333', 'moshe@example.com', 'דיני נזקין', 'תאונת דרכים עם נזקים כבדים', 'high', 25000, 'תל אביב', 'google', 'converted', 'bbbbbbbb-2222-2222-2222-222222222222'),
-  ('eeeeeeee-4444-4444-4444-444444444444', 'נועה רוזן', '0504444444', 'noa@example.com', 'דיני חוזים', 'הפרת חוזה עסקי', 'low', 5000, 'ירושלים', 'website', 'new', NULL)
+  ('eeeeeeee-1111-1111-1111-111111111111', 'Amir Cohen', '0501111111', 'amir@example.com', 'Family Law', 'Complex divorce case with minor children', 'high', 15000, 'Tel Aviv', 'website', 'assigned', 'aaaaaaaa-1111-1111-1111-111111111111'),
+  ('eeeeeeee-2222-2222-2222-222222222222', 'Rachel David', '0502222222', 'rachel@example.com', 'Labor Law', 'Unlawful termination from work', 'medium', 8000, 'Haifa', 'referral', 'new', NULL),
+  ('eeeeeeee-3333-3333-3333-333333333333', 'Moshe Levy', '0503333333', 'moshe@example.com', 'Tort Law', 'Car accident with heavy damages', 'high', 25000, 'Tel Aviv', 'google', 'converted', 'bbbbbbbb-2222-2222-2222-222222222222'),
+  ('eeeeeeee-4444-4444-4444-444444444444', 'Noa Rosen', '0504444444', 'noa@example.com', 'Contract Law', 'Business contract breach', 'low', 5000, 'Jerusalem', 'website', 'new', NULL)
 ON CONFLICT (id) DO NOTHING;
 
 -- Insert sample cases
 INSERT INTO public.cases (id, title, client_id, legal_category, status, priority, estimated_budget, assigned_lawyer_id, notes, opened_at) VALUES
-  ('dddddddd-1111-1111-1111-111111111111', 'תיק גירושין - אמיר כהן', '33333333-3333-3333-3333-333333333333', 'דיני משפחה', 'open', 'high', 15000, 'aaaaaaaa-1111-1111-1111-111111111111', 'תיק מורכב עם ילדים', '2024-01-15 10:00:00+00'),
-  ('dddddddd-2222-2222-2222-222222222222', 'תאונת דרכים - משה לוי', '44444444-4444-4444-4444-444444444444', 'דיני נזקין', 'open', 'high', 25000, 'bbbbbbbb-2222-2222-2222-222222222222', 'נזקים כבדים ונכות', '2024-01-20 14:30:00+00'),
-  ('dddddddd-3333-3333-3333-333333333333', 'הפרת חוזה - חברת ABC', '33333333-3333-3333-3333-333333333333', 'דיני חוזים', 'closed', 'medium', 12000, 'cccccccc-3333-3333-3333-333333333333', 'הושג פשר', '2023-12-01 09:00:00+00')
+  ('dddddddd-1111-1111-1111-111111111111', 'Divorce Case - Amir Cohen', '33333333-3333-3333-3333-333333333333', 'Family Law', 'open', 'high', 15000, 'aaaaaaaa-1111-1111-1111-111111111111', 'Complex case with children', '2024-01-15 10:00:00+00'),
+  ('dddddddd-2222-2222-2222-222222222222', 'Car Accident - Moshe Levy', '44444444-4444-4444-4444-444444444444', 'Tort Law', 'open', 'high', 25000, 'bbbbbbbb-2222-2222-2222-222222222222', 'Severe damages and disability', '2024-01-20 14:30:00+00'),
+  ('dddddddd-3333-3333-3333-333333333333', 'Contract Breach - ABC Company', '33333333-3333-3333-3333-333333333333', 'Contract Law', 'closed', 'medium', 12000, 'cccccccc-3333-3333-3333-333333333333', 'Settlement reached', '2023-12-01 09:00:00+00')
 ON CONFLICT (id) DO NOTHING;
 
 -- Insert sample events
 INSERT INTO public.events (id, title, start_time, end_time, client_id, case_id, lawyer_id, description) VALUES
-  ('ffffffff-1111-1111-1111-111111111111', 'פגישה עם לקוח - אמיר כהן', '2024-02-01 10:00:00+00', '2024-02-01 11:30:00+00', '33333333-3333-3333-3333-333333333333', 'dddddddd-1111-1111-1111-111111111111', 'aaaaaaaa-1111-1111-1111-111111111111', 'פגישת התייעצות ראשונה'),
-  ('ffffffff-2222-2222-2222-222222222222', 'דיון בבית משפט', '2024-02-05 09:00:00+00', '2024-02-05 12:00:00+00', '44444444-4444-4444-4444-444444444444', 'dddddddd-2222-2222-2222-222222222222', 'bbbbbbbb-2222-2222-2222-222222222222', 'דיון בתביעת נזקין'),
-  ('ffffffff-3333-3333-3333-333333333333', 'פגישת צוות', '2024-02-03 16:00:00+00', '2024-02-03 17:00:00+00', NULL, NULL, 'aaaaaaaa-1111-1111-1111-111111111111', 'סקירת תיקים שוטפים')
+  ('ffffffff-1111-1111-1111-111111111111', 'Meeting with Client - Amir Cohen', '2024-02-01 10:00:00+00', '2024-02-01 11:30:00+00', '33333333-3333-3333-3333-333333333333', 'dddddddd-1111-1111-1111-111111111111', 'aaaaaaaa-1111-1111-1111-111111111111', 'Initial consultation meeting'),
+  ('ffffffff-2222-2222-2222-222222222222', 'Court hearing', '2024-02-05 09:00:00+00', '2024-02-05 12:00:00+00', '44444444-4444-4444-4444-444444444444', 'dddddddd-2222-2222-2222-222222222222', 'bbbbbbbb-2222-2222-2222-222222222222', 'Tort lawsuit hearing'),
+  ('ffffffff-3333-3333-3333-333333333333', 'Team meeting', '2024-02-03 16:00:00+00', '2024-02-03 17:00:00+00', NULL, NULL, 'aaaaaaaa-1111-1111-1111-111111111111', 'Review of ongoing cases')
 ON CONFLICT (id) DO NOTHING;
 
 -- Insert sample lawyer scores

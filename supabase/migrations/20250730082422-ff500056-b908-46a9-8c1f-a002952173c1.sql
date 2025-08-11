@@ -1,7 +1,7 @@
--- תיקון מדיניות RLS כדי שהמשתמש יוכל לראות נתונים
--- נעדכן את המדיניות להיות יותר פתוחה למשתמשים מאומתים
+-- Fix RLS policies so the user can view data
+-- Update policies to be more open to authenticated users
 
--- תיקון מדיניות לידים - תאפשר למשתמשים מאומתים לראות לידים
+-- Fix leads policy - allow authenticated users to view leads
 DROP POLICY IF EXISTS "Lawyers can view assigned leads" ON public.leads;
 DROP POLICY IF EXISTS "Admins can manage all leads" ON public.leads;
 
@@ -14,7 +14,7 @@ CREATE POLICY "Authenticated users can manage leads" ON public.leads
   USING (true)
   WITH CHECK (true);
 
--- תיקון מדיניות תיקים - תאפשר למשתמשים מאומתים לראות תיקים
+-- Fix cases policy - allow authenticated users to view cases
 DROP POLICY IF EXISTS "Lawyers can view assigned cases" ON public.cases;
 DROP POLICY IF EXISTS "Lawyers can create cases" ON public.cases;
 DROP POLICY IF EXISTS "Lawyers can update assigned cases" ON public.cases;
@@ -28,7 +28,7 @@ CREATE POLICY "Authenticated users can manage cases" ON public.cases
   USING (true)
   WITH CHECK (true);
 
--- תיקון מדיניות אירועים - תאפשר למשתמשים מאומתים לראות אירועים
+-- Fix events policy - allow authenticated users to view events
 DROP POLICY IF EXISTS "Users can view their events" ON public.events;
 DROP POLICY IF EXISTS "Lawyers can manage events" ON public.events;
 

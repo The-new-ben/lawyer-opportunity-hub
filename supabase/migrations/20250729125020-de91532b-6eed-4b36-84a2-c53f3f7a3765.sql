@@ -47,16 +47,16 @@ CREATE TABLE IF NOT EXISTS public.lead_categories (
 
 -- Insert default legal categories
 INSERT INTO public.lead_categories (name, description) VALUES
-('אזרחי', 'תיקי משפט אזרחי'),
-('פלילי', 'תיקי משפט פלילי'),
-('משפחה', 'משפט משפחה וגירושין'),
-('עבודה', 'משפט עבודה'),
-('מקרקעין', 'משפט מקרקעין ונדלן'),
-('מסחרי', 'משפט מסחרי ועסקי'),
-('מינהלי', 'משפט מינהלי'),
-('ירושות', 'ירושות וצוואות'),
-('ביטוח', 'תביעות ביטוח'),
-('הוצאה לפועל', 'הוצאה לפועל וגבייה')
+('Civil', 'Civil legal cases'),
+('Criminal', 'Criminal legal cases'),
+('Family', 'Family law and divorce'),
+('Labor', 'Labor law'),
+('Real Estate', 'Real estate law'),
+('Commercial', 'Commercial and business law'),
+('Administrative', 'Administrative law'),
+('Inheritance', 'Inheritance and wills'),
+('Insurance', 'Insurance claims'),
+('Enforcement', 'Enforcement and collections')
 ON CONFLICT (name) DO NOTHING;
 
 -- Drop existing leads table if exists to recreate with new structure
