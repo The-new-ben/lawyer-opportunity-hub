@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -15,13 +16,44 @@ interface CalendarEvent {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { action, event, accessToken } = await req.json();
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    const resourceState = req.headers.get('x-goog-resource-state');
+    if (resourceState) {
+      const body = await req.json().catch(() => ({}));
+      const evt = body.event || body;
+      const eventId = evt.id;
+      if (eventId) {
+        if (resourceState === 'exists') {
+          await supabase
+            .from('hearings')
+            .update({
+              scheduled_at: evt.start_time,
+              location: evt.location ?? null,
+            })
+            .eq('google_event_id', eventId);
+        }
+        if (resourceState === 'not_exists') {
+          await supabase
+            .from('hearings')
+            .update({ google_event_id: null })
+            .eq('google_event_id', eventId);
+        }
+      }
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const { action, event, accessToken, hearingId } = await req.json();
     const GOOGLE_API_KEY = Deno.env.get('GOOGLE_API_KEY');
 
     if (!GOOGLE_API_KEY) {
@@ -42,11 +74,11 @@ serve(async (req) => {
           body: JSON.stringify({
             summary: event.title,
             description: event.description || '',
-            start: { 
+            start: {
               dateTime: event.start_time,
               timeZone: 'Asia/Jerusalem'
             },
-            end: { 
+            end: {
               dateTime: event.end_time,
               timeZone: 'Asia/Jerusalem'
             },
@@ -57,7 +89,7 @@ serve(async (req) => {
 
       case 'list': {
         const timeMin = new Date().toISOString();
-        const timeMax = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(); // 30 days from now
+        const timeMax = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
         response = await fetch(
           `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`,
@@ -73,7 +105,7 @@ serve(async (req) => {
 
       case 'update':
         if (!event.id) throw new Error('Event ID required for update');
-        
+
         response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${event.id}`, {
           method: 'PUT',
           headers: {
@@ -83,11 +115,11 @@ serve(async (req) => {
           body: JSON.stringify({
             summary: event.title,
             description: event.description || '',
-            start: { 
+            start: {
               dateTime: event.start_time,
               timeZone: 'Asia/Jerusalem'
             },
-            end: { 
+            end: {
               dateTime: event.end_time,
               timeZone: 'Asia/Jerusalem'
             },
@@ -98,7 +130,7 @@ serve(async (req) => {
 
       case 'delete':
         if (!event.id) throw new Error('Event ID required for delete');
-        
+
         response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${event.id}`, {
           method: 'DELETE',
           headers: {
@@ -114,30 +146,39 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Google Calendar API error:', response.status, errorText);
       throw new Error(`Google Calendar API error: ${response.status} ${errorText}`);
     }
 
-    // Handle empty response for delete operations
     if (response.status === 204 || action === 'delete') {
       data = { success: true };
     } else {
       data = await response.json();
     }
 
-    console.log(`Google Calendar ${action} successful:`, data);
+    if (action === 'create' && hearingId && data.id) {
+      await supabase
+        .from('hearings')
+        .update({ google_event_id: data.id })
+        .eq('id', hearingId);
+    }
+
+    if (action === 'delete' && hearingId) {
+      await supabase
+        .from('hearings')
+        .update({ google_event_id: null })
+        .eq('id', hearingId);
+    }
 
     return new Response(JSON.stringify({ success: true, data }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
-    console.error('Error in google-calendar-sync function:', error);
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         error: error.message,
-        success: false 
-      }), 
+        success: false
+      }),
       {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
