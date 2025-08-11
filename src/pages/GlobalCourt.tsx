@@ -10,6 +10,7 @@ import EvidencePrep from "@/components/court/EvidencePrep";
 import PartyInterrogation from "@/components/court/PartyInterrogation";
 import CaseBuilder from "@/components/court/CaseBuilder";
 import RoleMatchFinder from "@/components/court/RoleMatchFinder";
+import IntakeFreeform from "@/components/court/IntakeFreeform";
 
 const GlobalCourt = () => {
   useEffect(() => {
@@ -42,6 +43,10 @@ const GlobalCourt = () => {
           join live simulation with gamification, and learn how proceedings work.
         </p>
       </header>
+
+      <section className="mb-6">
+        <IntakeFreeform />
+      </section>
 
       <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Card className="col-span-1 lg:col-span-2">

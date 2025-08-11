@@ -36,13 +36,13 @@ const IntakeFreeform = () => {
   const { draft, update } = useCaseDraft();
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<ChatMessage[]>([]);
-  const [missing, setMissing] = useState<RequiredField[]>(REQUIRED_FIELDS as RequiredField[]);
+  const [missing, setMissing] = useState<RequiredField[]>([...REQUIRED_FIELDS]);
   const [loading, setLoading] = useState(false);
   const [planPreview, setPlanPreview] = useState<string>("");
   const endRef = useRef<HTMLDivElement | null>(null);
 
   const completed: RequiredField[] = useMemo(() => {
-    return (REQUIRED_FIELDS as RequiredField[]).filter((k) => {
+    return Array.from(REQUIRED_FIELDS).filter((k) => {
       const v = (draft as any)[k];
       if (k === "parties" || k === "evidence") return Array.isArray(v) && v.length > 0;
       return !!v && String(v).trim().length > 0;
@@ -56,7 +56,7 @@ const IntakeFreeform = () => {
   const sendToAI = async (message?: string) => {
     const userMsg = (message ?? input).trim();
     if (!userMsg) return;
-    const nextHistory = [...history, { role: "user", content: userMsg }];
+    const nextHistory: ChatMessage[] = [...history, { role: "user" as const, content: userMsg }];
     setHistory(nextHistory);
     setInput("");
     setLoading(true);
@@ -84,14 +84,14 @@ const IntakeFreeform = () => {
         update(next);
       }
       if (res.summary) {
-        setHistory((h) => [...h, { role: "assistant", content: `Summary updated. ${res.summary}` }]);
+        setHistory((h) => [...h, { role: "assistant" as const, content: `Summary updated. ${res.summary}` }]);
       }
       const missingFields = (res.missing_fields || []) as RequiredField[];
       setMissing(missingFields);
       if (res.next_question) {
-        setHistory((h) => [...h, { role: "assistant", content: res.next_question || "" }]);
+        setHistory((h) => [...h, { role: "assistant" as const, content: res.next_question || "" }]);
       } else if (missingFields.length === 0) {
-        setHistory((h) => [...h, { role: "assistant", content: "All required fields are filled. You can generate the case plan now." }]);
+        setHistory((h) => [...h, { role: "assistant" as const, content: "All required fields are filled. You can generate the case plan now." }]);
       }
     } catch (e) {
       console.error(e);
@@ -152,7 +152,7 @@ const IntakeFreeform = () => {
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {(REQUIRED_FIELDS as RequiredField[]).map((k) => (
+          {Array.from(REQUIRED_FIELDS).map((k) => (
             <Badge key={k} variant={completed.includes(k) ? "secondary" : "outline"}>
               {prettyLabel[k]}
             </Badge>
