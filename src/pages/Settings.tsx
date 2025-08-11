@@ -209,6 +209,49 @@ const Settings = () => {
     }
   };
 
+  const exportCase = async () => {
+    try {
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
+      if (!user) {
+        return;
+      }
+      const res = await fetch(`/functions/v1/case-export?caseId=${user.id}`);
+      if (!res.ok) {
+        throw new Error("export failed");
+      }
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `case-${user.id}.zip`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      toast({ title: "שגיאה בייצוא", variant: "destructive" });
+    }
+  };
+
+  const deleteAccount = async () => {
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return;
+    }
+    const { error } = await supabase
+      .from("profiles")
+      .update({ delete_requested: true })
+      .eq("user_id", user.id);
+    if (error) {
+      toast({ title: "שגיאה במחיקה", variant: "destructive" });
+      return;
+    }
+    toast({ title: "החשבון יסומן למחיקה" });
+    await supabase.auth.signOut();
+  };
+
   return (
     <div className="p-6 space-y-6 flex flex-col overflow-x-hidden">
       <div className="flex justify-between items-center">
@@ -699,10 +742,10 @@ const Settings = () => {
                 <Database className="h-4 w-4 mr-2" />
                 גבה נתונים
               </Button>
-              <Button variant="outline">
-                ייצא לאקסל
+              <Button variant="outline" onClick={exportCase}>
+                ייצוא תיק
               </Button>
-              <Button variant="destructive">
+              <Button variant="destructive" onClick={deleteAccount}>
                 מחק חשבון
               </Button>
             </div>
