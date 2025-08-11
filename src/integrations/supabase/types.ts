@@ -185,6 +185,90 @@ export type Database = {
         }
         Relationships: []
       }
+      court_documents: {
+        Row: {
+          id: string
+          user_id: string
+          case_id: string | null
+          document_url: string
+          description: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          case_id?: string | null
+          document_url: string
+          description?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          case_id?: string | null
+          document_url?: string
+          description?: string | null
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "court_documents_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "court_documents_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      court_reminders: {
+        Row: {
+          id: string
+          user_id: string
+          case_id: string | null
+          remind_at: string
+          notes: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          case_id?: string | null
+          remind_at: string
+          notes?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          case_id?: string | null
+          remind_at?: string
+          notes?: string | null
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "court_reminders_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "court_reminders_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deposits: {
         Row: {
           amount: number
