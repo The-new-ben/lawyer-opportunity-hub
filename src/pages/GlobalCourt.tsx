@@ -1,5 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import IntakeAssistant from "@/components/court/IntakeAssistant";
 import SummonsForm from "@/components/court/SummonsForm";
 import HearingScheduler from "@/components/court/HearingScheduler";
@@ -11,8 +13,11 @@ import PartyInterrogation from "@/components/court/PartyInterrogation";
 import CaseBuilder from "@/components/court/CaseBuilder";
 import RoleMatchFinder from "@/components/court/RoleMatchFinder";
 import IntakeFreeform from "@/components/court/IntakeFreeform";
+import SmartIntakePortal from "@/components/court/SmartIntakePortal";
 
 const GlobalCourt = () => {
+  const [showAdditionalTools, setShowAdditionalTools] = useState(false);
+  
   useEffect(() => {
     document.title = "International AI Court | Global Justice Dashboard";
     const metaDesc = document.querySelector('meta[name="description"]');
@@ -35,20 +40,47 @@ const GlobalCourt = () => {
   }, []);
 
   return (
-    <main className="container mx-auto p-6 space-y-8">
-      <header className="space-y-2">
-        <h1 className="text-3xl font-bold">International AI Court</h1>
-        <p className="text-muted-foreground max-w-2xl">
-          Unified, AI-assisted justice for everyone. Start case intake, summon parties, schedule hearings,
-          join live simulation with gamification, and learn how proceedings work.
-        </p>
-      </header>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      
+      {/* Smart Intake Portal - Main Interface */}
+      <SmartIntakePortal />
+      
+      {/* Toggle for Additional Tools */}
+      <div className="container mx-auto p-6">
+        <div className="text-center">
+          <Button
+            variant="outline"
+            onClick={() => setShowAdditionalTools(!showAdditionalTools)}
+            className="mb-6"
+          >
+            {showAdditionalTools ? (
+              <>
+                <ChevronUp className="w-4 h-4 mr-2" />
+                הסתר כלים נוספים
+              </>
+            ) : (
+              <>
+                <ChevronDown className="w-4 h-4 mr-2" />
+                הצג כלים נוספים
+              </>
+            )}
+          </Button>
+        </div>
 
-      <section className="mb-6">
-        <IntakeFreeform />
-      </section>
+        {showAdditionalTools && (
+          <div className="space-y-8">
+            <header className="text-center space-y-2">
+              <h2 className="text-3xl font-bold">כלים נוספים</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                כלים מתקדמים נוספים להכנת תיקים ודיונים משפטיים
+              </p>
+            </header>
 
-      <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <section className="mb-6">
+              <IntakeFreeform />
+            </section>
+
+            <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Card className="col-span-1 lg:col-span-2">
           <CardHeader>
             <CardTitle>Case Intake Assistant</CardTitle>
@@ -138,8 +170,11 @@ const GlobalCourt = () => {
             <RoleMatchFinder />
           </CardContent>
         </Card>
-    </section>
-    </main>
+            </section>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 
