@@ -36,7 +36,9 @@ import {
   Lock,
   Shield,
   Target,
-  Eye
+  Eye,
+  Mic,
+  Square
 } from 'lucide-react';
 
 interface ReadinessStatus {
@@ -93,10 +95,20 @@ const SmartIntakePortal = () => {
   const [hasAudience, setHasAudience] = useState(false);
   const [needsDeposit, setNeedsDeposit] = useState(false);
   const [selectedProfessionals, setSelectedProfessionals] = useState<string[]>([]);
-  const [showDetails, setShowDetails] = useState(false);
+const [showDetails, setShowDetails] = useState(false);
 
-  const chatEndRef = useRef<HTMLDivElement>(null);
-  const typingTimeoutRef = useRef<NodeJS.Timeout>();
+// Live extraction & approvals
+const [liveSuggestions, setLiveSuggestions] = useState<Record<string, any>>({});
+const [approvedFields, setApprovedFields] = useState<Record<string, boolean>>({});
+const [isLiveExtracting, setIsLiveExtracting] = useState(false);
+
+// Voice input
+const [listening, setListening] = useState(false);
+const recognitionRef = useRef<any>(null);
+
+const chatEndRef = useRef<HTMLDivElement>(null);
+const typingTimeoutRef = useRef<NodeJS.Timeout>();
+const liveDebounceRef = useRef<NodeJS.Timeout>();
 
   // Authentication check
   const handleLogin = () => {
@@ -179,6 +191,18 @@ const SmartIntakePortal = () => {
     setReadinessStatus(status);
   }, [fieldStatuses]);
 
+  // Debounced live extraction while typing
+  useEffect(() => {
+    if (!currentInput.trim() || isTyping) return;
+    if (liveDebounceRef.current) clearTimeout(liveDebounceRef.current);
+    liveDebounceRef.current = setTimeout(() => {
+      extractLive(currentInput.trim());
+    }, 600);
+    return () => {
+      if (liveDebounceRef.current) clearTimeout(liveDebounceRef.current);
+    };
+  }, [currentInput, isTyping]);
+
   const typewriterEffect = (text: string, callback?: () => void) => {
     setIsTyping(true);
     setChatHistory(prev => [...prev, { role: 'ai', content: '', typing: true }]);
@@ -206,6 +230,79 @@ const SmartIntakePortal = () => {
     };
     
     typeChar();
+  };
+
+  // Live extractor used by debounce
+  const extractLive = async (text: string) => {
+    try {
+      setIsLiveExtracting(true);
+      const response = await supabase.functions.invoke('ai-court-orchestrator', {
+        body: {
+          action: 'intake_extract',
+          locale: 'en',
+          context: {
+            history: [...chatHistory, { role: 'user', content: text }],
+            required_fields: ['title', 'summary', 'jurisdiction', 'category', 'goal', 'parties', 'evidence'],
+            current_fields: draft
+          }
+        }
+      });
+      if (response.error) throw response.error;
+      const aiResponse = response.data;
+      if (aiResponse?.updated_fields) {
+        setLiveSuggestions(aiResponse.updated_fields);
+      }
+    } catch (e) {
+      console.error('Live extract error:', e);
+    } finally {
+      setIsLiveExtracting(false);
+    }
+  };
+
+  // Voice controls
+  const startListening = () => {
+    try {
+      const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (!SR) {
+        toast({ title: 'Voice not supported', description: 'Browser missing SpeechRecognition', variant: 'destructive' });
+        return;
+      }
+      const rec = new SR();
+      recognitionRef.current = rec;
+      rec.lang = 'he-IL';
+      rec.continuous = true;
+      rec.interimResults = true;
+      rec.onresult = (event: any) => {
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            setCurrentInput((prev) => (prev + ' ' + transcript).trim());
+          }
+        }
+      };
+      rec.onend = () => setListening(false);
+      rec.onerror = () => setListening(false);
+      rec.start();
+      setListening(true);
+    } catch (e) {
+      console.error('Mic start error', e);
+    }
+  };
+
+  const stopListening = () => {
+    try { recognitionRef.current?.stop?.(); } finally { setListening(false); }
+  };
+
+  const approveSuggestion = (key: string) => {
+    const value = (liveSuggestions as any)[key];
+    if (value === undefined) return;
+    update({ [key]: value } as any);
+    setApprovedFields((prev) => ({ ...prev, [key]: true }));
+    setLiveSuggestions((prev) => {
+      const { [key]: _, ...rest } = prev;
+      return rest;
+    });
+    toast({ title: 'Field updated', description: `${key} approved from AI suggestion` });
   };
 
   const sendToAI = async () => {
@@ -508,6 +605,9 @@ const SmartIntakePortal = () => {
                 <Bot className="w-5 h-5 text-primary" />
                 <CardTitle>Interactive AI Interview</CardTitle>
                 {isAIActive && <Sparkles className="w-4 h-4 text-yellow-500 animate-pulse" />}
+                {isLiveExtracting && (
+                  <Badge variant="outline" className="ml-2 animate-fade-in">Live</Badge>
+                )}
               </div>
             </CardHeader>
             <CardContent className="p-0">
