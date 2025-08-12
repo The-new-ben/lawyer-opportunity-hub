@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { SocialLogin } from '@/components/auth/SocialLogin';
+import { InviteManager } from '@/components/social/InviteManager';
+import { PollManager } from '@/components/polls/PollManager';
+import { SubscriptionManager } from '@/components/subscription/SubscriptionManager';
+import { ProfessionalMarketplace } from '@/components/professionals/ProfessionalMarketplace';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
@@ -491,13 +496,37 @@ const liveDebounceRef = useRef<NodeJS.Timeout>();
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-6">
-        <Card className="w-full max-w-md border-2 shadow-lg">
-          <CardHeader className="text-center">
-            <div className="mx-auto p-3 bg-primary/10 rounded-full w-fit mb-4">
-              <Lock className="w-8 h-8 text-primary" />
-            </div>
-            <CardTitle className="text-2xl">Access Required</CardTitle>
-            <p className="text-muted-foreground">Password required</p>
+        <div className="w-full max-w-4xl space-y-6">
+          {/* Social Login */}
+          <div className="flex justify-center">
+            <SocialLogin onSuccess={() => setIsAuthenticated(true)} />
+          </div>
+          
+          {/* Traditional Access */}
+          <Card className="w-full max-w-md mx-auto border-2 shadow-lg">
+            <CardHeader className="text-center">
+              <div className="mx-auto p-3 bg-primary/10 rounded-full w-fit mb-4">
+                <Lock className="w-8 h-8 text-primary" />
+              </div>
+              <CardTitle className="text-2xl">Direct Access</CardTitle>
+              <p className="text-muted-foreground">Enter access code</p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Input
+                type="password"
+                placeholder="Enter password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+              />
+              <Button onClick={handleLogin} className="w-full">
+                <Shield className="w-4 h-4 mr-2" />
+                Access Portal
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <Input
