@@ -27,3 +27,30 @@ export const searchEvidence = async (query: string) => {
   if (error) throw error;
   return data;
 };
+
+export const intakeExtract = async (text: string) => {
+  const { data, error } = await supabase.functions.invoke('ai-court-orchestrator', { 
+    body: { action: 'intake_extract', context: { text } } 
+  });
+  if (error) throw error;
+  return data;
+};
+
+export const transcribeVoice = async (audioBlob: Blob) => {
+  const reader = new FileReader();
+  return new Promise((resolve, reject) => {
+    reader.onloadend = async () => {
+      try {
+        const base64 = (reader.result as string).split(',')[1];
+        const { data, error } = await supabase.functions.invoke('transcribe-voice', { 
+          body: { audio: base64 } 
+        });
+        if (error) throw error;
+        resolve(data);
+      } catch (err) {
+        reject(err);
+      }
+    };
+    reader.readAsDataURL(audioBlob);
+  });
+};
