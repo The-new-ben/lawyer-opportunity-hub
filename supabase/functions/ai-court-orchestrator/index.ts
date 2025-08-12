@@ -66,6 +66,7 @@ const MODEL_URL = Deno.env.get("MODEL_SERVER_URL");
 const MODEL_API_KEY = Deno.env.get("MODEL_API_KEY");
 const HF_TOKEN = Deno.env.get("HUGGINGFACE_API_KEY") || Deno.env.get("HUGGING_FACE_ACCESS_TOKEN");
 const HF_CHAT_DEFAULT_MODEL = Deno.env.get("HF_DEFAULT_CHAT_MODEL") || "openai/gpt-oss-120b:cerebras";
+console.info(JSON.stringify({ level: 'info', message: 'ai-court-orchestrator config', context: { hasHFToken: !!HF_TOKEN, defaultModel: HF_CHAT_DEFAULT_MODEL } }));
 
 async function callModelViaProxy(task: string, locale: string, context: Record<string, unknown>) {
   if (!(MODEL_URL && MODEL_API_KEY)) return null;
@@ -304,7 +305,16 @@ Consider context: ${JSON.stringify(body.context || {})}`;
             return new Response(JSON.stringify(gen), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
           }
         } catch (e) {
-          console.warn("Intake extract JSON parse failed, returning heuristic fallback:", e);
+          console.warn("Intake extract JSON parse failed, returning text proxy:", e);
+          const raw = typeof gen === "string" ? gen : JSON.stringify(gen);
+          const lastUser = [...history].reverse().find((m) => m.role === "user")?.content || "";
+          const proxy = {
+            updated_fields: { summary: (current as any).summary ?? lastUser },
+            missing_fields: required.filter((k) => !(current as any)[k] && k !== "summary"),
+            next_question: raw,
+            summary: ((current as any).summary ?? lastUser).slice(0, 600),
+          };
+          return new Response(JSON.stringify(proxy), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
       }
       const lastUser = [...history].reverse().find((m) => m.role === "user")?.content || "";
