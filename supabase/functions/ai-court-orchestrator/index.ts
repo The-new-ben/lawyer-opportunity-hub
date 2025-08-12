@@ -93,11 +93,12 @@ async function callModelViaHF(prompt: string, model?: string) {
     const payload = {
       model: model || HF_CHAT_DEFAULT_MODEL,
       messages: [
-        { role: "system", content: "You are a helpful assistant." },
+        { role: "system", content: "You are a helpful assistant. Always return ONLY a valid JSON object (no markdown/code fences, no surrounding text)." },
         { role: "user", content: prompt }
       ],
       max_tokens: 800,
       temperature: 0.3,
+      response_format: { type: "json_object" },
     };
 
     const resp = await fetch("https://router.huggingface.co/v1/chat/completions", {
@@ -288,8 +289,20 @@ Consider context: ${JSON.stringify(body.context || {})}`;
       const gen = await callModelViaHF(prompt, b.model);
       if (gen) {
         try {
-          const parsed = typeof gen === "string" ? JSON.parse(gen) : gen;
-          return new Response(JSON.stringify(parsed), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          if (typeof gen === "string") {
+            let txt = gen.trim();
+            // Strip code fences if present and isolate JSON object
+            txt = txt.replace(/^```json\s*/i, "").replace(/```\s*$/i, "");
+            const start = txt.indexOf("{");
+            const end = txt.lastIndexOf("}");
+            if (start !== -1 && end !== -1 && end > start) {
+              txt = txt.slice(start, end + 1);
+            }
+            const parsed = JSON.parse(txt);
+            return new Response(JSON.stringify(parsed), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          } else {
+            return new Response(JSON.stringify(gen), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          }
         } catch (e) {
           console.warn("Intake extract JSON parse failed, returning heuristic fallback:", e);
         }
