@@ -107,6 +107,9 @@ const [liveSuggestions, setLiveSuggestions] = useState<Record<string, any>>({});
 const [approvedFields, setApprovedFields] = useState<Record<string, boolean>>({});
 const [isLiveExtracting, setIsLiveExtracting] = useState(false);
 
+// HF token (memory-only)
+const [hfToken, setHfToken] = useState('');
+
 // Voice input
 const [listening, setListening] = useState(false);
 const recognitionRef = useRef<any>(null);
@@ -246,6 +249,7 @@ const liveDebounceRef = useRef<NodeJS.Timeout>();
         body: {
           action: 'intake_extract',
           locale: 'en',
+          hf_token: hfToken || undefined,
           context: {
             history: [...chatHistory, { role: 'user', content: text }],
             required_fields: ['title', 'summary', 'jurisdiction', 'category', 'goal', 'parties', 'evidence'],
@@ -327,6 +331,7 @@ const liveDebounceRef = useRef<NodeJS.Timeout>();
         body: {
           action: 'intake_extract',
           locale: 'en',
+          hf_token: hfToken || undefined,
           context: {
             history: [...chatHistory, { role: 'user', content: userMessage }],
             required_fields: ['title', 'summary', 'jurisdiction', 'category', 'goal', 'parties', 'evidence'],
@@ -406,6 +411,7 @@ const liveDebounceRef = useRef<NodeJS.Timeout>();
         body: {
           action: 'case_builder',
           locale: 'en',
+          hf_token: hfToken || undefined,
           context: {
             summary: draft.summary,
             goal: draft.goal,
@@ -629,7 +635,17 @@ const liveDebounceRef = useRef<NodeJS.Timeout>();
                 )}
               </div>
             </CardHeader>
-            <CardContent className="p-0">
+<CardContent className="p-0">
+              {/* HF Token input (memory-only) */}
+              <div className="p-4 border-b bg-muted/50">
+                <Input
+                  type="password"
+                  placeholder="Enter your Hugging Face token (stored in memory only)"
+                  value={hfToken}
+                  onChange={(e) => setHfToken(e.target.value)}
+                />
+              </div>
+              
               
               {/* Chat Messages */}
               <div className="h-96 overflow-y-auto p-4 space-y-4">

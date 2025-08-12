@@ -87,8 +87,8 @@ async function callModelViaProxy(task: string, locale: string, context: Record<s
   }
 }
 
-async function callModelViaHF(prompt: string, model?: string) {
-  const token = HF_TOKEN;
+async function callModelViaHF(prompt: string, model?: string, tokenOverride?: string) {
+  const token = tokenOverride || HF_TOKEN;
   if (!token) return null;
   try {
     const payload = {
@@ -230,7 +230,7 @@ serve(async (req) => {
       const prompt = `Create an IRAC-based intake in ${locale}.
 Return STRICT JSON with keys: intro, method, questions (array of {id,text,type,options?}), disclaimer.
 Consider context: ${JSON.stringify(body.context || {})}`;
-      const gen = await callModelViaHF(prompt, (body as any).model);
+      const gen = await callModelViaHF(prompt, (body as any).model, (body as any).hf_token);
       if (gen) {
         try {
           const parsed = typeof gen === "string" ? JSON.parse(gen) : gen;
@@ -259,7 +259,7 @@ Consider context: ${JSON.stringify(body.context || {})}`;
     if (body.action === "party_interrogation") {
       const b = body as PartyInterrogationPayload;
       const prompt = buildInterrogationPrompt(locale, b.context);
-      const gen = await callModelViaHF(prompt, b.model);
+      const gen = await callModelViaHF(prompt, b.model, (body as any).hf_token);
       if (gen) {
         try {
           const parsed = typeof gen === "string" ? JSON.parse(gen) : gen;
@@ -287,7 +287,7 @@ Consider context: ${JSON.stringify(body.context || {})}`;
       const required = b.context?.required_fields ?? ["summary", "jurisdiction", "category", "goal", "parties", "evidence", "startDate"];
       const current = b.context?.current_fields ?? {};
       const prompt = buildIntakeExtractPrompt(locale, history as any, required, current);
-      const gen = await callModelViaHF(prompt, b.model);
+      const gen = await callModelViaHF(prompt, b.model, (body as any).hf_token);
       if (gen) {
         try {
           if (typeof gen === "string") {
@@ -330,7 +330,7 @@ Consider context: ${JSON.stringify(body.context || {})}`;
     if (body.action === "case_builder") {
       const b = body as CaseBuilderPayload;
       const prompt = buildCasePlanPrompt(locale, b.context);
-      const gen = await callModelViaHF(prompt, b.model);
+      const gen = await callModelViaHF(prompt, b.model, (body as any).hf_token);
       if (gen) {
         try {
           const parsed = typeof gen === "string" ? JSON.parse(gen) : gen;
@@ -364,7 +364,7 @@ Consider context: ${JSON.stringify(body.context || {})}`;
     if (body.action === "role_match") {
       const b = body as RoleMatchPayload;
       const prompt = buildRoleMatchPrompt(locale, b.context);
-      const gen = await callModelViaHF(prompt, b.model);
+      const gen = await callModelViaHF(prompt, b.model, (body as any).hf_token);
       if (gen) {
         try {
           const parsed = typeof gen === "string" ? JSON.parse(gen) : gen;
