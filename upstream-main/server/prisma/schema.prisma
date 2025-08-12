@@ -1,0 +1,81 @@
+// Prisma schema for core entities
+// Adjust datasource provider and URL via environment variables
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  fullName  String?
+  role      String   @default("lawyer")
+  leads     Lead[]
+  createdAt DateTime @default(now())
+}
+
+model Lead {
+  id        String   @id @default(uuid())
+  fullName  String
+  phone     String
+  email     String?
+  legalArea String?
+  budget    Int?
+  priority  String?
+  source    String?
+  notes     String?
+  status    String?  @default("new")
+  user      User?    @relation(fields: [userId], references: [id])
+  userId    String?
+  createdAt DateTime @default(now())
+}
+
+model Client {
+  id        String   @id @default(uuid())
+  lead      Lead?    @relation(fields: [leadId], references: [id])
+  leadId    String?
+  name      String
+  email     String?
+  phone     String?
+  createdAt DateTime @default(now())
+  cases     Case[]
+}
+
+model Case {
+  id        String   @id @default(uuid())
+  client    Client   @relation(fields: [clientId], references: [id])
+  clientId  String
+  title     String
+  status    String?
+  createdAt DateTime @default(now())
+}
+
+model Payment {
+  id        String   @id @default(uuid())
+  case      Case     @relation(fields: [caseId], references: [id])
+  caseId    String
+  amount    Int
+  createdAt DateTime @default(now())
+}
+
+model Commission {
+  id        String   @id @default(uuid())
+  payment   Payment  @relation(fields: [paymentId], references: [id])
+  paymentId String
+  percent   Float
+}
+
+model Rating {
+  id        String   @id @default(uuid())
+  case      Case     @relation(fields: [caseId], references: [id])
+  caseId    String
+  score     Int
+  comment   String?
+  createdAt DateTime @default(now())
+}
