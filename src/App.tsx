@@ -36,6 +36,7 @@ import { RoleBasedRoute } from "./components/RoleBasedRoute";
 import GlobalCourt from "./pages/GlobalCourt";
 import Intake from "./pages/Intake";
 import HearingJoin from "./pages/HearingJoin";
+import GptOssPortal from "./pages/GptOssPortal";
 
 const App = () => (
   <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
@@ -51,6 +52,7 @@ const App = () => (
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/update-password" element={<UpdatePassword />} />
+                <Route path="/gpt-oss" element={<GptOssPortal />} />
                 <Route path="/" element={<GlobalCourt />} />
                 
                 {/* Protected Routes */}
