@@ -125,7 +125,7 @@ export function ProfessionalMarketplace({
   const [professionals, setProfessionals] = useState<Professional[]>(mockProfessionals);
   const [filteredProfessionals, setFilteredProfessionals] = useState<Professional[]>(mockProfessionals);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedSpecialty, setSelectedSpecialty] = useState(specialty || '');
+  const [selectedSpecialty, setSelectedSpecialty] = useState(specialty || 'all');
   const [maxRate, setMaxRate] = useState(budget || 1000);
   const [onlineOnly, setOnlineOnly] = useState(false);
   const [verifiedOnly, setVerifiedOnly] = useState(true);
@@ -151,7 +151,7 @@ export function ProfessionalMarketplace({
     }
 
     // Specialty filter
-    if (selectedSpecialty) {
+    if (selectedSpecialty && selectedSpecialty !== 'all') {
       filtered = filtered.filter(prof => 
         prof.specialties.some(s => s.toLowerCase().includes(selectedSpecialty.toLowerCase()))
       );
@@ -284,7 +284,7 @@ export function ProfessionalMarketplace({
                   <SelectValue placeholder="All specialties" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All specialties</SelectItem>
+                  <SelectItem value="all">All specialties</SelectItem>
                   {allSpecialties.map(spec => (
                     <SelectItem key={spec} value={spec}>{spec}</SelectItem>
                   ))}
@@ -508,7 +508,7 @@ export function ProfessionalMarketplace({
           <Button
             onClick={() => {
               setSearchQuery('');
-              setSelectedSpecialty('');
+              setSelectedSpecialty('all');
               setMaxRate(1000);
               setOnlineOnly(false);
               setVerifiedOnly(false);
