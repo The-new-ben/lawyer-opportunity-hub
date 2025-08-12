@@ -11,7 +11,7 @@ const Landing = () => {
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
             <Scale className="h-8 w-8 text-primary" />
-            <h1 className="text-2xl font-bold text-primary">LegalCRM Pro</h1>
+            <h1 className="text-2xl font-bold text-primary">Justice.com</h1>
           </div>
           <div className="flex gap-4">
             <Button variant="ghost" asChild>
