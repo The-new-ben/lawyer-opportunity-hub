@@ -35,6 +35,7 @@ import CourtSessionDetails from "./pages/court/CourtSessionDetails";
 import { RoleBasedRoute } from "./components/RoleBasedRoute";
 import GlobalCourt from "./pages/GlobalCourt";
 import Intake from "./pages/Intake";
+import HearingJoin from "./pages/HearingJoin";
 
 const App = () => (
   <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
@@ -153,6 +154,7 @@ const App = () => (
                               </RoleBasedRoute>
                             } />
                             <Route path="/meeting-scheduler" element={<MeetingScheduler />} />
+                            <Route path="/hearing/join" element={<HearingJoin />} />
                             <Route path="*" element={<NotFound />} />
                           </Routes>
                         </Layout>

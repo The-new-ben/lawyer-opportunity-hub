@@ -78,15 +78,24 @@ export function useRole(): UserRoleData {
 
   const hasPermission = (requiredRole: UserRole | UserRole[]): boolean => {
     if (!role) return false;
-    
-    const requiredRoles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
-    
-    // Admin has all permissions
-    if (role === 'admin') return true;
-    
-    return requiredRoles.includes(role);
-  };
 
+    const synonyms: Record<string, UserRole> = {
+      client: 'customer',
+      supplier: 'lead_provider',
+    } as const;
+
+    const normalize = (r: UserRole) => (synonyms[r] ? synonyms[r] : r);
+
+    const requiredRoles = (Array.isArray(requiredRole) ? requiredRole : [requiredRole])
+      .map((r) => normalize(r));
+
+    const current = normalize(role);
+
+    // Admin has all permissions
+    if (current === 'admin') return true;
+
+    return requiredRoles.includes(current);
+  };
   return {
     role,
     loading,
