@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import { HfInference } from "https://esm.sh/@huggingface/inference@2.3.2";
+// Using HF Router Chat Completions (no direct HfInference)
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -64,8 +64,8 @@ type RequestBody = IntakePayload | PartyInterrogationPayload | CaseBuilderPayloa
 
 const MODEL_URL = Deno.env.get("MODEL_SERVER_URL");
 const MODEL_API_KEY = Deno.env.get("MODEL_API_KEY");
-const HF_TOKEN = Deno.env.get("HUGGING_FACE_ACCESS_TOKEN");
-const HF_DEFAULT_MODEL = Deno.env.get("HF_DEFAULT_TEXT_MODEL") || "google/gemma-2-2b-it";
+const HF_TOKEN = Deno.env.get("HUGGINGFACE_API_KEY") || Deno.env.get("HUGGING_FACE_ACCESS_TOKEN");
+const HF_CHAT_DEFAULT_MODEL = Deno.env.get("HF_DEFAULT_CHAT_MODEL") || "openai/gpt-oss-120b:cerebras";
 
 async function callModelViaProxy(task: string, locale: string, context: Record<string, unknown>) {
   if (!(MODEL_URL && MODEL_API_KEY)) return null;
@@ -87,19 +87,39 @@ async function callModelViaProxy(task: string, locale: string, context: Record<s
 }
 
 async function callModelViaHF(prompt: string, model?: string) {
-  if (!HF_TOKEN) return null;
+  const token = HF_TOKEN;
+  if (!token) return null;
   try {
-    const hf = new HfInference(HF_TOKEN);
-    const res = await hf.textGeneration({
-      model: model || HF_DEFAULT_MODEL,
-      inputs: prompt,
-      parameters: { max_new_tokens: 600, temperature: 0.3, return_full_text: false }
+    const payload = {
+      model: model || HF_CHAT_DEFAULT_MODEL,
+      messages: [
+        { role: "system", content: "You are a helpful assistant." },
+        { role: "user", content: prompt }
+      ],
+      max_tokens: 800,
+      temperature: 0.3,
+    };
+
+    const resp = await fetch("https://router.huggingface.co/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
     });
-    // res.generated_text may contain extra text; we return raw and let caller parse JSON if needed
-    // @ts-ignore - types vary across models
-    return typeof res === "string" ? res : res.generated_text ?? JSON.stringify(res);
-  } catch (err) {
-    console.error("HF generation failed:", err);
+
+    if (!resp.ok) {
+      const errText = await resp.text();
+      console.error(JSON.stringify({ level: 'error', message: 'HF chat API error', context: { status: resp.status, errText } }));
+      return null;
+    }
+
+    const data = await resp.json();
+    const text = data?.choices?.[0]?.message?.content;
+    return text || JSON.stringify(data);
+  } catch (err: any) {
+    console.error(JSON.stringify({ level: 'error', message: 'HF generation failed', context: { error: err?.message } }));
     return null;
   }
 }
