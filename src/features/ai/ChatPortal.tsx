@@ -74,7 +74,8 @@ export default function ChatPortal() {
       ];
 
       const resp = await chat({
-        provider: mode === 'server' ? 'huggingface' : 'huggingface', // server uses secret; direct uses pasted token
+        // In server mode, call via Supabase (provider undefined). In direct mode, call HF Router.
+        provider: mode === 'server' ? undefined : 'huggingface',
         model,
         messages,
         max_tokens: 1024,
