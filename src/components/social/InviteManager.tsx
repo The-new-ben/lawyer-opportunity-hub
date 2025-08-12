@@ -158,7 +158,7 @@ export function InviteManager({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {[
               { id: 'public', label: 'Public Call', icon: Globe, desc: 'Open invitation to community' },
-              { id: 'professional', label: 'Legal Experts', icon: UserCheck, desc: 'Verified professionals only' },
+              { id: 'professional', label: 'Legal Experts', icon: UserPlus, desc: 'Verified professionals only' },
               { id: 'specific', label: 'Targeted Invite', icon: Users, desc: 'Specific individuals/groups' }
             ].map((mode) => {
               const IconComponent = mode.icon;

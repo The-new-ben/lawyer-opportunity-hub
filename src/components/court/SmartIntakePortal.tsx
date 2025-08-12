@@ -527,22 +527,6 @@ const liveDebounceRef = useRef<NodeJS.Timeout>();
           </Card>
         </div>
       </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Input
-              type="password"
-              placeholder="Enter password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-            />
-            <Button onClick={handleLogin} className="w-full">
-              <Shield className="w-4 h-4 mr-2" />
-              Access Portal
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
     );
   }
 

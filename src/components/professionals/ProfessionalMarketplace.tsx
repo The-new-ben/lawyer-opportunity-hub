@@ -326,11 +326,11 @@ export function ProfessionalMarketplace({
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label className="text-xs">Online only</Label>
-                <Switch checked={onlineOnly} onCheckedChange={setOnlineOnly} size="sm" />
+                <Switch checked={onlineOnly} onCheckedChange={setOnlineOnly} />
               </div>
               <div className="flex items-center justify-between">
                 <Label className="text-xs">Verified only</Label>
-                <Switch checked={verifiedOnly} onCheckedChange={setVerifiedOnly} size="sm" />
+                <Switch checked={verifiedOnly} onCheckedChange={setVerifiedOnly} />
               </div>
             </div>
           </div>
