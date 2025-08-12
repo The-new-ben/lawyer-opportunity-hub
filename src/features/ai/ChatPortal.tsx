@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import HtmlPortalEmbed from './HtmlPortalEmbed';
+import { detectLanguage, t, localeFor, dirFor, type Lang } from './i18n';
 
 // Models (include both server/HF and OpenAI)
 const MODELS = [
@@ -21,6 +22,7 @@ const MODELS = [
 type Thread = { question: string; answer: string; timestamp: string };
 
 export default function ChatPortal() {
+  const [lang] = useState<Lang>(() => detectLanguage());
   const [mode, setMode] = useState<'server' | 'huggingface' | 'openai'>('server');
   const [hfToken, setHfToken] = useState('');
   const [model, setModel] = useState(MODELS[0].value);
@@ -39,17 +41,17 @@ export default function ChatPortal() {
   const sendBtnRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    document.title = 'GPT-OSS Portal | Legal AI Chat';
+    document.title = `${t(lang, 'title')} | Legal AI Chat`;
     const meta = document.querySelector('meta[name="description"]');
-    const desc = 'Chat with open-source GPT models via secure server or direct HF token.';
+    const desc = t(lang, 'metaDesc');
     if (meta) meta.setAttribute('content', desc);
     else {
       const m = document.createElement('meta');
-      m.name = 'description';
-      m.content = desc;
+      (m as any).name = 'description';
+      (m as any).content = desc;
       document.head.appendChild(m);
     }
-  }, []);
+  }, [lang]);
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -62,11 +64,11 @@ export default function ChatPortal() {
   const onSend = async () => {
     setError(null);
     if (!query.trim()) {
-      setError('נא להזין שאלה.');
+      setError(t(lang, 'errorEnterQuestion'));
       return;
     }
     if (mode === 'huggingface' && !hfToken.trim()) {
-      setError('הדבק/י טוקן Hugging Face או עבר/י למצב שרת.');
+      setError(t(lang, 'errorNeedToken'));
       return;
     }
     setLoading(true);
@@ -89,14 +91,14 @@ export default function ChatPortal() {
       const thread: Thread = {
         question: query.trim(),
         answer: sanitize(resp.text),
-        timestamp: new Date().toLocaleString('he-IL'),
+        timestamp: new Date().toLocaleString(localeFor(lang)),
       };
       const next = [...history, thread];
       setHistory(next);
       localStorage.setItem('gptoss_history', JSON.stringify(next));
       setQuery('');
     } catch (e: any) {
-      setError(e?.message || 'שגיאה לא ידועה');
+      setError(e?.message || t(lang, 'unknownError'));
     } finally {
       setLoading(false);
       sendBtnRef.current?.focus();
@@ -104,16 +106,16 @@ export default function ChatPortal() {
   };
 
   const clearHistory = () => {
-    if (confirm('למחוק היסטוריה?')) {
+    if (confirm(t(lang, 'confirmClear'))) {
       setHistory([]);
       localStorage.removeItem('gptoss_history');
     }
   };
 
   return (
-    <div className="container max-w-3xl mx-auto p-4 space-y-4">
+    <div className="container max-w-3xl mx-auto p-4 space-y-4" dir={dirFor(lang)}>
       <header>
-        <h1 className="text-xl font-semibold text-center">GPT-OSS Portal</h1>
+        <h1 className="text-xl font-semibold text-center">{t(lang, 'title')}</h1>
       </header>
 
       {/* Legacy HTML portal embedded for testing */}
@@ -126,7 +128,7 @@ export default function ChatPortal() {
           <CardHeader>
             <div className="grid gap-3 md:grid-cols-2">
               <div className="space-y-2">
-                <label className="font-medium">מצב</label>
+                <label className="font-medium">{t(lang, 'modeLabel')}</label>
                 <select
                   className="border rounded p-2 w-full"
                   value={mode}
@@ -139,7 +141,7 @@ export default function ChatPortal() {
               </div>
 
               <div className="space-y-2">
-                <label className="font-medium">מודל</label>
+                <label className="font-medium">{t(lang, 'modelLabel')}</label>
                 <select
                   className="border rounded p-2 w-full"
                   value={model}
@@ -153,10 +155,10 @@ export default function ChatPortal() {
           <CardContent>
             {mode === 'huggingface' && (
               <div className="space-y-2 mb-4">
-                <label className="font-medium">Hugging Face Token (לא נשמר)</label>
+                <label className="font-medium">{t(lang, 'hfTokenLabel')}</label>
                 <Input
                   type="password"
-                  placeholder="Paste HF token…"
+                  placeholder={t(lang, 'hfTokenPlaceholder')}
                   value={hfToken}
                   onChange={(e) => setHfToken(e.target.value)}
                   autoComplete="off"
@@ -165,15 +167,15 @@ export default function ChatPortal() {
             )}
 
             <div className="space-y-2">
-              <label className="font-medium">Prompt</label>
+              <label className="font-medium">{t(lang, 'promptLabel')}</label>
               <textarea
                 className="border rounded p-2 w-full min-h-[120px]"
-                placeholder="Ask anything…"
+                placeholder={t(lang, 'promptPlaceholder')}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
               <Button ref={sendBtnRef} onClick={onSend} disabled={loading}>
-                {loading ? 'טוען…' : 'שליחה'}
+                {loading ? t(lang, 'sending') : t(lang, 'send')}
               </Button>
               {error && <div className="text-destructive text-sm mt-1">{error}</div>}
             </div>
@@ -183,11 +185,11 @@ export default function ChatPortal() {
         <section aria-label="Search and history">
           <div className="flex items-center gap-2 mb-2">
             <Input
-              placeholder="חיפוש בהיסטוריה…"
+              placeholder={t(lang, 'searchPlaceholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-            <Button variant="outline" onClick={clearHistory}>ניקוי</Button>
+            <Button variant="outline" onClick={clearHistory}>{t(lang, 'clear')}</Button>
           </div>
 
           <div className="space-y-2">
@@ -198,8 +200,8 @@ export default function ChatPortal() {
                   <span className="truncate max-w-[60%]">{truncate(t.question, 60)}</span>
                 </summary>
                 <div className="px-3 py-2">
-                  <div className="whitespace-pre-wrap"><b>Question:</b> {t.question}</div>
-                  <div className="whitespace-pre-wrap mt-1"><b>Answer:</b> {t.answer}</div>
+                  <div className="whitespace-pre-wrap"><b>{t(lang, 'question')}</b> {t.question}</div>
+                  <div className="whitespace-pre-wrap mt-1"><b>{t(lang, 'answer')}</b> {t.answer}</div>
                 </div>
               </details>
             ))}
