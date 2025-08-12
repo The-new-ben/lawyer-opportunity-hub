@@ -241,6 +241,7 @@ const liveDebounceRef = useRef<NodeJS.Timeout>();
   const extractLive = async (text: string) => {
     try {
       setIsLiveExtracting(true);
+      console.log('[AI] extractLive -> invoking ai-court-orchestrator', { text });
       const response = await supabase.functions.invoke('ai-court-orchestrator', {
         body: {
           action: 'intake_extract',
@@ -252,6 +253,7 @@ const liveDebounceRef = useRef<NodeJS.Timeout>();
           }
         }
       });
+      console.log('[AI] extractLive <- response', response);
       if (response.error) throw response.error;
       const aiResponse = response.data;
       if (aiResponse?.updated_fields) {
@@ -320,6 +322,7 @@ const liveDebounceRef = useRef<NodeJS.Timeout>();
     try {
       setIsAIActive(true);
       
+      console.log('[AI] sendToAI ->', userMessage);
       const response = await supabase.functions.invoke('ai-court-orchestrator', {
         body: {
           action: 'intake_extract',
@@ -331,6 +334,7 @@ const liveDebounceRef = useRef<NodeJS.Timeout>();
           }
         }
       });
+      console.log('[AI] sendToAI <- response', response);
 
       if (response.error) throw response.error;
 
@@ -397,6 +401,7 @@ const liveDebounceRef = useRef<NodeJS.Timeout>();
     }
 
     try {
+      console.log('[AI] generateCase ->', { summary: draft.summary, goal: draft.goal, jurisdiction: draft.jurisdiction, category: draft.category });
       const response = await supabase.functions.invoke('ai-court-orchestrator', {
         body: {
           action: 'case_builder',
@@ -409,6 +414,7 @@ const liveDebounceRef = useRef<NodeJS.Timeout>();
           }
         }
       });
+      console.log('[AI] generateCase <- response', response);
 
       if (response.error) throw response.error;
 
