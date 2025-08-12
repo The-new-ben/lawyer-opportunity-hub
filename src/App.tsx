@@ -51,8 +51,7 @@ const App = () => (
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/update-password" element={<UpdatePassword />} />
-                <Route path="/court-global" element={<GlobalCourt />} />
-                <Route path="/" element={<Index />} />
+                <Route path="/" element={<GlobalCourt />} />
                 
                 {/* Protected Routes */}
                 <Route
@@ -61,7 +60,6 @@ const App = () => (
                     <ProtectedRoute>
                       <Layout>
                         <Routes>
-                          <Route path="/" element={<Index />} />
                           <Route path="/intake" element={<Intake />} />
                           <Route path="/live-intake" element={
                             <React.Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div></div>}>
