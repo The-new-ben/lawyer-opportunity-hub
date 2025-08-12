@@ -5,6 +5,7 @@ import { chat } from '@/services/gptClient';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import HtmlPortalEmbed from './HtmlPortalEmbed';
 
 // Models
 const MODELS = [
@@ -112,6 +113,11 @@ export default function ChatPortal() {
       <header>
         <h1 className="text-xl font-semibold text-center">GPT-OSS Portal</h1>
       </header>
+
+      {/* Legacy HTML portal embedded for testing */}
+      <section aria-label="Legacy HTML Portal" className="mb-4">
+        <HtmlPortalEmbed />
+      </section>
 
       <main className="space-y-4">
         <Card>
