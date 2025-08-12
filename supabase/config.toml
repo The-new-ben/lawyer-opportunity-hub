@@ -62,3 +62,6 @@ schedule = "0 9 * * *"
 
 [functions.ai-gateway]
 verify_jwt = false
+
+[functions.openai-chat]
+verify_jwt = false

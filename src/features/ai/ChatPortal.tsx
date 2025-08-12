@@ -7,19 +7,21 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import HtmlPortalEmbed from './HtmlPortalEmbed';
 
-// Models
+// Models (include both server/HF and OpenAI)
 const MODELS = [
   { value: 'meta-llama/llama-3.1-70b-instruct', label: 'Llama 3.1 70B (Server)' },
   { value: 'mistralai/mixtral-8x7b-instruct', label: 'Mixtral 8x7B (Server)' },
   { value: 'qwen/qwen2.5-72b-instruct', label: 'Qwen2.5 72B (Server)' },
   { value: 'openai/gpt-oss-20b:fireworks-ai', label: 'gpt-oss-20b (HF Router)' },
   { value: 'openai/gpt-oss-120b:cerebras', label: 'gpt-oss-120b (HF Router)' },
+  { value: 'gpt-4o-mini', label: 'gpt-4o-mini (OpenAI)' },
+  { value: 'gpt-4.1-2025-04-14', label: 'gpt-4.1 (OpenAI)' },
 ];
 
 type Thread = { question: string; answer: string; timestamp: string };
 
 export default function ChatPortal() {
-  const [mode, setMode] = useState<'server' | 'huggingface'>('server');
+  const [mode, setMode] = useState<'server' | 'huggingface' | 'openai'>('server');
   const [hfToken, setHfToken] = useState('');
   const [model, setModel] = useState(MODELS[0].value);
   const [query, setQuery] = useState('');
@@ -75,12 +77,12 @@ export default function ChatPortal() {
       ];
 
       const resp = await chat({
-        // In server mode, call via Supabase (provider undefined). In direct mode, call HF Router.
-        provider: mode === 'server' ? undefined : 'huggingface',
+        // In server mode, call via Supabase (provider undefined). In direct mode, call HF Router. For OpenAI, call openai-chat.
+        provider: mode === 'server' ? undefined : mode === 'huggingface' ? 'huggingface' : 'openai',
         model,
         messages,
         max_tokens: 1024,
-        temperature: mode === 'server' ? 0.3 : 0.7,
+        temperature: mode === 'huggingface' ? 0.7 : 0.3,
         hfToken: mode === 'huggingface' ? hfToken.trim() : undefined,
       });
 
@@ -132,6 +134,7 @@ export default function ChatPortal() {
                 >
                   <option value="server">Server (Supabase Edge)</option>
                   <option value="huggingface">Direct (HF Router + Token)</option>
+                  <option value="openai">OpenAI (Supabase Edge)</option>
                 </select>
               </div>
 

@@ -73,11 +73,31 @@ async function callViaHuggingFaceRouter(req: ChatRequest): Promise<ChatResponse>
 }
 
 /**
- * Public entry – prefers server (Supabase) unless provider === 'huggingface' explicitly.
+ * Call OpenAI via Supabase Edge Function (server-side secret).
+ */
+async function callViaOpenAI(req: ChatRequest): Promise<ChatResponse> {
+  const { supabase } = await import('@/integrations/supabase/client');
+  const { data, error } = await supabase.functions.invoke('openai-chat', {
+    body: {
+      model: req.model,
+      messages: req.messages,
+      temperature: req.temperature ?? 0.6,
+      max_tokens: req.max_tokens ?? 1024,
+    },
+  });
+  if (error) throw error as any;
+  return data as ChatResponse;
+}
+
+/**
+ * Public entry – prefers server (Supabase) unless provider is forced.
  */
 export async function chat(req: ChatRequest): Promise<ChatResponse> {
   if (req.provider === 'huggingface') {
     return callViaHuggingFaceRouter(req);
+  }
+  if (req.provider === 'openai') {
+    return callViaOpenAI(req);
   }
   return callViaSupabase(req);
 }
