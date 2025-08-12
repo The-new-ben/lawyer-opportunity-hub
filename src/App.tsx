@@ -49,7 +49,7 @@ const App = () => (
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/update-password" element={<UpdatePassword />} />
-                <Route path="/" element={<GlobalCourt />} />
+                <Route path="/court-global" element={<GlobalCourt />} />
                 
                 {/* Protected Routes */}
                 <Route
@@ -59,6 +59,7 @@ const App = () => (
                       <Layout>
                         <Routes>
                           <Route path="/" element={<Index />} />
+                          <Route path="/intake" element={<Intake />} />
                           <Route path="/dashboard" element={<RoleDashboard />} />
                           <Route path="/dashboard/lawyer" element={
                             <RoleBasedRoute allowedRoles={['lawyer', 'admin']}>
