@@ -954,6 +954,59 @@ const liveDebounceRef = useRef<NodeJS.Timeout>();
           </CardContent>
         </Card>
 
+        {/* Additional Features */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="w-5 h-5" />
+                Professional Network
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ProfessionalMarketplace />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageSquare className="w-5 h-5" />
+                Community Polls
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <PollManager />
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Mail className="w-5 h-5" />
+                Professional Invites
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <InviteManager />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="w-5 h-5" />
+                Subscription Management
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <SubscriptionManager />
+            </CardContent>
+          </Card>
+        </div>
+
         {/* AI Connection Test - Moved to bottom */}
         <AIConnectionTest />
 
