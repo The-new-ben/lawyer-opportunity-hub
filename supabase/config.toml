@@ -53,6 +53,9 @@ verify_jwt = false
 [functions.ai-court-orchestrator]
 verify_jwt = false
 
+[functions.ai-intake-extract]
+verify_jwt = false
+
 [functions.notification-digest]
 verify_jwt = false
 schedule = "0 9 * * *"

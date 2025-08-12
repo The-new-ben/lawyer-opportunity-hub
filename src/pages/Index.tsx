@@ -14,8 +14,8 @@ const Index = () => {
   }
   
   // If user is authenticated, redirect to dashboard
-  // Otherwise, redirect to court portal for first-time users
-  return <Navigate to={user ? "/dashboard" : "/court-global"} replace />;
+  // Otherwise, redirect to landing page for new users
+  return <Navigate to={user ? "/dashboard" : "/landing"} replace />;
 };
 
 export default Index;

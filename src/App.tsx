@@ -1,3 +1,4 @@
+import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -50,6 +51,7 @@ const App = () => (
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/update-password" element={<UpdatePassword />} />
                 <Route path="/court-global" element={<GlobalCourt />} />
+                <Route path="/" element={<Index />} />
                 
                 {/* Protected Routes */}
                 <Route
@@ -60,6 +62,14 @@ const App = () => (
                         <Routes>
                           <Route path="/" element={<Index />} />
                           <Route path="/intake" element={<Intake />} />
+                          <Route path="/live-intake" element={
+                            <React.Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div></div>}>
+                              {React.createElement(() => {
+                                const LiveIntake = React.lazy(() => import('@/components/LiveIntake'));
+                                return <LiveIntake />;
+                              })}
+                            </React.Suspense>
+                          } />
                           <Route path="/dashboard" element={<RoleDashboard />} />
                           <Route path="/dashboard/lawyer" element={
                             <RoleBasedRoute allowedRoles={['lawyer', 'admin']}>
