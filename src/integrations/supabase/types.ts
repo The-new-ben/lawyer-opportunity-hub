@@ -185,90 +185,6 @@ export type Database = {
         }
         Relationships: []
       }
-      court_documents: {
-        Row: {
-          id: string
-          user_id: string
-          case_id: string | null
-          document_url: string
-          description: string | null
-          created_at: string | null
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          case_id?: string | null
-          document_url: string
-          description?: string | null
-          created_at?: string | null
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          case_id?: string | null
-          document_url?: string
-          description?: string | null
-          created_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "court_documents_case_id_fkey"
-            columns: ["case_id"]
-            isOneToOne: false
-            referencedRelation: "cases"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "court_documents_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      court_reminders: {
-        Row: {
-          id: string
-          user_id: string
-          case_id: string | null
-          remind_at: string
-          notes: string | null
-          created_at: string | null
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          case_id?: string | null
-          remind_at: string
-          notes?: string | null
-          created_at?: string | null
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          case_id?: string | null
-          remind_at?: string
-          notes?: string | null
-          created_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "court_reminders_case_id_fkey"
-            columns: ["case_id"]
-            isOneToOne: false
-            referencedRelation: "cases"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "court_reminders_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       deposits: {
         Row: {
           amount: number
@@ -947,6 +863,47 @@ export type Database = {
           },
         ]
       }
+      notification_preferences: {
+        Row: {
+          created_at: string
+          digest_frequency: string
+          email: boolean
+          id: string
+          in_app: boolean
+          profile_id: string
+          updated_at: string
+          whatsapp: boolean
+        }
+        Insert: {
+          created_at?: string
+          digest_frequency?: string
+          email?: boolean
+          id?: string
+          in_app?: boolean
+          profile_id: string
+          updated_at?: string
+          whatsapp?: boolean
+        }
+        Update: {
+          created_at?: string
+          digest_frequency?: string
+          email?: boolean
+          id?: string
+          in_app?: boolean
+          profile_id?: string
+          updated_at?: string
+          whatsapp?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           amount: number
@@ -1285,7 +1242,15 @@ export type Database = {
         | "cases.update"
         | "payments.manage"
         | "users.manage"
-      app_role: "admin" | "lawyer" | "client" | "supplier"
+      app_role:
+        | "admin"
+        | "lawyer"
+        | "client"
+        | "supplier"
+        | "customer"
+        | "judge"
+        | "witness"
+        | "audience"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1423,7 +1388,16 @@ export const Constants = {
         "payments.manage",
         "users.manage",
       ],
-      app_role: ["admin", "lawyer", "client", "supplier"],
+      app_role: [
+        "admin",
+        "lawyer",
+        "client",
+        "supplier",
+        "customer",
+        "judge",
+        "witness",
+        "audience",
+      ],
     },
   },
 } as const
