@@ -49,9 +49,7 @@ const App = () => (
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/update-password" element={<UpdatePassword />} />
-                <Route path="/" element={<Index />} />
-                <Route path="/global-court" element={<GlobalCourt />} />
-                <Route path="/intake" element={<Intake />} />
+                <Route path="/" element={<GlobalCourt />} />
                 
                 {/* Protected Routes */}
                 <Route
