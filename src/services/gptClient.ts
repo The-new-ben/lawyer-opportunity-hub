@@ -90,14 +90,12 @@ async function callViaOpenAI(req: ChatRequest): Promise<ChatResponse> {
 }
 
 /**
- * Public entry – prefers server (Supabase) unless provider is forced.
+ * Public entry – defaults to OpenAI via Supabase Edge Function.
  */
 export async function chat(req: ChatRequest): Promise<ChatResponse> {
   if (req.provider === 'huggingface') {
     return callViaHuggingFaceRouter(req);
   }
-  if (req.provider === 'openai') {
-    return callViaOpenAI(req);
-  }
-  return callViaSupabase(req);
+  // Default to OpenAI for all cases
+  return callViaOpenAI(req);
 }

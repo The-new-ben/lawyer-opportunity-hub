@@ -32,7 +32,47 @@ export default function ChatPortal() {
   const [history, setHistory] = useState<Thread[]>(() => {
     try {
       const raw = localStorage.getItem('gptoss_history');
-      return raw ? JSON.parse(raw) : [];
+      const existing = raw ? JSON.parse(raw) : [];
+      
+      // Add welcome message if history is empty
+      if (existing.length === 0) {
+        return [{
+          question: '',
+          answer: lang === 'he' ? 
+            `ברוכים הבאים למערכת המשפט החכמה שלנו! 🏛️
+
+אני כאן לעזור לכם להבין את המערכת המשפטית ולהכין תיק משפטי מובנה.
+
+**איך המערכת עובדת:**
+• אני אוסף מידע על התיק שלכם בשיחה טבעית
+• מנתח את הפרטים ומכין תוכנית משפטית מובנית
+• מציע אפשרויות: סימולציה (תרגול) או הליך אמיתי
+• מחבר אתכם לאנשי מקצוע מתאימים לפי הצורך
+
+**רקע משפטי חשוב:**
+המערכת המשפטית מבוססת על עקרונות של צדק, שקיפות והליך הוגן. כל תיק דורש הכנה יסודית של ראיות, טיעונים משפטיים ותכנון אסטרטגי.
+
+**בואו נתחיל:**
+ספרו לי על המצב המשפטי שלכם - מה קרה ומה אתם מחפשים להשיג?` :
+            `Welcome to our Smart Legal System! 🏛️
+
+I'm here to help you understand the legal system and prepare a structured legal case.
+
+**How the system works:**
+• I collect information about your case through natural conversation
+• Analyze the details and prepare a structured legal plan  
+• Offer options: simulation (practice) or real proceedings
+• Connect you to appropriate professionals as needed
+
+**Important legal background:**
+The legal system is based on principles of justice, transparency and due process. Every case requires thorough preparation of evidence, legal arguments and strategic planning.
+
+**Let's begin:**
+Tell me about your legal situation - what happened and what are you looking to achieve?`,
+          timestamp: new Date().toLocaleString(localeFor(lang))
+        }];
+      }
+      return existing;
     } catch {
       return [];
     }
@@ -90,18 +130,21 @@ export default function ChatPortal() {
     setLoading(true);
     try {
       const messages: ChatMessage[] = [
-        { role: 'system', content: 'You are a helpful legal assistant.' },
+        { 
+          role: 'system', 
+          content: lang === 'he' ? 
+            'אתה עוזר משפטי מקצועי העוזר למשתמשים להבין את המערכת המשפטית, לאסוף מידע לתיקים משפטיים ולהכין אסטרטגיות. השב בעברית בצורה ברורה ומקצועית. כלול המלצות מעשיות ושאל שאלות מבהירות לאיסוף מידע מלא.' :
+            'You are a professional legal assistant helping users understand the legal system, collect information for legal cases, and prepare strategies. Respond clearly and professionally. Include practical recommendations and ask clarifying questions to collect complete information.'
+        },
         { role: 'user', content: query.trim() },
       ];
 
       const resp = await chat({
-        // In server mode, call via Supabase (provider undefined). In direct mode, call HF Router. For OpenAI, call openai-chat.
-        provider: mode === 'server' ? undefined : mode === 'huggingface' ? 'huggingface' : 'openai',
+        provider: 'openai',
         model,
         messages,
         max_tokens: 1024,
-        temperature: mode === 'huggingface' ? 0.7 : 0.3,
-        hfToken: mode === 'huggingface' ? hfToken.trim() : undefined,
+        temperature: 0.7
       });
 
       const thread: Thread = {
@@ -210,14 +253,30 @@ export default function ChatPortal() {
 
           <div className="space-y-2">
             {filtered.map((thread, idx) => (
-              <details key={idx} className="border rounded">
+              <details key={idx} className={`border rounded ${!thread.question ? 'border-primary/30 bg-primary/5' : ''}`}>
                 <summary className="cursor-pointer px-3 py-2 bg-muted flex justify-between">
                   <span className="font-medium">{thread.timestamp}</span>
-                  <span className="truncate max-w-[60%]">{truncate(thread.question, 60)}</span>
+                  <span className="truncate max-w-[60%]">
+                    {thread.question ? truncate(thread.question, 60) : (lang === 'he' ? '💬 הודעת מערכת' : '💬 System Message')}
+                  </span>
                 </summary>
                 <div className="px-3 py-2">
-                  <div className="whitespace-pre-wrap"><b>{t(lang, 'question')}</b> {thread.question}</div>
-                  <div className="whitespace-pre-wrap mt-1"><b>{t(lang, 'answer')}</b> {thread.answer}</div>
+                  {thread.question && (
+                    <div className="whitespace-pre-wrap"><b>{t(lang, 'question')}</b> {thread.question}</div>
+                  )}
+                  <div className="whitespace-pre-wrap mt-1">
+                    {thread.question && <b>{t(lang, 'answer')}</b>} {thread.answer}
+                  </div>
+                  {thread.question && (
+                    <div className="flex gap-2 mt-3 pt-2 border-t border-border">
+                      <Button size="sm" variant="default" className="text-xs">
+                        {lang === 'he' ? '🎭 התחל סימולציה' : '🎭 Start Simulation'}
+                      </Button>
+                      <Button size="sm" variant="secondary" className="text-xs">
+                        {lang === 'he' ? '⚖️ הליך אמיתי' : '⚖️ Real Proceeding'}
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </details>
             ))}

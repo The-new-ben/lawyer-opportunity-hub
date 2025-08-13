@@ -31,7 +31,7 @@ serve(async (req) => {
     }
 
     const payload = {
-      model: model || "gpt-4o-mini",
+      model: model || "gpt-4.1-2025-04-14",
       messages,
       temperature: typeof temperature === "number" ? temperature : 0.6,
       max_tokens: typeof max_tokens === "number" ? max_tokens : 1024,
