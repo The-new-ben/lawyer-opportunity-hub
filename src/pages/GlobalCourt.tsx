@@ -41,6 +41,19 @@ const GlobalCourt = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       
+      {/* Header with AI Portal Link */}
+      <div className="container mx-auto p-4">
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-2xl font-bold text-primary">International AI Court</h1>
+          <Button 
+            onClick={() => window.location.href = '/ai-portal'} 
+            className="bg-primary hover:bg-primary/90 text-primary-foreground"
+          >
+            🤖 צ'אט AI חדש - OpenAI
+          </Button>
+        </div>
+      </div>
+      
       {/* Smart Intake Portal - Main Interface */}
       <SmartIntakePortal />
     </div>
