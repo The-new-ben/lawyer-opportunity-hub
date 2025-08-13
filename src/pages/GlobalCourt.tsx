@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import ChatPortal from "@/features/ai/ChatPortal";
+import SimpleChatPortal from "@/components/SimpleChatPortal";
 
 const GlobalCourt = () => {
   
@@ -26,8 +26,7 @@ const GlobalCourt = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      {/* Main AI Chat Portal - First thing users see */}
-      <ChatPortal />
+      <SimpleChatPortal />
     </div>
   );
 };
