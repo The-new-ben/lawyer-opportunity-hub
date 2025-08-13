@@ -23,9 +23,9 @@ type Thread = { question: string; answer: string; timestamp: string };
 
 export default function ChatPortal() {
   const [lang] = useState<Lang>(() => detectLanguage());
-  const [mode, setMode] = useState<'server' | 'huggingface' | 'openai'>('server');
+  const [mode, setMode] = useState<'server' | 'huggingface' | 'openai'>('openai');
   const [hfToken, setHfToken] = useState('');
-  const [model, setModel] = useState(MODELS[0].value);
+  const [model, setModel] = useState('gpt-4.1-2025-04-14');
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,6 +39,22 @@ export default function ChatPortal() {
   });
   const [search, setSearch] = useState('');
   const sendBtnRef = useRef<HTMLButtonElement>(null);
+
+  // Limit models by mode to avoid invalid selections
+  const modelsForMode = useMemo(() => {
+    if (mode === 'openai') return MODELS.filter(m => m.label.includes('(OpenAI)') || m.value.startsWith('gpt'));
+    if (mode === 'huggingface') return MODELS.filter(m => m.label.includes('(HF Router)'));
+    return MODELS.filter(m => m.label.includes('(Server)'));
+  }, [mode]);
+
+  useEffect(() => {
+    // Ensure selected model is valid for the current mode
+    if (!modelsForMode.some(m => m.value === model)) {
+      const fallback = modelsForMode[0]?.value;
+      if (fallback) setModel(fallback);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
 
   useEffect(() => {
     document.title = `${t(lang, 'title')} | Legal AI Chat`;
@@ -147,7 +163,7 @@ export default function ChatPortal() {
                   value={model}
                   onChange={(e) => setModel(e.target.value)}
                 >
-                  {MODELS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+                  {modelsForMode.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
                 </select>
               </div>
             </div>
