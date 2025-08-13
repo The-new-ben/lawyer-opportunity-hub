@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -6,15 +6,19 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useCaseDraft } from '@/hooks/useCaseDraft';
 import { useMatching } from '@/hooks/useMatching';
 import { useRatings } from '@/hooks/useRatings';
 import { supabase } from '@/integrations/supabase/client';
+import { SocialLogin } from '@/components/auth/SocialLogin';
 import SimulationArena from './court/SimulationArena';
 import ProfessionalsCatalog from './court/ProfessionalsCatalog';
 import { ProfessionalMarketplace } from './professionals/ProfessionalMarketplace';
 import { InviteManager } from './social/InviteManager';
+import { MatchingEngine } from './MatchingEngine';
 import ReputationBadge from './court/ReputationBadge';
 import { LawyerTierBadge } from './LawyerTierBadge';
 import { 
@@ -37,8 +41,27 @@ import {
   Briefcase,
   GamepadIcon,
   Network,
-  Zap
+  Zap,
+  Plus,
+  Eye,
+  Heart,
+  TrendingUp,
+  Award,
+  Coins,
+  Crown,
+  Sparkles,
+  Facebook,
+  Linkedin,
+  Twitter,
+  Mail,
+  Phone,
+  Calendar,
+  Video,
+  ShoppingCart,
+  Gift,
+  Rocket
 } from 'lucide-react';
+import { FaGoogle, FaWhatsapp, FaTelegram } from 'react-icons/fa';
 
 interface ChatMessage {
   user: string;
@@ -64,14 +87,32 @@ const InternationalCourt = () => {
   const [selectedProfessional, setSelectedProfessional] = useState(null);
   const [userPoints, setUserPoints] = useState(45);
   const [currentTier, setCurrentTier] = useState('bronze');
+  
+  // Additional state for authentication and enhanced features
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showMatchingEngine, setShowMatchingEngine] = useState(false);
+  const [legalCategory, setLegalCategory] = useState('');
+  const [selectedScenario, setSelectedScenario] = useState<'simulation' | 'real' | null>(null);
+  const [socialShares, setSocialShares] = useState(0);
+  const [engagementLevel, setEngagementLevel] = useState(1);
+
   const { toast } = useToast();
   const { draft, update } = useCaseDraft();
   const { useMatchedLawyers } = useMatching();
   const { addRating, getRatingStats } = useRatings();
 
+  // Enhanced authentication check
+  useEffect(() => {
+    // Simple demo authentication - in production this would check actual auth
+    const demoAuth = localStorage.getItem('demo_auth');
+    if (demoAuth) {
+      setIsAuthenticated(true);
+    }
+  }, []);
+
   // Welcome message on first load
   useEffect(() => {
-    if (history.length === 0) {
+    if (history.length === 0 && isAuthenticated) {
       const welcomeMessage: ChatMessage = {
         user: '',
         ai: `Welcome to the International AI Court System! 🏛️
@@ -96,7 +137,7 @@ Please describe your legal situation, dispute, or question. Be as detailed as yo
       };
       setHistory([welcomeMessage]);
     }
-  }, []);
+  }, [isAuthenticated]);
 
   // Define case fields with their properties
   const caseFields: CaseField[] = [
@@ -167,7 +208,7 @@ Please describe your legal situation, dispute, or question. Be as detailed as yo
   ];
 
   // Calculate readiness score
-  const readinessScore = React.useMemo(() => {
+  const readinessScore = useMemo(() => {
     const requiredFields = caseFields.filter(f => f.required);
     const completedRequired = requiredFields.filter(f => f.status === 'complete').length;
     const partialRequired = requiredFields.filter(f => f.status === 'partial').length;
@@ -204,11 +245,12 @@ User Query: "${userMessage}"
 
 Instructions:
 1. Analyze the legal context and identify the primary legal issues
-2. Ask ONE focused follow-up question to gather the most critical missing information
-3. Provide brief legal context where helpful (1-2 sentences)
-4. Suggest practical next steps if appropriate
-5. Maintain a professional but approachable tone
-6. If this appears to be an international dispute, highlight jurisdictional considerations
+2. Extract any new case information (title, summary, jurisdiction, category, goal, parties, evidence, timeline)
+3. Ask ONE focused follow-up question to gather the most critical missing information
+4. Provide brief legal context where helpful (1-2 sentences)
+5. Suggest practical next steps if appropriate
+6. Maintain a professional but approachable tone
+7. If this appears to be an international dispute, highlight jurisdictional considerations
 
 Respond concisely and professionally.`;
 
@@ -227,14 +269,14 @@ Respond concisely and professionally.`;
 
       if (error) throw error;
 
-      // Extract fields automatically
+      // Extract fields automatically using AI
       const extractResponse = await supabase.functions.invoke('ai-court-orchestrator', {
         body: {
           action: 'intake_extract',
           locale: 'en',
           context: {
             history: [...history.map(h => ({ role: 'user', content: h.user })), { role: 'user', content: userMessage }],
-            required_fields: ['title', 'summary', 'jurisdiction', 'legal_category', 'goal', 'parties', 'evidence'],
+            required_fields: ['title', 'summary', 'jurisdiction', 'category', 'goal', 'parties', 'evidence', 'timeline'],
             current_fields: draft
           }
         }
@@ -243,13 +285,21 @@ Respond concisely and professionally.`;
       let extractedFields = {};
       if (extractResponse.data?.updated_fields) {
         extractedFields = extractResponse.data.updated_fields;
+        
+        // Update case draft with extracted fields
         update(extractedFields);
+        
+        // Set legal category for matching
+        if (extractedFields && 'category' in extractedFields && extractedFields.category) {
+          setLegalCategory(extractedFields.category as string);
+        }
         
         const updatedFieldNames = Object.keys(extractedFields);
         if (updatedFieldNames.length > 0) {
+          setUserPoints(prev => prev + updatedFieldNames.length * 2); // Reward for progress
           toast({
-            title: 'Case Fields Updated',
-            description: `Updated: ${updatedFieldNames.join(', ')}`
+            title: 'Case Fields Updated Successfully',
+            description: `Updated: ${updatedFieldNames.join(', ')} (+${updatedFieldNames.length * 2} points)`
           });
         }
       }
@@ -302,9 +352,12 @@ Respond concisely and professionally.`;
 
       if (response.error) throw response.error;
 
+      setUserPoints(prev => prev + 25); // Major reward for case generation
+      setShowMatchingEngine(true);
+
       toast({
         title: 'Case Generated Successfully!',
-        description: 'Your legal case structure is ready. Choose your next step below.'
+        description: 'Your legal case structure is ready. +25 points earned! Professional matching is now available.'
       });
 
     } catch (err: any) {
@@ -334,21 +387,36 @@ Respond concisely and professionally.`;
     }
   };
 
-  const handleProfessionalSelected = (professional: any) => {
+  // Enhanced professional selection with monetization
+  const handleProfessionalSelectedEnhanced = (professional: any) => {
     setSelectedProfessional(professional);
-    setUserPoints(prev => prev + 10); // Gamification: reward for engaging with professionals
+    setUserPoints(prev => prev + 15); // Higher reward for professional engagement
+    setEngagementLevel(prev => Math.min(prev + 1, 5));
+    
     toast({
-      title: 'Professional Connected',
-      description: `Connected with ${professional.name}. +10 points earned!`
+      title: 'Professional Connected Successfully',
+      description: `Connected with ${professional.name}. +15 points earned! Engagement level increased.`
     });
   };
 
-  const handleInviteSent = (details: any) => {
-    setUserPoints(prev => prev + 5); // Gamification: reward for social engagement
-    toast({
-      title: 'Social Engagement Bonus',
-      description: '+5 points for sharing and inviting participants!'
-    });
+  // Enhanced social sharing with rewards
+  const handleSocialEngagement = (platform: string, details: any) => {
+    setSocialShares(prev => prev + 1);
+    setUserPoints(prev => prev + 8); // Reward for social engagement
+    
+    // Bonus for reaching milestones
+    if (socialShares > 0 && socialShares % 5 === 0) {
+      setUserPoints(prev => prev + 20);
+      toast({
+        title: 'Social Milestone Reached!',
+        description: `Great networking! +20 bonus points for ${socialShares + 1} social interactions.`
+      });
+    } else {
+      toast({
+        title: 'Social Engagement Reward',
+        description: `Shared to ${platform}. +8 points earned!`
+      });
+    }
   };
 
   const handleTabChange = (tab: string) => {
@@ -358,68 +426,183 @@ Respond concisely and professionally.`;
     }
   };
 
+  // Tier management
+  useEffect(() => {
+    if (userPoints >= 200) setCurrentTier('platinum');
+    else if (userPoints >= 120) setCurrentTier('gold');
+    else if (userPoints >= 60) setCurrentTier('silver');
+    else setCurrentTier('bronze');
+  }, [userPoints]);
+
+  // Authentication component
+  const AuthenticationGate = () => (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-purple-50 to-indigo-50 p-4">
+      <div className="max-w-md w-full space-y-6">
+        <Card className="border-blue-200 shadow-xl">
+          <CardHeader className="text-center space-y-4">
+            <div className="mx-auto p-4 bg-blue-100 rounded-full w-fit">
+              <Scale className="w-12 h-12 text-blue-600" />
+            </div>
+            <CardTitle className="text-2xl font-bold">International AI Court</CardTitle>
+            <p className="text-muted-foreground">
+              Access the world's first AI-powered legal platform for international justice
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Demo Access */}
+            <Button 
+              className="w-full"
+              onClick={() => {
+                localStorage.setItem('demo_auth', 'true');
+                setIsAuthenticated(true);
+                toast({
+                  title: 'Welcome to International AI Court!',
+                  description: 'You now have access to all platform features.'
+                });
+              }}
+            >
+              <Rocket className="w-4 h-4 mr-2" />
+              Quick Demo Access
+            </Button>
+            
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  Or continue with
+                </span>
+              </div>
+            </div>
+
+            {/* Social Login */}
+            <SocialLogin 
+              mode="full"
+              onSuccess={() => {
+                setIsAuthenticated(true);
+                toast({
+                  title: 'Authentication Successful',
+                  description: 'Welcome to the International AI Court platform!'
+                });
+              }}
+            />
+
+            {/* Feature highlights */}
+            <div className="space-y-3 text-sm">
+              <div className="flex items-center gap-3 p-3 bg-blue-50 rounded border border-blue-200">
+                <Globe className="w-5 h-5 text-blue-600" />
+                <div>
+                  <p className="font-medium text-blue-800">Global Access</p>
+                  <p className="text-blue-600">Connect across borders and jurisdictions</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3 p-3 bg-purple-50 rounded border border-purple-200">
+                <Network className="w-5 h-5 text-purple-600" />
+                <div>
+                  <p className="font-medium text-purple-800">Professional Network</p>
+                  <p className="text-purple-600">Verified lawyers, judges, and mediators</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3 p-3 bg-green-50 rounded border border-green-200">
+                <Zap className="w-5 h-5 text-green-600" />
+                <div>
+                  <p className="font-medium text-green-800">AI-Powered</p>
+                  <p className="text-green-600">Intelligent case building and analysis</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+
+  // Main authenticated interface
+  if (!isAuthenticated) {
+    return <AuthenticationGate />;
+  }
+
   return (
-    <div className="container mx-auto p-4 max-w-7xl space-y-6">
-      {/* Enhanced Header with User Stats */}
+    <div className="container mx-auto p-2 md:p-4 max-w-7xl space-y-4 md:space-y-6">
+      {/* Enhanced Header with User Stats - Mobile Responsive */}
       <Card className="bg-gradient-to-r from-blue-50 via-purple-50 to-indigo-50 border-blue-200">
-        <CardHeader className="text-center">
-          <div className="flex items-center justify-between mb-4">
+        <CardHeader className="text-center pb-4">
+          <div className="flex flex-col md:flex-row items-center justify-between mb-4 gap-4">
             <div className="flex items-center gap-3">
               <ReputationBadge points={userPoints} />
               <LawyerTierBadge tier={currentTier as any} />
             </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Trophy className="w-4 h-4 text-yellow-500" />
-              <span>{userPoints} Points</span>
+            <div className="flex items-center gap-4 text-sm">
+              <div className="flex items-center gap-2 text-yellow-600">
+                <Trophy className="w-4 h-4" />
+                <span>{userPoints} Points</span>
+              </div>
+              <div className="flex items-center gap-2 text-blue-600">
+                <Share2 className="w-4 h-4" />
+                <span>{socialShares} Shares</span>
+              </div>
+              <div className="flex items-center gap-2 text-purple-600">
+                <Heart className="w-4 h-4" />
+                <span>Level {engagementLevel}</span>
+              </div>
             </div>
           </div>
-          <CardTitle className="flex items-center justify-center gap-2 text-3xl">
-            <Scale className="w-8 h-8 text-blue-600" />
+          <CardTitle className="flex items-center justify-center gap-2 text-2xl md:text-3xl">
+            <Scale className="w-6 h-6 md:w-8 md:h-8 text-blue-600" />
             International AI Court
           </CardTitle>
-          <p className="text-lg text-muted-foreground">
-            Intelligent Legal Case Preparation • Professional Matching • Social Engagement
+          <p className="text-sm md:text-lg text-muted-foreground">
+            Intelligent Legal Case Preparation • Professional Matching • Global Networking
           </p>
         </CardHeader>
       </Card>
 
-      {/* Main Tabs Interface */}
+      {/* Main Tabs Interface - Mobile Responsive */}
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="chat" className="flex items-center gap-2">
-            <MessageSquare className="w-4 h-4" />
-            AI Chat
+        <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 gap-1">
+          <TabsTrigger value="chat" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+            <MessageSquare className="w-3 h-3 md:w-4 md:h-4" />
+            <span className="hidden sm:inline">AI Chat</span>
+            <span className="sm:hidden">Chat</span>
           </TabsTrigger>
-          <TabsTrigger value="simulation" className="flex items-center gap-2">
-            <GamepadIcon className="w-4 h-4" />
-            Simulation
+          <TabsTrigger value="simulation" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+            <GamepadIcon className="w-3 h-3 md:w-4 md:h-4" />
+            <span className="hidden sm:inline">Simulation</span>
+            <span className="sm:hidden">Sim</span>
           </TabsTrigger>
-          <TabsTrigger value="professionals" className="flex items-center gap-2">
-            <Users className="w-4 h-4" />
-            Professionals
+          <TabsTrigger value="professionals" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+            <Users className="w-3 h-3 md:w-4 md:h-4" />
+            <span className="hidden sm:inline">Professionals</span>
+            <span className="sm:hidden">Pro</span>
           </TabsTrigger>
-          <TabsTrigger value="marketplace" className="flex items-center gap-2">
-            <Briefcase className="w-4 h-4" />
-            Marketplace
+          <TabsTrigger value="marketplace" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+            <Briefcase className="w-3 h-3 md:w-4 md:h-4" />
+            <span className="hidden sm:inline">Marketplace</span>
+            <span className="sm:hidden">Market</span>
           </TabsTrigger>
-          <TabsTrigger value="social" className="flex items-center gap-2">
-            <Share2 className="w-4 h-4" />
-            Social
+          <TabsTrigger value="social" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+            <Share2 className="w-3 h-3 md:w-4 md:h-4" />
+            <span className="hidden sm:inline">Social</span>
+            <span className="sm:hidden">Share</span>
           </TabsTrigger>
-          <TabsTrigger value="monetization" className="flex items-center gap-2">
-            <DollarSign className="w-4 h-4" />
-            Earnings
+          <TabsTrigger value="monetization" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+            <DollarSign className="w-3 h-3 md:w-4 md:h-4" />
+            <span className="hidden sm:inline">Earnings</span>
+            <span className="sm:hidden">$$$</span>
           </TabsTrigger>
         </TabsList>
 
         {/* AI Chat Tab */}
-        <TabsContent value="chat" className="space-y-6">
-          <div className="grid lg:grid-cols-3 gap-6">
+        <TabsContent value="chat" className="space-y-4 md:space-y-6">
+          <div className="grid lg:grid-cols-3 gap-4 md:gap-6">
             {/* Chat Interface - Left Column */}
             <div className="lg:col-span-2 space-y-4">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-lg">
                     <MessageSquare className="w-5 h-5" />
                     Legal Consultation Chat
                     <Badge variant="secondary" className="ml-auto">
@@ -430,21 +613,21 @@ Respond concisely and professionally.`;
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {/* Chat History */}
-                  <div className="max-h-96 overflow-y-auto space-y-4 border rounded-lg p-4 bg-gray-50">
+                  <div className="max-h-80 md:max-h-96 overflow-y-auto space-y-4 border rounded-lg p-3 md:p-4 bg-gray-50">
                     {history.map((msg, idx) => (
                       <div key={idx} className="space-y-3">
                         {msg.user && (
-                          <div className="bg-blue-100 p-3 rounded-lg ml-8">
-                            <div className="font-semibold text-blue-800">You:</div>
-                            <div className="text-blue-700">{msg.user}</div>
+                          <div className="bg-blue-100 p-3 rounded-lg ml-4 md:ml-8">
+                            <div className="font-semibold text-blue-800 text-sm">You:</div>
+                            <div className="text-blue-700 text-sm">{msg.user}</div>
                           </div>
                         )}
-                        <div className="bg-white p-3 rounded-lg mr-8 border">
-                          <div className="font-semibold text-green-800 flex items-center gap-2">
+                        <div className="bg-white p-3 rounded-lg mr-4 md:mr-8 border">
+                          <div className="font-semibold text-green-800 flex items-center gap-2 text-sm">
                             <UserCheck className="w-4 h-4" />
                             Legal AI Assistant:
                           </div>
-                          <div className="text-gray-700 whitespace-pre-wrap">{msg.ai}</div>
+                          <div className="text-gray-700 whitespace-pre-wrap text-sm">{msg.ai}</div>
                           {msg.extracted_fields && Object.keys(msg.extracted_fields).length > 0 && (
                             <div className="mt-2 p-2 bg-green-50 rounded border-l-4 border-green-400">
                               <div className="text-xs text-green-600 font-medium">
@@ -463,10 +646,10 @@ Respond concisely and professionally.`;
                       placeholder="Describe your legal situation in detail... (e.g., 'I have a contract dispute with my business partner who violated our agreement terms')"
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
-                      className="min-h-[100px]"
+                      className="min-h-[80px] md:min-h-[100px] text-sm"
                       disabled={loading}
                     />
-                    <div className="flex gap-2">
+                    <div className="flex flex-col md:flex-row gap-2">
                       <Button 
                         onClick={sendMessage} 
                         disabled={loading || !input.trim()}
@@ -481,284 +664,321 @@ Respond concisely and professionally.`;
                         className="flex items-center gap-2"
                       >
                         <Gavel className="w-4 h-4" />
-                        Generate Case
+                        Generate Case ({readinessScore}%)
                       </Button>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-
-              {/* Enhanced Action Buttons */}
-              {readinessScore >= 70 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      Choose Your Path
-                      <Badge variant="default" className="ml-auto">
-                        Ready to Proceed
-                      </Badge>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <Button 
-                        variant="outline" 
-                        className="h-auto p-4 flex flex-col items-center gap-2"
-                        onClick={() => setActiveTab('simulation')}
-                      >
-                        <div className="text-2xl">🎭</div>
-                        <div className="font-semibold">Start Simulation</div>
-                        <div className="text-sm text-muted-foreground text-center">
-                          Practice with AI judge and opposing counsel. Risk-free environment to test your case.
-                        </div>
-                        <Badge variant="secondary" className="mt-2">
-                          <Star className="w-3 h-3 mr-1" />
-                          Earn 15 Points
-                        </Badge>
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        className="h-auto p-4 flex flex-col items-center gap-2"
-                        onClick={() => setActiveTab('professionals')}
-                      >
-                        <div className="text-2xl">⚖️</div>
-                        <div className="font-semibold">Real Proceeding</div>
-                        <div className="text-sm text-muted-foreground text-center">
-                          Connect with verified legal professionals and initiate actual legal proceedings.
-                        </div>
-                        <Badge variant="default" className="mt-2">
-                          <DollarSign className="w-3 h-3 mr-1" />
-                          Paid Service
-                        </Badge>
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
             </div>
 
-            {/* Enhanced Right Column */}
+            {/* Case Information - Right Column */}
             <div className="space-y-4">
               {/* Readiness Score */}
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Target className="w-5 h-5" />
                     Case Readiness
-                    <Badge variant={readinessScore >= 80 ? 'default' : readinessScore >= 50 ? 'secondary' : 'destructive'}>
-                      {readinessScore}%
-                    </Badge>
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <Progress value={readinessScore} className="w-full" />
-                  <p className="text-sm text-muted-foreground mt-2">
-                    {readinessScore >= 80 ? 'Ready for case generation!' :
-                     readinessScore >= 50 ? 'Almost ready - provide more details' :
-                     'Requires additional information'}
-                  </p>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Completion</span>
+                      <span className="font-semibold">{readinessScore}%</span>
+                    </div>
+                    <Progress value={readinessScore} className="h-3" />
+                  </div>
+                  
+                  {readinessScore >= 70 && (
+                    <div className="p-3 bg-green-50 rounded border border-green-200">
+                      <div className="flex items-center gap-2 text-green-800 text-sm font-medium">
+                        <CheckCircle className="w-4 h-4" />
+                        Ready for Processing
+                      </div>
+                      <p className="text-green-600 text-xs mt-1">
+                        Your case is ready for generation and professional matching!
+                      </p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
-              {/* Case Fields */}
+              {/* Case Fields Status */}
               <Card>
-                <CardHeader>
-                  <CardTitle>Case Information</CardTitle>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg">Case Details</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  {caseFields.map((field) => (
-                    <div key={field.key} className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          {field.icon}
-                          <span className="font-medium">{field.label}</span>
-                          {field.required && <span className="text-red-500">*</span>}
+                <CardContent>
+                  <div className="space-y-2">
+                    {caseFields.map(field => (
+                      <div key={field.key} className={`p-2 rounded border text-xs ${getFieldStatusColor(field.status)}`}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            {field.icon}
+                            <span className="font-medium">{field.label}</span>
+                            {field.required && <span className="text-red-500">*</span>}
+                          </div>
+                          {getFieldStatusIcon(field.status)}
                         </div>
-                        {getFieldStatusIcon(field.status)}
-                      </div>
-                      <div className={`p-2 rounded border text-sm ${getFieldStatusColor(field.status)}`}>
-                        {field.value ? (
-                          typeof field.value === 'object' ? 
-                            `${Array.isArray(field.value) ? field.value.length : Object.keys(field.value).length} items` :
-                            String(field.value).slice(0, 100) + (String(field.value).length > 100 ? '...' : '')
-                        ) : (
-                          'Not provided'
+                        {field.value && (
+                          <div className="mt-1 text-xs opacity-80 truncate">
+                            {typeof field.value === 'string' ? field.value : 
+                             Array.isArray(field.value) ? `${field.value.length} items` : 
+                             field.value.toString()}
+                          </div>
                         )}
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
 
               {/* Quick Actions */}
               <Card>
-                <CardHeader>
-                  <CardTitle>Quick Actions</CardTitle>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg">Quick Actions</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
                   <Button 
-                    variant="ghost" 
-                    className="w-full justify-start"
+                    size="sm" 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => setSelectedScenario('simulation')}
+                  >
+                    <GamepadIcon className="w-4 h-4 mr-2" />
+                    Practice Mode
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => setSelectedScenario('real')}
+                    disabled={readinessScore < 70}
+                  >
+                    <Gavel className="w-4 h-4 mr-2" />
+                    Real Proceedings
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="w-full"
                     onClick={() => setActiveTab('professionals')}
                   >
                     <Users className="w-4 h-4 mr-2" />
-                    Find Legal Professionals
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    className="w-full justify-start"
-                    onClick={() => setActiveTab('social')}
-                  >
-                    <Share2 className="w-4 h-4 mr-2" />
-                    Share & Invite Experts
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    className="w-full justify-start"
-                    onClick={() => setActiveTab('simulation')}
-                  >
-                    <GamepadIcon className="w-4 h-4 mr-2" />
-                    Practice Simulation
+                    Find Professionals
                   </Button>
                 </CardContent>
               </Card>
             </div>
           </div>
+
+          {/* Matching Engine - Shown when case is ready */}
+          {showMatchingEngine && legalCategory && (
+            <Card className="border-blue-200">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="w-5 h-5" />
+                  Professional Matching Available
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <MatchingEngine 
+                  leadId="demo-lead" 
+                  legalCategory={legalCategory}
+                />
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         {/* Simulation Tab */}
         <TabsContent value="simulation" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <GamepadIcon className="w-5 h-5" />
-                Legal Simulation Arena
-                <Badge variant="secondary" className="ml-auto">
-                  <Trophy className="w-3 h-3 mr-1" />
-                  Gamified Experience
-                </Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <SimulationArena />
-            </CardContent>
-          </Card>
+          <div className="grid gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <GamepadIcon className="w-5 h-5" />
+                  Legal Simulation Arena
+                </CardTitle>
+                <p className="text-muted-foreground">
+                  Practice your case in a simulated environment with AI-powered feedback
+                </p>
+              </CardHeader>
+              <CardContent>
+                <SimulationArena />
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         {/* Professionals Tab */}
         <TabsContent value="professionals" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="w-5 h-5" />
-                Professional Directory
-                <Badge variant="secondary" className="ml-auto">
-                  Verified Experts
-                </Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ProfessionalsCatalog />
-            </CardContent>
-          </Card>
+          <div className="grid gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="w-5 h-5" />
+                  Legal Professionals Catalog
+                </CardTitle>
+                <p className="text-muted-foreground">
+                  Connect with verified lawyers, judges, mediators, and legal experts worldwide
+                </p>
+              </CardHeader>
+              <CardContent>
+                <ProfessionalsCatalog />
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
-        {/* Professional Marketplace Tab */}
+        {/* Marketplace Tab */}
         <TabsContent value="marketplace" className="space-y-6">
-          <ProfessionalMarketplace
-            caseId="current-case"
-            specialty={draft.category}
-            budget={1000}
-            onProfessionalSelected={handleProfessionalSelected}
-          />
+          <div className="grid gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Briefcase className="w-5 h-5" />
+                  Professional Services Marketplace
+                </CardTitle>
+                <p className="text-muted-foreground">
+                  Discover and purchase professional legal services, consultations, and expertise
+                </p>
+              </CardHeader>
+              <CardContent>
+                <ProfessionalMarketplace />
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         {/* Social Tab */}
         <TabsContent value="social" className="space-y-6">
-          <InviteManager
-            caseId="current-case"
-            caseTitle={draft.title || 'Legal Discussion'}
-            caseDescription={draft.summary || ''}
-            onInviteSent={handleInviteSent}
-          />
-        </TabsContent>
-
-        {/* Monetization Tab */}
-        <TabsContent value="monetization" className="space-y-6">
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid gap-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="w-5 h-5 text-green-600" />
+                  <Share2 className="w-5 h-5" />
+                  Social Engagement & Invitations
+                </CardTitle>
+                <p className="text-muted-foreground">
+                  Share your case, invite participants, and engage with the legal community
+                </p>
+              </CardHeader>
+              <CardContent>
+                <InviteManager 
+                  caseId={draft.title || 'demo-case'}
+                  caseTitle={draft.title || 'Legal Discussion'}
+                  caseDescription={draft.summary || ''}
+                  onInviteSent={(details: any) => handleSocialEngagement('social', details)}
+                />
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Monetization/Earnings Tab */}
+        <TabsContent value="monetization" className="space-y-6">
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Earning Opportunities */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="w-5 h-5" />
                   Earning Opportunities
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-                  <h4 className="font-semibold text-green-800 mb-2">Current Points: {userPoints}</h4>
-                  <p className="text-sm text-green-700">
-                    Earn points by engaging with the platform, helping others, and participating in simulations.
-                  </p>
-                </div>
-                
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 border rounded">
-                    <div>
-                      <p className="font-medium">Professional Consultation</p>
-                      <p className="text-sm text-muted-foreground">Offer paid legal advice</p>
+                  <div className="flex items-center justify-between p-3 bg-green-50 rounded border border-green-200">
+                    <div className="flex items-center gap-3">
+                      <Trophy className="w-5 h-5 text-green-600" />
+                      <div>
+                        <p className="font-medium text-green-800">Case Completion</p>
+                        <p className="text-xs text-green-600">Earn $25-100 per case</p>
+                      </div>
                     </div>
-                    <Badge variant="default">$50-500/hr</Badge>
+                    <Badge variant="secondary">+$50</Badge>
                   </div>
                   
-                  <div className="flex items-center justify-between p-3 border rounded">
-                    <div>
-                      <p className="font-medium">Case Review</p>
-                      <p className="text-sm text-muted-foreground">Review and rate cases</p>
+                  <div className="flex items-center justify-between p-3 bg-blue-50 rounded border border-blue-200">
+                    <div className="flex items-center gap-3">
+                      <Users className="w-5 h-5 text-blue-600" />
+                      <div>
+                        <p className="font-medium text-blue-800">Professional Referrals</p>
+                        <p className="text-xs text-blue-600">5% commission on matches</p>
+                      </div>
                     </div>
-                    <Badge variant="secondary">$25-100</Badge>
+                    <Badge variant="secondary">5%</Badge>
                   </div>
                   
-                  <div className="flex items-center justify-between p-3 border rounded">
-                    <div>
-                      <p className="font-medium">Simulation Judge</p>
-                      <p className="text-sm text-muted-foreground">Moderate practice sessions</p>
+                  <div className="flex items-center justify-between p-3 bg-purple-50 rounded border border-purple-200">
+                    <div className="flex items-center gap-3">
+                      <Share2 className="w-5 h-5 text-purple-600" />
+                      <div>
+                        <p className="font-medium text-purple-800">Social Engagement</p>
+                        <p className="text-xs text-purple-600">$1-5 per quality share</p>
+                      </div>
                     </div>
-                    <Badge variant="outline">$20-80/session</Badge>
+                    <Badge variant="secondary">+$3</Badge>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
+            {/* Reputation & Tiers */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Star className="w-5 h-5 text-yellow-500" />
+                  <Crown className="w-5 h-5" />
                   Reputation System
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="text-center">
-                  <LawyerTierBadge tier={currentTier as any} className="text-lg" />
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Current Tier: {currentTier.charAt(0).toUpperCase() + currentTier.slice(1)}
-                  </p>
+                  <div className="text-2xl font-bold text-purple-600">{userPoints}</div>
+                  <div className="text-sm text-muted-foreground">Total Points</div>
                 </div>
                 
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Next Tier Progress</span>
-                    <span>{userPoints}/100</span>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Bronze (0-59)</span>
+                    <Badge variant={currentTier === 'bronze' ? 'default' : 'outline'}>
+                      {currentTier === 'bronze' ? 'Current' : 'Passed'}
+                    </Badge>
                   </div>
-                  <Progress value={userPoints} className="w-full" />
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Silver (60-119)</span>
+                    <Badge variant={currentTier === 'silver' ? 'default' : 'outline'}>
+                      {currentTier === 'silver' ? 'Current' : userPoints >= 60 ? 'Passed' : 'Locked'}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Gold (120-199)</span>
+                    <Badge variant={currentTier === 'gold' ? 'default' : 'outline'}>
+                      {currentTier === 'gold' ? 'Current' : userPoints >= 120 ? 'Passed' : 'Locked'}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Platinum (200+)</span>
+                    <Badge variant={currentTier === 'platinum' ? 'default' : 'outline'}>
+                      {currentTier === 'platinum' ? 'Current' : 'Locked'}
+                    </Badge>
+                  </div>
                 </div>
-                
-                <div className="p-3 bg-blue-50 rounded border border-blue-200">
-                  <h5 className="font-medium text-blue-800 mb-1">Benefits of Higher Tiers:</h5>
-                  <ul className="text-sm text-blue-700 space-y-1">
-                    <li>• Higher visibility in marketplace</li>
-                    <li>• Increased earning rates</li>
-                    <li>• Priority case assignments</li>
-                    <li>• Exclusive networking events</li>
-                  </ul>
+
+                <div className="pt-4 border-t">
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground mb-2">Next Tier Progress</p>
+                    <Progress 
+                      value={userPoints >= 200 ? 100 : 
+                             userPoints >= 120 ? ((userPoints - 120) / 80) * 100 :
+                             userPoints >= 60 ? ((userPoints - 60) / 60) * 100 :
+                             (userPoints / 60) * 100} 
+                      className="h-2"
+                    />
+                  </div>
                 </div>
               </CardContent>
             </Card>
