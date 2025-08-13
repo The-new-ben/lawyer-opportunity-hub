@@ -193,15 +193,15 @@ export default function ChatPortal() {
           </div>
 
           <div className="space-y-2">
-            {filtered.map((t, idx) => (
+            {filtered.map((thread, idx) => (
               <details key={idx} className="border rounded">
                 <summary className="cursor-pointer px-3 py-2 bg-muted flex justify-between">
-                  <span className="font-medium">{t.timestamp}</span>
-                  <span className="truncate max-w-[60%]">{truncate(t.question, 60)}</span>
+                  <span className="font-medium">{thread.timestamp}</span>
+                  <span className="truncate max-w-[60%]">{truncate(thread.question, 60)}</span>
                 </summary>
                 <div className="px-3 py-2">
-                  <div className="whitespace-pre-wrap"><b>{t(lang, 'question')}</b> {t.question}</div>
-                  <div className="whitespace-pre-wrap mt-1"><b>{t(lang, 'answer')}</b> {t.answer}</div>
+                  <div className="whitespace-pre-wrap"><b>{t(lang, 'question')}</b> {thread.question}</div>
+                  <div className="whitespace-pre-wrap mt-1"><b>{t(lang, 'answer')}</b> {thread.answer}</div>
                 </div>
               </details>
             ))}
