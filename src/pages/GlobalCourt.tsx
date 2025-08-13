@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import SimpleChatPortal from "@/components/SimpleChatPortal";
+import InternationalCourt from "@/components/InternationalCourt";
 
 const GlobalCourt = () => {
   
@@ -26,7 +26,7 @@ const GlobalCourt = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      <SimpleChatPortal />
+      <InternationalCourt />
     </div>
   );
 };
