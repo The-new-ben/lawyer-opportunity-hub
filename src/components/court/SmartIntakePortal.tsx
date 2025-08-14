@@ -292,9 +292,19 @@ const SmartIntakePortal = () => {
 
   const applyAIFields = (fieldsToApply: Record<string, any>) => {
     if (Object.keys(fieldsToApply).length > 0) {
-      // Apply each field to the form
+      // Apply each field to the form using React Hook Form
       Object.entries(fieldsToApply).forEach(([key, value]) => {
-        form.setValue(key as any, value, { shouldDirty: true, shouldTouch: true });
+        console.log(`Applying AI field: ${key} = ${value}`);
+        form.setValue(key as any, value, { 
+          shouldDirty: true, 
+          shouldTouch: true, 
+          shouldValidate: true 
+        });
+      });
+      
+      // Trigger validation for all applied fields
+      Object.keys(fieldsToApply).forEach(key => {
+        form.trigger(key as any);
       });
       
       // Show success with animated toast
@@ -303,10 +313,8 @@ const SmartIntakePortal = () => {
         description: `${Object.keys(fieldsToApply).length} fields updated with AI suggestions`,
       });
       
-      // Reset AI fields after showing success
-      setTimeout(() => {
-        resetFields();
-      }, 2000);
+      // Don't reset fields immediately - let user see the applied values
+      console.log('Form values after AI apply:', form.getValues());
     }
   };
 
@@ -514,11 +522,18 @@ const SmartIntakePortal = () => {
                     aiFields={aiFields} 
                     onApplyFields={applyAIFields}
                     onApplyOne={(fieldPath, value) => {
-                      form.setValue(fieldPath as any, value, { shouldDirty: true, shouldTouch: true });
+                      console.log(`Applying single AI field: ${fieldPath} = ${value}`);
+                      form.setValue(fieldPath as any, value, { 
+                        shouldDirty: true, 
+                        shouldTouch: true, 
+                        shouldValidate: true 
+                      });
+                      form.trigger(fieldPath as any);
                       toast({
                         title: `✨ ${fieldPath} Updated!`,
                         description: 'Field applied from AI suggestion',
                       });
+                      console.log('Form values after single apply:', form.getValues());
                     }}
                     isLocked={() => false}
                   />
