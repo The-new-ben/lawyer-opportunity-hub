@@ -16,6 +16,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useCaseDraft } from '@/hooks/useCaseDraft';
 import { supabase } from '@/integrations/supabase/client';
 import AIConnectionTest from './AIConnectionTest';
+import { useAIAssistedIntake } from '@/aiIntake/useAIAssistedIntake';
+import { AIFieldsDisplay } from '@/aiIntake/AIFieldsDisplay';
 import { 
   MessageSquare, 
   Users, 
@@ -66,6 +68,15 @@ interface FieldStatus {
 const SmartIntakePortal = () => {
   const { toast } = useToast();
   const { draft, update } = useCaseDraft();
+  const { 
+    aiFields, 
+    nextQuestion, 
+    loading: aiLoading, 
+    onUserInput, 
+    approveField, 
+    editField,
+    resetFields 
+  } = useAIAssistedIntake();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
   const [isAIActive, setIsAIActive] = useState(false);
@@ -316,68 +327,69 @@ const liveDebounceRef = useRef<NodeJS.Timeout>();
     toast({ title: 'Field updated', description: `${key} approved from AI suggestion` });
   };
 
+  const applyAIFields = () => {
+    const approvedAIFields = Object.entries(aiFields)
+      .filter(([_, field]) => field.status === "approved" && field.value)
+      .reduce((acc, [key, field]) => {
+        // Map AI fields to draft structure
+        switch (key) {
+          case 'caseTitle':
+            acc.title = field.value;
+            break;
+          case 'caseSummary':
+            acc.summary = field.value;
+            break;
+          case 'parties':
+            // Parse parties from AI format: "role:name; role:name"
+            if (field.value) {
+              const parsedParties = field.value.split(';').map(p => {
+                const [role, name] = p.split(':').map(s => s.trim());
+                return { role: role || 'party', name: name || '' };
+              }).filter(p => p.role);
+              acc.parties = parsedParties;
+            }
+            break;
+          case 'evidence':
+            // Parse evidence from comma-separated format
+            if (field.value) {
+              acc.evidence = field.value.split(',').map(e => e.trim()).filter(e => e);
+            }
+            break;
+          default:
+            acc[key] = field.value;
+        }
+        return acc;
+      }, {} as any);
+
+    if (Object.keys(approvedAIFields).length > 0) {
+      update(approvedAIFields);
+      toast({
+        title: 'Fields Applied Successfully',
+        description: `${Object.keys(approvedAIFields).length} fields updated from AI suggestions`,
+      });
+      resetFields();
+    }
+  };
+
   const sendToAI = async () => {
     if (!currentInput.trim() || isTyping) return;
 
     const userMessage = currentInput.trim();
     setChatHistory(prev => [...prev, { role: 'user', content: userMessage }]);
+    
+    // Trigger new AI analysis
+    onUserInput(userMessage);
+    
     setCurrentInput('');
 
     try {
       setIsAIActive(true);
       
-      console.log('[AI] sendToAI ->', userMessage);
-      const response = await supabase.functions.invoke('ai-court-orchestrator', {
-        body: {
-          action: 'intake_extract',
-          locale: 'en',
-          hf_token: hfToken || undefined,
-          context: {
-            history: [...chatHistory, { role: 'user', content: userMessage }],
-            required_fields: ['title', 'summary', 'jurisdiction', 'category', 'goal', 'parties', 'evidence'],
-            current_fields: draft
-          }
-        }
-      });
-      console.log('[AI] sendToAI <- response', response);
-
-      if (response.error) throw response.error;
-
-      const aiResponse = response.data;
-      
-      // Update draft with extracted fields
-      if (aiResponse.updated_fields) {
-        update(aiResponse.updated_fields);
-        
-        // Create a summary of what was updated
-        const updatedKeys = Object.keys(aiResponse.updated_fields);
-        if (updatedKeys.length > 0) {
-          const fieldsText = updatedKeys.map(key => {
-            switch(key) {
-              case 'title': return 'Case Title';
-              case 'summary': return 'Dispute Description';
-              case 'jurisdiction': return 'Jurisdiction';
-              case 'category': return 'Legal Category';
-              case 'goal': return 'Discussion Goal';
-              case 'parties': return 'Parties';
-              case 'evidence': return 'Evidence';
-              default: return key;
-            }
-          }).join(', ');
-          
-          setTimeout(() => {
-            typewriterEffect(`Excellent! I've updated the fields: ${fieldsText}. ${aiResponse.next_question || 'How else can I help you?'}`);
-          }, 500);
-        } else {
-          setTimeout(() => {
-            typewriterEffect(aiResponse.next_question || 'Thank you for the information. How else can I help you?');
-          }, 500);
-        }
-      } else {
-        setTimeout(() => {
-          typewriterEffect('Thank you for the information. How else can I help you?');
-        }, 500);
-      }
+      // Show typing effect with next question if available
+      setTimeout(() => {
+        const responseText = nextQuestion || 'Thank you for the information. How else can I help you?';
+        typewriterEffect(responseText);
+      }, 1000);
 
     } catch (error) {
       console.error('AI Error:', error);
@@ -621,10 +633,10 @@ const liveDebounceRef = useRef<NodeJS.Timeout>();
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           {/* AI Chat Interface */}
-          <Card className="border-2 shadow-lg">
+          <Card className="border-2 shadow-lg lg:col-span-2">
             <CardHeader className="border-b">
               <div className="flex items-center gap-2">
                 <Bot className="w-5 h-5 text-primary" />
@@ -684,7 +696,7 @@ const liveDebounceRef = useRef<NodeJS.Timeout>();
                   />
                   <Button 
                     onClick={sendToAI} 
-                    disabled={!currentInput.trim() || isTyping || isAIActive}
+                    disabled={!currentInput.trim() || isTyping || isAIActive || aiLoading}
                     className="h-[60px] px-6"
                   >
                     {isAIActive ? <Zap className="w-4 h-4 animate-pulse" /> : <MessageSquare className="w-4 h-4" />}
@@ -694,123 +706,149 @@ const liveDebounceRef = useRef<NodeJS.Timeout>();
             </CardContent>
           </Card>
 
-          {/* Case Information Panel */}
+          {/* AI Fields Analysis Display */}
           <Card className="border-2 shadow-lg">
             <CardHeader className="border-b">
               <CardTitle className="flex items-center gap-2">
-                <FileText className="w-5 h-5" />
-                Case Details
-                {showDetails && (
-                  <Badge variant="outline" className="ml-auto">
-                    Live Updates
-                  </Badge>
-                )}
+                <Sparkles className="w-5 h-5" />
+                AI Field Analysis
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-4 space-y-4">
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <label className="text-sm font-medium text-muted-foreground">Case Title</label>
-                    {showDetails && (
-                      <div className={`flex items-center gap-1 ${getFieldStatusColor(fieldStatuses.title?.status || 'incomplete')}`}>
-                        {getFieldStatusIcon(fieldStatuses.title?.status || 'incomplete')}
-                        <span className="text-xs">{fieldStatuses.title?.message}</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="mt-1 p-2 bg-muted rounded min-h-[36px] flex items-center">
-                    {draft.title || 'Not defined'}
-                  </div>
+            <CardContent className="p-4">
+              <AIFieldsDisplay
+                aiFields={aiFields}
+                nextQuestion={nextQuestion}
+                loading={aiLoading}
+                onApproveField={approveField}
+                onEditField={editField}
+                onApplyFields={applyAIFields}
+              />
+              {Object.keys(aiFields).length === 0 && !aiLoading && (
+                <div className="text-center text-muted-foreground py-8">
+                  <Target className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">Start chatting to see AI field suggestions</p>
                 </div>
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <label className="text-sm font-medium text-muted-foreground">Jurisdiction</label>
-                    {showDetails && (
-                      <div className={`flex items-center gap-1 ${getFieldStatusColor(fieldStatuses.jurisdiction?.status || 'incomplete')}`}>
-                        {getFieldStatusIcon(fieldStatuses.jurisdiction?.status || 'incomplete')}
-                        <span className="text-xs">{fieldStatuses.jurisdiction?.message}</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="mt-1 p-2 bg-muted rounded min-h-[36px] flex items-center">
-                    {draft.jurisdiction || 'Not defined'}
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <label className="text-sm font-medium text-muted-foreground">Dispute Description</label>
-                  {showDetails && (
-                    <div className={`flex items-center gap-1 ${getFieldStatusColor(fieldStatuses.summary?.status || 'incomplete')}`}>
-                      {getFieldStatusIcon(fieldStatuses.summary?.status || 'incomplete')}
-                      <span className="text-xs">{fieldStatuses.summary?.message}</span>
-                    </div>
-                  )}
-                </div>
-                <div className="mt-1 p-2 bg-muted rounded min-h-[60px]">
-                  {draft.summary || 'Not defined'}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <label className="text-sm font-medium text-muted-foreground">Category</label>
-                    {showDetails && (
-                      <div className={`flex items-center gap-1 ${getFieldStatusColor(fieldStatuses.category?.status || 'incomplete')}`}>
-                        {getFieldStatusIcon(fieldStatuses.category?.status || 'incomplete')}
-                        <span className="text-xs">{fieldStatuses.category?.message}</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="mt-1 p-2 bg-muted rounded min-h-[36px] flex items-center">
-                    {draft.category || 'Not defined'}
-                  </div>
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <label className="text-sm font-medium text-muted-foreground">Goal</label>
-                    {showDetails && (
-                      <div className={`flex items-center gap-1 ${getFieldStatusColor(fieldStatuses.goal?.status || 'incomplete')}`}>
-                        {getFieldStatusIcon(fieldStatuses.goal?.status || 'incomplete')}
-                        <span className="text-xs">{fieldStatuses.goal?.message}</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="mt-1 p-2 bg-muted rounded min-h-[36px] flex items-center">
-                    {draft.goal || 'Not defined'}
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <label className="text-sm font-medium text-muted-foreground">Parties</label>
-                  {showDetails && (
-                    <div className={`flex items-center gap-1 ${getFieldStatusColor(fieldStatuses.parties?.status || 'incomplete')}`}>
-                      {getFieldStatusIcon(fieldStatuses.parties?.status || 'incomplete')}
-                      <span className="text-xs">{fieldStatuses.parties?.message}</span>
-                    </div>
-                  )}
-                </div>
-                <div className="mt-1 space-y-2">
-                  {draft.parties?.length ? draft.parties.map((party, idx) => (
-                    <div key={idx} className="p-2 bg-muted rounded flex items-center gap-2">
-                      <Users className="w-4 h-4" />
-                      <span>{party.role}: {party.name}</span>
-                    </div>
-                  )) : (
-                    <div className="p-2 bg-muted rounded">No parties defined</div>
-                  )}
-                </div>
-              </div>
-
+              )}
             </CardContent>
           </Card>
         </div>
+
+        {/* Case Information Panel */}
+        <Card className="border-2 shadow-lg">
+          <CardHeader className="border-b">
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5" />
+              Case Details
+              {showDetails && (
+                <Badge variant="outline" className="ml-auto">
+                  Live Updates
+                </Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 space-y-4">
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <label className="text-sm font-medium text-muted-foreground">Case Title</label>
+                  {showDetails && (
+                    <div className={`flex items-center gap-1 ${getFieldStatusColor(fieldStatuses.title?.status || 'incomplete')}`}>
+                      {getFieldStatusIcon(fieldStatuses.title?.status || 'incomplete')}
+                      <span className="text-xs">{fieldStatuses.title?.message}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="mt-1 p-2 bg-muted rounded min-h-[36px] flex items-center">
+                  {draft.title || 'Not defined'}
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <label className="text-sm font-medium text-muted-foreground">Jurisdiction</label>
+                  {showDetails && (
+                    <div className={`flex items-center gap-1 ${getFieldStatusColor(fieldStatuses.jurisdiction?.status || 'incomplete')}`}>
+                      {getFieldStatusIcon(fieldStatuses.jurisdiction?.status || 'incomplete')}
+                      <span className="text-xs">{fieldStatuses.jurisdiction?.message}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="mt-1 p-2 bg-muted rounded min-h-[36px] flex items-center">
+                  {draft.jurisdiction || 'Not defined'}
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <label className="text-sm font-medium text-muted-foreground">Dispute Description</label>
+                {showDetails && (
+                  <div className={`flex items-center gap-1 ${getFieldStatusColor(fieldStatuses.summary?.status || 'incomplete')}`}>
+                    {getFieldStatusIcon(fieldStatuses.summary?.status || 'incomplete')}
+                    <span className="text-xs">{fieldStatuses.summary?.message}</span>
+                  </div>
+                )}
+              </div>
+              <div className="mt-1 p-2 bg-muted rounded min-h-[60px]">
+                {draft.summary || 'Not defined'}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <label className="text-sm font-medium text-muted-foreground">Category</label>
+                  {showDetails && (
+                    <div className={`flex items-center gap-1 ${getFieldStatusColor(fieldStatuses.category?.status || 'incomplete')}`}>
+                      {getFieldStatusIcon(fieldStatuses.category?.status || 'incomplete')}
+                      <span className="text-xs">{fieldStatuses.category?.message}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="mt-1 p-2 bg-muted rounded min-h-[36px] flex items-center">
+                  {draft.category || 'Not defined'}
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <label className="text-sm font-medium text-muted-foreground">Goal</label>
+                  {showDetails && (
+                    <div className={`flex items-center gap-1 ${getFieldStatusColor(fieldStatuses.goal?.status || 'incomplete')}`}>
+                      {getFieldStatusIcon(fieldStatuses.goal?.status || 'incomplete')}
+                      <span className="text-xs">{fieldStatuses.goal?.message}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="mt-1 p-2 bg-muted rounded min-h-[36px] flex items-center">
+                  {draft.goal || 'Not defined'}
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <label className="text-sm font-medium text-muted-foreground">Parties</label>
+                {showDetails && (
+                  <div className={`flex items-center gap-1 ${getFieldStatusColor(fieldStatuses.parties?.status || 'incomplete')}`}>
+                    {getFieldStatusIcon(fieldStatuses.parties?.status || 'incomplete')}
+                    <span className="text-xs">{fieldStatuses.parties?.message}</span>
+                  </div>
+                )}
+              </div>
+              <div className="mt-1 space-y-2">
+                {draft.parties?.length ? draft.parties.map((party, idx) => (
+                  <div key={idx} className="p-2 bg-muted rounded flex items-center gap-2">
+                    <Users className="w-4 h-4" />
+                    <span>{party.role}: {party.name}</span>
+                  </div>
+                )) : (
+                  <div className="p-2 bg-muted rounded">No parties defined</div>
+                )}
+              </div>
+            </div>
+
+          </CardContent>
+        </Card>
 
         {/* Simulation Options */}
         <Card className="border-2 shadow-lg">

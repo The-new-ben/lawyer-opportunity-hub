@@ -65,3 +65,6 @@ verify_jwt = false
 
 [functions.openai-chat]
 verify_jwt = false
+
+[functions.ai-intake-openai]
+verify_jwt = false
