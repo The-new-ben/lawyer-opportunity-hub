@@ -18,6 +18,7 @@ import { supabase } from '@/integrations/supabase/client';
 import AIConnectionTest from './AIConnectionTest';
 import { useAIAssistedIntake } from '@/aiIntake/useAIAssistedIntake';
 import { AIFieldsDisplay } from '@/aiIntake/AIFieldsDisplay';
+import AIBridge from '@/aiIntake/AIBridge';
 import { 
   MessageSquare, 
   Users, 
@@ -327,67 +328,32 @@ const liveDebounceRef = useRef<NodeJS.Timeout>();
     toast({ title: 'Field updated', description: `${key} approved from AI suggestion` });
   };
 
-  const applyAIFields = () => {
-    const approvedAIFields = Object.entries(aiFields)
-      .filter(([_, field]) => field.status === "approved" && field.value)
-      .reduce((acc, [key, field]) => {
-        // Map AI fields to draft structure with animations
-        switch (key) {
-          case 'caseTitle':
-            acc.title = field.value;
-            break;
-          case 'caseSummary':
-            acc.summary = field.value;
-            break;
-          case 'jurisdiction':
-            acc.jurisdiction = field.value;
-            break;
-          case 'legalCategory':
-            acc.category = field.value;
-            break;
-          case 'reliefSought':
-            acc.goal = field.value;
-            break;
-          case 'parties':
-            // Parse parties from AI format: "role:name; role:name"
-            if (field.value) {
-              const parsedParties = field.value.split(';').map(p => {
-                const [role, name] = p.split(':').map(s => s.trim());
-                return { role: role || 'party', name: name || '' };
-              }).filter(p => p.role);
-              acc.parties = parsedParties;
-            }
-            break;
-          case 'evidence':
-            // Parse evidence from comma-separated format
-            if (field.value) {
-              acc.evidence = field.value.split(',').map(e => e.trim()).filter(e => e);
-            }
-            break;
-          case 'timeline':
-            acc.timeline = field.value;
-            break;
-          default:
-            acc[key] = field.value;
-        }
-        return acc;
-      }, {} as any);
-
-    if (Object.keys(approvedAIFields).length > 0) {
-      // Apply with visual feedback
-      update(approvedAIFields);
+  const applyAIFields = (fieldsToApply: Record<string, any>) => {
+    if (Object.keys(fieldsToApply).length > 0) {
+      // Apply with visual feedback and animation
+      update(fieldsToApply);
       
       // Show success with animated toast
       toast({
         title: '✨ Fields Applied Successfully!',
-        description: `${Object.keys(approvedAIFields).length} fields updated with AI suggestions`,
+        description: `${Object.keys(fieldsToApply).length} fields updated with AI suggestions`,
       });
       
-      // Don't reset fields immediately - let user see the applied values
+      // Reset AI fields after showing success
       setTimeout(() => {
         resetFields();
       }, 2000);
     }
+  };
+
+  const applyOneField = (fieldPath: string, value: any) => {
+    // Apply single field with visual feedback
+    update({ [fieldPath]: value } as any);
+    
+    toast({
+      title: `✨ ${fieldPath} Updated!`,
+      description: 'Field applied from AI suggestion',
+    });
   };
 
   const sendToAI = async () => {
@@ -739,7 +705,50 @@ const liveDebounceRef = useRef<NodeJS.Timeout>();
                 loading={aiLoading}
                 onApproveField={approveField}
                 onEditField={editField}
-                onApplyFields={applyAIFields}
+                onApplyFields={() => {
+                  const fieldsToApply = Object.entries(aiFields)
+                    .filter(([_, field]) => field.status === "approved" && field.value)
+                    .reduce((acc, [key, field]) => {
+                      switch (key) {
+                        case 'caseTitle':
+                          acc.title = field.value;
+                          break;
+                        case 'caseSummary':
+                          acc.summary = field.value;
+                          break;
+                        case 'jurisdiction':
+                          acc.jurisdiction = field.value;
+                          break;
+                        case 'legalCategory':
+                          acc.category = field.value;
+                          break;
+                        case 'reliefSought':
+                          acc.goal = field.value;
+                          break;
+                        case 'parties':
+                          if (field.value) {
+                            const parsedParties = field.value.split(';').map(p => {
+                              const [role, name] = p.split(':').map(s => s.trim());
+                              return { role: role || 'party', name: name || '' };
+                            }).filter(p => p.role);
+                            acc.parties = parsedParties;
+                          }
+                          break;
+                        case 'evidence':
+                          if (field.value) {
+                            acc.evidence = field.value.split(',').map(e => e.trim()).filter(e => e);
+                          }
+                          break;
+                        case 'timeline':
+                          acc.timeline = field.value;
+                          break;
+                        default:
+                          acc[key] = field.value;
+                      }
+                      return acc;
+                    }, {} as any);
+                  applyAIFields(fieldsToApply);
+                }}
               />
               {Object.keys(aiFields).length === 0 && !aiLoading && (
                 <div className="text-center text-muted-foreground py-8">
@@ -750,6 +759,13 @@ const liveDebounceRef = useRef<NodeJS.Timeout>();
             </CardContent>
           </Card>
         </div>
+
+        {/* AI Bridge for One-Click Apply */}
+        <AIBridge
+          aiFields={aiFields}
+          onApplyFields={applyAIFields}
+          onApplyOne={applyOneField}
+        />
 
         {/* Case Information Panel */}
         <Card className="border-2 shadow-lg">
