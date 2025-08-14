@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useForm, useWatch, Controller } from 'react-hook-form';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { SocialLogin } from '@/components/auth/SocialLogin';
@@ -13,12 +14,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { useCaseDraft } from '@/hooks/useCaseDraft';
+import { useDebounce } from '@/hooks/useDebounce';
 import { supabase } from '@/integrations/supabase/client';
 import AIConnectionTest from './AIConnectionTest';
 import { useAIAssistedIntake } from '@/aiIntake/useAIAssistedIntake';
 import { AIFieldsDisplay } from '@/aiIntake/AIFieldsDisplay';
 import AIBridge from '@/aiIntake/AIBridge';
+import { FIELD_MAP, REQUIRED_FIELDS } from '@/aiIntake/fieldMap';
 import { 
   MessageSquare, 
   Users, 
