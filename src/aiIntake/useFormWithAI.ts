@@ -1,4 +1,4 @@
-import { useForm, UseFormReturn } from 'react-hook-form';
+import { useForm, UseFormReturn, useWatch } from 'react-hook-form';
 import { useEffect } from 'react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { supabase } from '@/integrations/supabase/client';
@@ -36,23 +36,14 @@ export function useFormWithAI(caseId: string = 'draft') {
   // Watch all form values for autosave
   const watchedValues = useDebounce(useWatch({ control: form.control }), 1200);
 
-  // Autosave to Supabase
+  // Autosave to localStorage (using existing case_drafts structure)
   useEffect(() => {
-    const saveData = async () => {
+    const saveData = () => {
       try {
-        const payload = { 
-          case_id: caseId, 
-          data: watchedValues,
-          updated_at: new Date().toISOString()
-        };
-        
-        await supabase
-          .from('case_drafts')
-          .upsert(payload, { onConflict: 'case_id' });
-        
-        console.log('Draft saved:', payload);
+        localStorage.setItem('caseDraft', JSON.stringify(watchedValues));
+        console.log('Draft saved to localStorage:', watchedValues);
       } catch (error) {
-        console.error('Autosave error:', error);
+        console.error('LocalStorage save error:', error);
       }
     };
 
@@ -134,19 +125,32 @@ export function useFormWithAI(caseId: string = 'draft') {
     return Math.round((completed.length / REQUIRED_FIELDS.length) * 100);
   };
 
-  // Load draft on init
+  // Load draft on init from localStorage (compatible with existing system)
   useEffect(() => {
-    const loadDraft = async () => {
+    const loadDraft = () => {
       try {
-        const { data } = await supabase
-          .from('case_drafts')
-          .select('data')
-          .eq('case_id', caseId)
-          .single();
-        
-        if (data?.data) {
+        const saved = localStorage.getItem('caseDraft');
+        if (saved) {
+          const data = JSON.parse(saved);
+          
+          // Map existing caseDraft structure to our form fields
+          const formData = {
+            title: data.title || '',
+            summary: data.summary || '',
+            jurisdiction: data.jurisdiction || '',
+            category: data.category || '',
+            goal: data.goal || '',
+            parties: Array.isArray(data.parties) 
+              ? data.parties.map(p => `${p.role}:${p.name || ''}`).join('; ')
+              : (data.parties || ''),
+            evidence: Array.isArray(data.evidence) 
+              ? data.evidence.map(e => e.title || e).join(', ')
+              : (data.evidence || ''),
+            timeline: data.timeline || ''
+          };
+          
           // Load saved values without marking as dirty
-          Object.entries(data.data).forEach(([key, value]) => {
+          Object.entries(formData).forEach(([key, value]) => {
             if (value) {
               setValue(key as keyof CaseFormData, value as string, {
                 shouldDirty: false,

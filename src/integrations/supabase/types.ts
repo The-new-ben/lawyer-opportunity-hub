@@ -7,13 +7,57 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.12 (cd3cf9e)"
   }
   public: {
     Tables: {
+      ai_extraction_logs: {
+        Row: {
+          case_draft_id: string | null
+          confidence_score: number | null
+          created_at: string | null
+          extracted_fields: Json | null
+          id: string
+          input_text: string
+          model_used: string | null
+          processing_time_ms: number | null
+          user_id: string
+        }
+        Insert: {
+          case_draft_id?: string | null
+          confidence_score?: number | null
+          created_at?: string | null
+          extracted_fields?: Json | null
+          id?: string
+          input_text: string
+          model_used?: string | null
+          processing_time_ms?: number | null
+          user_id: string
+        }
+        Update: {
+          case_draft_id?: string | null
+          confidence_score?: number | null
+          created_at?: string | null
+          extracted_fields?: Json | null
+          id?: string
+          input_text?: string
+          model_used?: string | null
+          processing_time_ms?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_extraction_logs_case_draft_id_fkey"
+            columns: ["case_draft_id"]
+            isOneToOne: false
+            referencedRelation: "case_drafts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -50,6 +94,69 @@ export type Database = {
           table_name?: string
           user_agent?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      case_drafts: {
+        Row: {
+          claim_amount: number | null
+          confidence_score: number | null
+          created_at: string | null
+          description: string | null
+          evidence: Json | null
+          extracted_fields: Json | null
+          id: string
+          is_simulation: boolean | null
+          jurisdiction: string | null
+          legal_category: string | null
+          location: string | null
+          parties: Json | null
+          readiness_score: number | null
+          status: string | null
+          title: string | null
+          updated_at: string | null
+          user_id: string
+          version_hash: string | null
+        }
+        Insert: {
+          claim_amount?: number | null
+          confidence_score?: number | null
+          created_at?: string | null
+          description?: string | null
+          evidence?: Json | null
+          extracted_fields?: Json | null
+          id?: string
+          is_simulation?: boolean | null
+          jurisdiction?: string | null
+          legal_category?: string | null
+          location?: string | null
+          parties?: Json | null
+          readiness_score?: number | null
+          status?: string | null
+          title?: string | null
+          updated_at?: string | null
+          user_id: string
+          version_hash?: string | null
+        }
+        Update: {
+          claim_amount?: number | null
+          confidence_score?: number | null
+          created_at?: string | null
+          description?: string | null
+          evidence?: Json | null
+          extracted_fields?: Json | null
+          id?: string
+          is_simulation?: boolean | null
+          jurisdiction?: string | null
+          legal_category?: string | null
+          location?: string | null
+          parties?: Json | null
+          readiness_score?: number | null
+          status?: string | null
+          title?: string | null
+          updated_at?: string | null
+          user_id?: string
+          version_hash?: string | null
         }
         Relationships: []
       }
@@ -904,6 +1011,50 @@ export type Database = {
           },
         ]
       }
+      party_approvals: {
+        Row: {
+          approval_status: string | null
+          approval_token: string | null
+          approved_at: string | null
+          case_draft_id: string
+          created_at: string | null
+          id: string
+          party_email: string
+          party_name: string
+          party_role: string
+        }
+        Insert: {
+          approval_status?: string | null
+          approval_token?: string | null
+          approved_at?: string | null
+          case_draft_id: string
+          created_at?: string | null
+          id?: string
+          party_email: string
+          party_name: string
+          party_role: string
+        }
+        Update: {
+          approval_status?: string | null
+          approval_token?: string | null
+          approved_at?: string | null
+          case_draft_id?: string
+          created_at?: string | null
+          id?: string
+          party_email?: string
+          party_name?: string
+          party_role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "party_approvals_case_draft_id_fkey"
+            columns: ["case_draft_id"]
+            isOneToOne: false
+            referencedRelation: "case_drafts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           amount: number
@@ -1183,6 +1334,47 @@ export type Database = {
         }
         Relationships: []
       }
+      voice_transcriptions: {
+        Row: {
+          audio_duration_seconds: number | null
+          case_draft_id: string | null
+          confidence_score: number | null
+          created_at: string | null
+          id: string
+          language_detected: string | null
+          transcription_text: string
+          user_id: string
+        }
+        Insert: {
+          audio_duration_seconds?: number | null
+          case_draft_id?: string | null
+          confidence_score?: number | null
+          created_at?: string | null
+          id?: string
+          language_detected?: string | null
+          transcription_text: string
+          user_id: string
+        }
+        Update: {
+          audio_duration_seconds?: number | null
+          case_draft_id?: string | null
+          confidence_score?: number | null
+          created_at?: string | null
+          id?: string
+          language_detected?: string | null
+          transcription_text?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_transcriptions_case_draft_id_fkey"
+            columns: ["case_draft_id"]
+            isOneToOne: false
+            referencedRelation: "case_drafts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -1190,9 +1382,9 @@ export type Database = {
     Functions: {
       calculate_matching_score: {
         Args: {
+          p_estimated_budget?: number
           p_lawyer_id: string
           p_legal_category: string
-          p_estimated_budget?: number
         }
         Returns: number
       }
@@ -1200,13 +1392,17 @@ export type Database = {
         Args: {
           p_lawyer_id: string
           p_leads_accepted?: number
-          p_sla_met?: boolean
           p_nps_score?: number
           p_pro_bono_hours?: number
           p_refunds?: number
           p_sla_critical_miss?: boolean
+          p_sla_met?: boolean
         }
         Returns: number
+      }
+      generate_case_version_hash: {
+        Args: { draft_data: Json }
+        Returns: string
       }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
@@ -1215,12 +1411,12 @@ export type Database = {
       get_matched_lawyers: {
         Args: { p_lead_id: string; p_limit?: number }
         Returns: {
+          hourly_rate: number
           lawyer_id: string
           lawyer_name: string
-          specializations: string[]
-          rating: number
-          hourly_rate: number
           matching_score: number
+          rating: number
+          specializations: string[]
         }[]
       }
       get_user_role: {
@@ -1228,7 +1424,7 @@ export type Database = {
         Returns: Database["public"]["Enums"]["app_role"]
       }
       process_incoming_lead: {
-        Args: { p_from_number: string; p_content: string }
+        Args: { p_content: string; p_from_number: string }
         Returns: string
       }
     }

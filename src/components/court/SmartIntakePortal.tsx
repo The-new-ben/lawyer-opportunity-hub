@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useForm, useWatch, Controller } from 'react-hook-form';
+import { FormProvider } from 'react-hook-form';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { SocialLogin } from '@/components/auth/SocialLogin';
@@ -21,6 +21,17 @@ import { useAIAssistedIntake } from '@/aiIntake/useAIAssistedIntake';
 import { AIFieldsDisplay } from '@/aiIntake/AIFieldsDisplay';
 import AIBridge from '@/aiIntake/AIBridge';
 import { FIELD_MAP, REQUIRED_FIELDS } from '@/aiIntake/fieldMap';
+import { useFormWithAI } from '@/aiIntake/useFormWithAI';
+import { 
+  CaseTitleField, 
+  CaseSummaryField, 
+  JurisdictionField, 
+  CategoryField, 
+  GoalField, 
+  PartiesField, 
+  EvidenceField, 
+  TimelineField 
+} from '@/aiIntake/ControlledFormFields';
 import { 
   MessageSquare, 
   Users, 
@@ -70,7 +81,7 @@ interface FieldStatus {
 
 const SmartIntakePortal = () => {
   const { toast } = useToast();
-  const { draft, update } = useCaseDraft();
+  const { form, applyAIToForm, applyOneField, calculateProgress } = useFormWithAI('draft');
   const { 
     aiFields, 
     nextQuestion, 
@@ -80,6 +91,7 @@ const SmartIntakePortal = () => {
     editField,
     resetFields 
   } = useAIAssistedIntake();
+  
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
   const [isAIActive, setIsAIActive] = useState(false);
@@ -97,40 +109,44 @@ const SmartIntakePortal = () => {
     score: 0 
   });
 
-  // Field status tracking
-  const [fieldStatuses, setFieldStatuses] = useState<Record<string, FieldStatus>>({
-    title: { status: 'incomplete', message: 'Case title required' },
-    summary: { status: 'incomplete', message: 'Dispute description required' },
-    jurisdiction: { status: 'incomplete', message: 'Jurisdiction required' },
-    category: { status: 'incomplete', message: 'Legal category required' },
-    goal: { status: 'incomplete', message: 'Discussion goal required' },
-    parties: { status: 'incomplete', message: 'Parties information required' },
-    evidence: { status: 'incomplete', message: 'Evidence details required' },
-    timeline: { status: 'incomplete', message: 'Timeline information required' }
-  });
-
   // Simulation options
   const [simulationType, setSimulationType] = useState<'impression' | 'practice' | 'public' | 'paid'>('impression');
   const [hasAudience, setHasAudience] = useState(false);
   const [needsDeposit, setNeedsDeposit] = useState(false);
   const [selectedProfessionals, setSelectedProfessionals] = useState<string[]>([]);
-const [showDetails, setShowDetails] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
 
-// Live extraction & approvals
-const [liveSuggestions, setLiveSuggestions] = useState<Record<string, any>>({});
-const [approvedFields, setApprovedFields] = useState<Record<string, boolean>>({});
-const [isLiveExtracting, setIsLiveExtracting] = useState(false);
+  // Live extraction & approvals
+  const [liveSuggestions, setLiveSuggestions] = useState<Record<string, any>>({});
+  const [approvedFields, setApprovedFields] = useState<Record<string, boolean>>({});
+  const [isLiveExtracting, setIsLiveExtracting] = useState(false);
 
-// HF token (memory-only)
-const [hfToken, setHfToken] = useState('');
+  // HF token (memory-only)
+  const [hfToken, setHfToken] = useState('');
 
-// Voice input
-const [listening, setListening] = useState(false);
-const recognitionRef = useRef<any>(null);
+  // Voice input
+  const [listening, setListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
 
-const chatEndRef = useRef<HTMLDivElement>(null);
-const typingTimeoutRef = useRef<NodeJS.Timeout>();
-const liveDebounceRef = useRef<NodeJS.Timeout>();
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout>();
+  const liveDebounceRef = useRef<NodeJS.Timeout>();
+
+  // Calculate progress based on form values
+  useEffect(() => {
+    const progress = calculateProgress();
+    
+    let status: ReadinessStatus;
+    if (progress >= 80) {
+      status = { color: 'green', message: 'Ready to generate trial!', score: progress };
+    } else if (progress >= 50) {
+      status = { color: 'orange', message: 'Almost ready - minor details missing', score: progress };
+    } else {
+      status = { color: 'red', message: 'Additional details required', score: progress };
+    }
+    
+    setReadinessStatus(status);
+  }, [form.watch(), calculateProgress]);
 
   // Authentication check
   const handleLogin = () => {
@@ -153,65 +169,6 @@ const liveDebounceRef = useRef<NodeJS.Timeout>();
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatHistory]);
-
-  // Update field statuses based on draft
-  useEffect(() => {
-    const newStatuses = { ...fieldStatuses };
-    
-    Object.keys(newStatuses).forEach(field => {
-      const value = draft[field as keyof typeof draft];
-      let status: FieldStatus['status'] = 'incomplete';
-      let message = '';
-      
-      if (field === 'parties' && Array.isArray(value)) {
-        if (value.length >= 2) {
-          status = 'complete';
-          message = 'All parties defined';
-        } else if (value.length === 1) {
-          status = 'partial';
-          message = 'At least one more party needed';
-        } else {
-          status = 'incomplete';
-          message = 'Parties information required';
-        }
-      } else if (value && String(value).trim().length > 0) {
-        if (String(value).trim().length > 50) {
-          status = 'complete';
-          message = 'Complete information provided';
-        } else if (String(value).trim().length > 10) {
-          status = 'partial';
-          message = 'More details recommended';
-        } else {
-          status = 'partial';
-          message = 'Basic information provided';
-        }
-      }
-      
-      newStatuses[field] = { status, message };
-    });
-    
-    setFieldStatuses(newStatuses);
-  }, [draft]);
-
-  // Calculate readiness score based on field statuses
-  useEffect(() => {
-    const totalFields = Object.keys(fieldStatuses).length;
-    const completeFields = Object.values(fieldStatuses).filter(f => f.status === 'complete').length;
-    const partialFields = Object.values(fieldStatuses).filter(f => f.status === 'partial').length;
-    
-    const score = Math.round(((completeFields * 100) + (partialFields * 50)) / (totalFields * 100) * 100);
-    
-    let status: ReadinessStatus;
-    if (score >= 80) {
-      status = { color: 'green', message: 'Ready to generate trial!', score };
-    } else if (score >= 50) {
-      status = { color: 'orange', message: 'Almost ready - minor details missing', score };
-    } else {
-      status = { color: 'red', message: 'Additional details required', score };
-    }
-    
-    setReadinessStatus(status);
-  }, [fieldStatuses]);
 
   // Debounced live extraction while typing
   useEffect(() => {
@@ -267,7 +224,7 @@ const liveDebounceRef = useRef<NodeJS.Timeout>();
           context: {
             history: [...chatHistory, { role: 'user', content: text }],
             required_fields: ['title', 'summary', 'jurisdiction', 'category', 'goal', 'parties', 'evidence'],
-            current_fields: draft
+            current_fields: form.getValues()
           }
         }
       });
@@ -321,7 +278,10 @@ const liveDebounceRef = useRef<NodeJS.Timeout>();
   const approveSuggestion = (key: string) => {
     const value = (liveSuggestions as any)[key];
     if (value === undefined) return;
-    update({ [key]: value } as any);
+    
+    // Apply suggestion directly to form
+    form.setValue(key as any, value, { shouldDirty: true, shouldTouch: true });
+    
     setApprovedFields((prev) => ({ ...prev, [key]: true }));
     setLiveSuggestions((prev) => {
       const { [key]: _, ...rest } = prev;
@@ -332,8 +292,10 @@ const liveDebounceRef = useRef<NodeJS.Timeout>();
 
   const applyAIFields = (fieldsToApply: Record<string, any>) => {
     if (Object.keys(fieldsToApply).length > 0) {
-      // Apply with visual feedback and animation
-      update(fieldsToApply);
+      // Apply each field to the form
+      Object.entries(fieldsToApply).forEach(([key, value]) => {
+        form.setValue(key as any, value, { shouldDirty: true, shouldTouch: true });
+      });
       
       // Show success with animated toast
       toast({
@@ -348,16 +310,6 @@ const liveDebounceRef = useRef<NodeJS.Timeout>();
     }
   };
 
-  const applyOneField = (fieldPath: string, value: any) => {
-    // Apply single field with visual feedback
-    update({ [fieldPath]: value } as any);
-    
-    toast({
-      title: `✨ ${fieldPath} Updated!`,
-      description: 'Field applied from AI suggestion',
-    });
-  };
-
   const sendToAI = async () => {
     if (!currentInput.trim() || isTyping) return;
 
@@ -370,6 +322,9 @@ const liveDebounceRef = useRef<NodeJS.Timeout>();
       
       // Trigger AI analysis with actual user input
       await onUserInput(userMessage);
+      
+      // Apply AI results to form automatically
+      // This will happen through the AI bridge
       
       // Show typing effect with next question if available
       setTimeout(() => {
@@ -404,17 +359,18 @@ const liveDebounceRef = useRef<NodeJS.Timeout>();
     }
 
     try {
-      console.log('[AI] generateCase ->', { summary: draft.summary, goal: draft.goal, jurisdiction: draft.jurisdiction, category: draft.category });
+      const formValues = form.getValues();
+      console.log('[AI] generateCase ->', formValues);
       const response = await supabase.functions.invoke('ai-court-orchestrator', {
         body: {
           action: 'case_builder',
           locale: 'en',
           hf_token: hfToken || undefined,
           context: {
-            summary: draft.summary,
-            goal: draft.goal,
-            jurisdiction: draft.jurisdiction,
-            category: draft.category
+            summary: formValues.summary,
+            goal: formValues.goal,
+            jurisdiction: formValues.jurisdiction,
+            category: formValues.category
           }
         }
       });
@@ -461,7 +417,8 @@ const liveDebounceRef = useRef<NodeJS.Timeout>();
   };
 
   const shareToSocial = (platform: string) => {
-    const text = `Join legal discussion: ${draft.title || 'Legal Discussion'}`;
+    const formValues = form.getValues();
+    const text = `Join legal discussion: ${formValues.title || 'Legal Discussion'}`;
     const urls = {
       linkedin: `https://linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}&summary=${encodeURIComponent(text)}`,
       facebook: `https://facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}&quote=${encodeURIComponent(text)}`,
@@ -487,661 +444,186 @@ const liveDebounceRef = useRef<NodeJS.Timeout>();
     }
   };
 
-  const getFieldStatusColor = (status: FieldStatus['status']) => {
-    switch (status) {
-      case 'complete': return 'text-green-500';
-      case 'partial': return 'text-orange-500';
-      case 'incomplete': return 'text-red-500';
-    }
-  };
-
-  const getFieldStatusIcon = (status: FieldStatus['status']) => {
-    switch (status) {
-      case 'complete': return <CheckCircle className="w-4 h-4" />;
-      case 'partial': return <Clock className="w-4 h-4" />;
-      case 'incomplete': return <AlertCircle className="w-4 h-4" />;
-    }
-  };
-
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-6">
-        <div className="w-full max-w-4xl space-y-6">
-          {/* Social Login */}
-          <div className="flex justify-center">
-            <SocialLogin onSuccess={() => setIsAuthenticated(true)} />
-          </div>
-          
-          {/* Traditional Access */}
-          <Card className="w-full max-w-md mx-auto border-2 shadow-lg">
-            <CardHeader className="text-center">
-              <div className="mx-auto p-3 bg-primary/10 rounded-full w-fit mb-4">
-                <Lock className="w-8 h-8 text-primary" />
-              </div>
-              <CardTitle className="text-2xl">Direct Access</CardTitle>
-              <p className="text-muted-foreground">Enter access code</p>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Input
-                type="password"
-                placeholder="Enter password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-              />
-              <Button onClick={handleLogin} className="w-full">
-                <Shield className="w-4 h-4 mr-2" />
-                Access Portal
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-center">Access Smart Legal Portal</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Input
+              type="password"
+              placeholder="Enter access code"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+            />
+            <Button onClick={handleLogin} className="w-full">
+              <Lock className="w-4 h-4 mr-2" />
+              Access Portal
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        
-        {/* Header with Instructions Infographic */}
-        <Card className="border-2 shadow-lg bg-gradient-to-r from-blue-50 to-purple-50">
-          <CardHeader className="pb-4">
-            <div className="text-center space-y-4">
-              <div className="flex items-center justify-center gap-3">
-                <div className="p-3 bg-primary/10 rounded-lg">
-                  <Scale className="w-8 h-8 text-primary" />
-                </div>
-                <div>
-                  <CardTitle className="text-3xl">Smart Legal Portal</CardTitle>
-                  <p className="text-muted-foreground">Powered by Advanced AI</p>
-                </div>
-              </div>
-              
-              {/* Usage Instructions Infographic */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-                <div className="text-center space-y-2">
-                  <div className="p-3 bg-blue-100 rounded-full w-fit mx-auto">
-                    <MessageSquare className="w-6 h-6 text-blue-600" />
+    <FormProvider {...form}>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20">
+        <div className="container mx-auto p-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Panel - Chat Interface */}
+            <div className="lg:col-span-1">
+              <Card className="h-[600px] flex flex-col">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center gap-2">
+                    <Bot className="w-6 h-6 text-blue-600" />
+                    <CardTitle>AI Legal Assistant</CardTitle>
+                    {isAIActive && <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />}
                   </div>
-                  <h3 className="font-semibold text-sm">1. Chat with AI</h3>
-                  <p className="text-xs text-muted-foreground">Describe your dispute in natural language</p>
-                </div>
-                <div className="text-center space-y-2">
-                  <div className="p-3 bg-green-100 rounded-full w-fit mx-auto">
-                    <Target className="w-6 h-6 text-green-600" />
-                  </div>
-                  <h3 className="font-semibold text-sm">2. Auto-Fill Forms</h3>
-                  <p className="text-xs text-muted-foreground">AI extracts and organizes information</p>
-                </div>
-                <div className="text-center space-y-2">
-                  <div className="p-3 bg-orange-100 rounded-full w-fit mx-auto">
-                    <Video className="w-6 h-6 text-orange-600" />
-                  </div>
-                  <h3 className="font-semibold text-sm">3. Choose Options</h3>
-                  <p className="text-xs text-muted-foreground">Select simulation type and professionals</p>
-                </div>
-                <div className="text-center space-y-2">
-                  <div className="p-3 bg-purple-100 rounded-full w-fit mx-auto">
-                    <Gavel className="w-6 h-6 text-purple-600" />
-                  </div>
-                  <h3 className="font-semibold text-sm">4. Generate Trial</h3>
-                  <p className="text-xs text-muted-foreground">Start your legal proceeding</p>
-                </div>
-              </div>
-            </div>
-          </CardHeader>
-        </Card>
-
-        {/* Readiness Status */}
-        <Card className="border-2 shadow-lg">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 ${getStatusColor()}`}>
-                  {getStatusIcon()}
-                  <div className="text-sm font-medium">
-                    <div>{readinessStatus.message}</div>
-                    <div className="text-xs opacity-75">{readinessStatus.score}% Complete</div>
-                  </div>
-                </div>
-              </div>
-              
-              <Button
-                variant="outline"
-                onClick={() => setShowDetails(!showDetails)}
-                className="flex items-center gap-2"
-              >
-                <Eye className="w-4 h-4" />
-                {showDetails ? 'Hide Details' : 'Show Details'}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          {/* AI Chat Interface */}
-          <Card className="border-2 shadow-lg lg:col-span-2">
-            <CardHeader className="border-b">
-              <div className="flex items-center gap-2">
-                <Bot className="w-5 h-5 text-primary" />
-                <CardTitle>Interactive AI Interview</CardTitle>
-                {isAIActive && <Sparkles className="w-4 h-4 text-yellow-500 animate-pulse" />}
-                {isLiveExtracting && (
-                  <Badge variant="outline" className="ml-2 animate-fade-in">Live</Badge>
-                )}
-              </div>
-            </CardHeader>
-<CardContent className="p-0">
-              {/* HF Token input (memory-only) */}
-              <div className="p-4 border-b bg-muted/50">
-                <Input
-                  type="password"
-                  placeholder="Enter your Hugging Face token (stored in memory only)"
-                  value={hfToken}
-                  onChange={(e) => setHfToken(e.target.value)}
-                />
-              </div>
-              
-              
-              {/* Chat Messages */}
-              <div className="h-96 overflow-y-auto p-4 space-y-4">
-                {chatHistory.map((message, index) => (
-                  <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[80%] p-3 rounded-lg ${
-                      message.role === 'user' 
-                        ? 'bg-primary text-primary-foreground' 
-                        : 'bg-muted'
-                    }`}>
-                      <div className="text-sm">
-                        {message.content}
-                        {message.typing && <span className="animate-pulse">|</span>}
+                </CardHeader>
+                <CardContent className="flex-1 flex flex-col">
+                  {/* Chat Messages */}
+                  <div className="flex-1 overflow-y-auto space-y-4 mb-4">
+                    {chatHistory.map((message, index) => (
+                      <div
+                        key={index}
+                        className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                      >
+                        <div
+                          className={`max-w-[80%] p-3 rounded-lg ${
+                            message.role === 'user'
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-100 text-gray-800'
+                          }`}
+                        >
+                          {message.content}
+                          {message.typing && (
+                            <span className="inline-block w-1 h-4 bg-gray-400 animate-pulse ml-1" />
+                          )}
+                        </div>
                       </div>
-                    </div>
+                    ))}
+                    <div ref={chatEndRef} />
                   </div>
-                ))}
-                <div ref={chatEndRef} />
-              </div>
-              
-              {/* Input Area */}
-              <div className="border-t p-4">
-                <div className="flex gap-2">
-                  <Textarea
-                    value={currentInput}
-                    onChange={(e) => setCurrentInput(e.target.value)}
-                    placeholder="Describe your dispute..."
-                    className="min-h-[60px] resize-none"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        sendToAI();
-                      }
+
+                  {/* AI Bridge Component */}
+                  <AIBridge 
+                    aiFields={aiFields} 
+                    onApplyFields={applyAIFields}
+                    onApplyOne={(fieldPath, value) => {
+                      form.setValue(fieldPath as any, value, { shouldDirty: true, shouldTouch: true });
+                      toast({
+                        title: `✨ ${fieldPath} Updated!`,
+                        description: 'Field applied from AI suggestion',
+                      });
                     }}
-                    disabled={isTyping}
+                    isLocked={() => false}
                   />
-                  <Button 
-                    onClick={sendToAI} 
-                    disabled={!currentInput.trim() || isTyping || isAIActive || aiLoading}
-                    className="h-[60px] px-6"
-                  >
-                    {isAIActive ? <Zap className="w-4 h-4 animate-pulse" /> : <MessageSquare className="w-4 h-4" />}
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
 
-          {/* AI Fields Analysis Display */}
-          <Card className="border-2 shadow-lg">
-            <CardHeader className="border-b">
-              <CardTitle className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5" />
-                AI Field Analysis
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4">
-              <AIFieldsDisplay
-                aiFields={aiFields}
-                nextQuestion={nextQuestion}
-                loading={aiLoading}
-                onApproveField={approveField}
-                onEditField={editField}
-                onApplyFields={() => {
-                  const fieldsToApply = Object.entries(aiFields)
-                    .filter(([_, field]) => field.status === "approved" && field.value)
-                    .reduce((acc, [key, field]) => {
-                      switch (key) {
-                        case 'caseTitle':
-                          acc.title = field.value;
-                          break;
-                        case 'caseSummary':
-                          acc.summary = field.value;
-                          break;
-                        case 'jurisdiction':
-                          acc.jurisdiction = field.value;
-                          break;
-                        case 'legalCategory':
-                          acc.category = field.value;
-                          break;
-                        case 'reliefSought':
-                          acc.goal = field.value;
-                          break;
-                        case 'parties':
-                          if (field.value) {
-                            const parsedParties = field.value.split(';').map(p => {
-                              const [role, name] = p.split(':').map(s => s.trim());
-                              return { role: role || 'party', name: name || '' };
-                            }).filter(p => p.role);
-                            acc.parties = parsedParties;
-                          }
-                          break;
-                        case 'evidence':
-                          if (field.value) {
-                            acc.evidence = field.value.split(',').map(e => e.trim()).filter(e => e);
-                          }
-                          break;
-                        case 'timeline':
-                          acc.timeline = field.value;
-                          break;
-                        default:
-                          acc[key] = field.value;
-                      }
-                      return acc;
-                    }, {} as any);
-                  applyAIFields(fieldsToApply);
-                }}
-              />
-              {Object.keys(aiFields).length === 0 && !aiLoading && (
-                <div className="text-center text-muted-foreground py-8">
-                  <Target className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">Start chatting to see AI field suggestions</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* AI Bridge for One-Click Apply */}
-        <AIBridge
-          aiFields={aiFields}
-          onApplyFields={applyAIFields}
-          onApplyOne={applyOneField}
-        />
-
-        {/* Case Information Panel */}
-        <Card className="border-2 shadow-lg">
-          <CardHeader className="border-b">
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="w-5 h-5" />
-              Case Details
-              {showDetails && (
-                <Badge variant="outline" className="ml-auto">
-                  Live Updates
-                </Badge>
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 space-y-4">
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <label className="text-sm font-medium text-muted-foreground">Case Title</label>
-                  {showDetails && (
-                    <div className={`flex items-center gap-1 ${getFieldStatusColor(fieldStatuses.title?.status || 'incomplete')}`}>
-                      {getFieldStatusIcon(fieldStatuses.title?.status || 'incomplete')}
-                      <span className="text-xs">{fieldStatuses.title?.message}</span>
+                  {/* Input Area */}
+                  <div className="flex gap-2">
+                    <Textarea
+                      placeholder="Describe your legal issue..."
+                      value={currentInput}
+                      onChange={(e) => setCurrentInput(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), sendToAI())}
+                      className="flex-1 min-h-[50px]"
+                      disabled={isTyping || isAIActive}
+                    />
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        onClick={listening ? stopListening : startListening}
+                        variant="outline"
+                        size="sm"
+                        className={listening ? 'bg-red-100 text-red-600' : ''}
+                      >
+                        <Mic className="w-4 h-4" />
+                      </Button>
+                      <Button 
+                        onClick={sendToAI} 
+                        disabled={!currentInput.trim() || isTyping || isAIActive}
+                        size="sm"
+                      >
+                        <Sparkles className="w-4 h-4" />
+                      </Button>
                     </div>
-                  )}
-                </div>
-                <Input
-                  value={draft.title || ''}
-                  onChange={(e) => update({ title: e.target.value })}
-                  placeholder="Enter case title..."
-                  className={`transition-all duration-300 ${draft.title ? 'border-green-500 bg-green-50' : 'border-muted'}`}
-                />
-              </div>
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <label className="text-sm font-medium text-muted-foreground">Jurisdiction</label>
-                  {showDetails && (
-                    <div className={`flex items-center gap-1 ${getFieldStatusColor(fieldStatuses.jurisdiction?.status || 'incomplete')}`}>
-                      {getFieldStatusIcon(fieldStatuses.jurisdiction?.status || 'incomplete')}
-                      <span className="text-xs">{fieldStatuses.jurisdiction?.message}</span>
-                    </div>
-                  )}
-                </div>
-                <Input
-                  value={draft.jurisdiction || ''}
-                  onChange={(e) => update({ jurisdiction: e.target.value })}
-                  placeholder="Enter jurisdiction..."
-                  className={`transition-all duration-300 ${draft.jurisdiction ? 'border-green-500 bg-green-50' : 'border-muted'}`}
-                />
-              </div>
-            </div>
-
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <label className="text-sm font-medium text-muted-foreground">Dispute Description</label>
-                {showDetails && (
-                  <div className={`flex items-center gap-1 ${getFieldStatusColor(fieldStatuses.summary?.status || 'incomplete')}`}>
-                    {getFieldStatusIcon(fieldStatuses.summary?.status || 'incomplete')}
-                    <span className="text-xs">{fieldStatuses.summary?.message}</span>
                   </div>
-                )}
-              </div>
-              <Textarea
-                value={draft.summary || ''}
-                onChange={(e) => update({ summary: e.target.value })}
-                placeholder="Describe your dispute..."
-                className={`transition-all duration-300 min-h-[80px] ${draft.summary ? 'border-green-500 bg-green-50' : 'border-muted'}`}
-              />
+                </CardContent>
+              </Card>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <label className="text-sm font-medium text-muted-foreground">Category</label>
-                  {showDetails && (
-                    <div className={`flex items-center gap-1 ${getFieldStatusColor(fieldStatuses.category?.status || 'incomplete')}`}>
-                      {getFieldStatusIcon(fieldStatuses.category?.status || 'incomplete')}
-                      <span className="text-xs">{fieldStatuses.category?.message}</span>
+            {/* Right Panel - Form Fields */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Case Readiness Status */}
+              <Card>
+                <CardContent className="p-4">
+                  <div className={`flex items-center gap-3 p-3 rounded-lg border ${getStatusColor()}`}>
+                    {getStatusIcon()}
+                    <div className="flex-1">
+                      <div className="font-semibold">Case Readiness: {readinessStatus.score}%</div>
+                      <div className="text-sm opacity-80">{readinessStatus.message}</div>
                     </div>
-                  )}
-                </div>
-                <Select value={draft.category || ''} onValueChange={(value) => update({ category: value })}>
-                  <SelectTrigger className={`transition-all duration-300 ${draft.category ? 'border-green-500 bg-green-50' : 'border-muted'}`}>
-                    <SelectValue placeholder="Select category..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="civil">Civil</SelectItem>
-                    <SelectItem value="criminal">Criminal</SelectItem>
-                    <SelectItem value="family">Family</SelectItem>
-                    <SelectItem value="labor">Labor</SelectItem>
-                    <SelectItem value="corporate">Corporate</SelectItem>
-                    <SelectItem value="property">Property</SelectItem>
-                    <SelectItem value="tax">Tax</SelectItem>
-                    <SelectItem value="immigration">Immigration</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <label className="text-sm font-medium text-muted-foreground">Relief Sought</label>
-                  {showDetails && (
-                    <div className={`flex items-center gap-1 ${getFieldStatusColor(fieldStatuses.goal?.status || 'incomplete')}`}>
-                      {getFieldStatusIcon(fieldStatuses.goal?.status || 'incomplete')}
-                      <span className="text-xs">{fieldStatuses.goal?.message}</span>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold">{readinessStatus.score}%</div>
+                      <div className="text-xs opacity-70">Complete</div>
                     </div>
-                  )}
-                </div>
-                <Input
-                  value={draft.goal || ''}
-                  onChange={(e) => update({ goal: e.target.value })}
-                  placeholder="What resolution do you seek?"
-                  className={`transition-all duration-300 ${draft.goal ? 'border-green-500 bg-green-50' : 'border-muted'}`}
-                />
-              </div>
-            </div>
-
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <label className="text-sm font-medium text-muted-foreground">Parties</label>
-                {showDetails && (
-                  <div className={`flex items-center gap-1 ${getFieldStatusColor(fieldStatuses.parties?.status || 'incomplete')}`}>
-                    {getFieldStatusIcon(fieldStatuses.parties?.status || 'incomplete')}
-                    <span className="text-xs">{fieldStatuses.parties?.message}</span>
                   </div>
-                )}
-              </div>
-              <div className="mt-1 space-y-2">
-                {draft.parties?.length ? draft.parties.map((party, idx) => (
-                  <div key={idx} className="p-2 bg-muted rounded flex items-center gap-2">
-                    <Users className="w-4 h-4" />
-                    <span>{party.role}: {party.name}</span>
+                </CardContent>
+              </Card>
+
+              {/* Form Fields */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Case Details</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <CaseTitleField />
+                    <JurisdictionField />
                   </div>
-                )) : (
-                  <div className="p-2 bg-muted rounded">No parties defined</div>
-                )}
-              </div>
-            </div>
-
-          </CardContent>
-        </Card>
-
-        {/* Simulation Options */}
-        <Card className="border-2 shadow-lg">
-          <CardHeader className="border-b">
-            <CardTitle className="flex items-center gap-2">
-              <Video className="w-5 h-5" />
-              Simulation Options
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              
-              <Card className={`cursor-pointer border-2 transition-all ${
-                simulationType === 'impression' ? 'border-primary bg-primary/5' : 'border-muted'
-              }`} onClick={() => setSimulationType('impression')}>
-                <CardContent className="p-4 text-center">
-                  <Globe className="w-8 h-8 mx-auto mb-2 text-blue-500" />
-                  <h3 className="font-semibold mb-1">For Impression</h3>
-                  <p className="text-xs text-muted-foreground">Basic discussion without audience</p>
+                  
+                  <CategoryField />
+                  
+                  <CaseSummaryField />
+                  
+                  <GoalField />
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <PartiesField />
+                    <EvidenceField />
+                  </div>
+                  
+                  <TimelineField />
                 </CardContent>
               </Card>
 
-              <Card className={`cursor-pointer border-2 transition-all ${
-                simulationType === 'practice' ? 'border-primary bg-primary/5' : 'border-muted'
-              }`} onClick={() => setSimulationType('practice')}>
-                <CardContent className="p-4 text-center">
-                  <UserCheck className="w-8 h-8 mx-auto mb-2 text-green-500" />
-                  <h3 className="font-semibold mb-1">Practice</h3>
-                  <p className="text-xs text-muted-foreground">With/without audience</p>
-                </CardContent>
-              </Card>
-
-              <Card className={`cursor-pointer border-2 transition-all ${
-                simulationType === 'public' ? 'border-primary bg-primary/5' : 'border-muted'
-              }`} onClick={() => setSimulationType('public')}>
-                <CardContent className="p-4 text-center">
-                  <Users className="w-8 h-8 mx-auto mb-2 text-purple-500" />
-                  <h3 className="font-semibold mb-1">Public</h3>
-                  <p className="text-xs text-muted-foreground">Call for public participation</p>
-                </CardContent>
-              </Card>
-
-              <Card className={`cursor-pointer border-2 transition-all ${
-                simulationType === 'paid' ? 'border-primary bg-primary/5' : 'border-muted'
-              }`} onClick={() => setSimulationType('paid')}>
-                <CardContent className="p-4 text-center">
-                  <Gavel className="w-8 h-8 mx-auto mb-2 text-orange-500" />
-                  <h3 className="font-semibold mb-1">Professional</h3>
-                  <p className="text-xs text-muted-foreground">With paid experts</p>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Additional Options */}
-            <div className="space-y-4">
-              
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4" />
-                  <span>With audience</span>
-                </div>
-                <Switch checked={hasAudience} onCheckedChange={setHasAudience} />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <CreditCard className="w-4 h-4" />
-                  <span>Require deposit for enforcement</span>
-                </div>
-                <Switch checked={needsDeposit} onCheckedChange={setNeedsDeposit} />
-              </div>
-
-              <Separator />
-
-              {/* Professional Selection */}
-              <div>
-                <h4 className="font-semibold mb-3">Invite Professionals</h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                  {[
-                    { id: 'lawyer', label: 'Lawyers', icon: Scale },
-                    { id: 'judge', label: 'Judges', icon: Gavel },
-                    { id: 'mediator', label: 'Mediators', icon: Users },
-                    { id: 'expert', label: 'Experts', icon: UserCheck }
-                  ].map((prof) => (
-                    <Button
-                      key={prof.id}
-                      variant={selectedProfessionals.includes(prof.id) ? 'default' : 'outline'}
-                      className="h-auto p-3 flex-col gap-1"
-                      onClick={() => {
-                        setSelectedProfessionals(prev => 
-                          prev.includes(prof.id) 
-                            ? prev.filter(p => p !== prof.id)
-                            : [...prev, prof.id]
-                        );
-                      }}
+              {/* Action Buttons */}
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex gap-4">
+                    <Button 
+                      onClick={generateCase}
+                      disabled={readinessStatus.score < 80}
+                      className="flex-1"
                     >
-                      <prof.icon className="w-4 h-4" />
-                      <span className="text-xs">{prof.label}</span>
+                      <Scale className="w-4 h-4 mr-2" />
+                      Generate Case Discussion
                     </Button>
-                  ))}
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Social Media Sharing */}
-              <div>
-                <h4 className="font-semibold mb-3">Share on Social Media</h4>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => shareToSocial('linkedin')}
-                    className="flex items-center gap-2"
-                  >
-                    <Linkedin className="w-4 h-4" />
-                    LinkedIn
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => shareToSocial('facebook')}
-                    className="flex items-center gap-2"
-                  >
-                    <Facebook className="w-4 h-4" />
-                    Facebook
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => shareToSocial('twitter')}
-                    className="flex items-center gap-2"
-                  >
-                    <Twitter className="w-4 h-4" />
-                    Twitter
-                  </Button>
-                </div>
-              </div>
-
+                    <Button variant="outline">
+                      <Eye className="w-4 h-4 mr-2" />
+                      Preview
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Generate Button */}
-        <Card className="border-2 shadow-lg bg-gradient-to-r from-primary/5 to-primary/10">
-          <CardContent className="p-6 text-center">
-            <Button
-              onClick={generateCase}
-              disabled={readinessStatus.score < 80}
-              size="lg"
-              className="h-16 px-12 text-lg font-semibold"
-            >
-              <Scale className="w-6 h-6 mr-2" />
-              Generate Trial & Start Discussion
-            </Button>
-            <p className="text-sm text-muted-foreground mt-2">
-              {readinessStatus.score < 80 
-                ? 'Complete all required details to begin' 
-                : 'All set! Click to start the discussion'
-              }
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Additional Features */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="w-5 h-5" />
-                Professional Network
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ProfessionalMarketplace />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MessageSquare className="w-5 h-5" />
-                Community Polls
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <PollManager />
-            </CardContent>
-          </Card>
+          </div>
         </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Mail className="w-5 h-5" />
-                Professional Invites
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <InviteManager />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CreditCard className="w-5 h-5" />
-                Subscription Management
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <SubscriptionManager />
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* AI Connection Test - Moved to bottom */}
-        <AIConnectionTest />
-
-        {/* Footer */}
-        <Card className="border-2 shadow-lg bg-slate-900 text-white">
-          <CardContent className="p-4 text-center">
-            <p className="text-sm">
-              © 2024 All Rights Reserved - <strong>jus-tice.com</strong>
-            </p>
-          </CardContent>
-        </Card>
-
       </div>
-    </div>
+    </FormProvider>
   );
 };
 
