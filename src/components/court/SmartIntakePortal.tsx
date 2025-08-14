@@ -520,21 +520,8 @@ const SmartIntakePortal = () => {
                   {/* AI Bridge Component */}
                   <AIBridge 
                     aiFields={aiFields} 
-                    onApplyFields={applyAIFields}
-                    onApplyOne={(fieldPath, value) => {
-                      console.log(`Applying single AI field: ${fieldPath} = ${value}`);
-                      form.setValue(fieldPath as any, value, { 
-                        shouldDirty: true, 
-                        shouldTouch: true, 
-                        shouldValidate: true 
-                      });
-                      form.trigger(fieldPath as any);
-                      toast({
-                        title: `✨ ${fieldPath} Updated!`,
-                        description: 'Field applied from AI suggestion',
-                      });
-                      console.log('Form values after single apply:', form.getValues());
-                    }}
+                     onApplyFields={applyAIToForm}
+                    onApplyOne={applyOneField}
                     isLocked={() => false}
                   />
 
