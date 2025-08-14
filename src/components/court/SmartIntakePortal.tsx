@@ -376,20 +376,19 @@ const liveDebounceRef = useRef<NodeJS.Timeout>();
 
     const userMessage = currentInput.trim();
     setChatHistory(prev => [...prev, { role: 'user', content: userMessage }]);
-    
-    // Trigger new AI analysis
-    onUserInput(userMessage);
-    
     setCurrentInput('');
 
     try {
       setIsAIActive(true);
       
+      // Trigger AI analysis with actual user input
+      await onUserInput(userMessage);
+      
       // Show typing effect with next question if available
       setTimeout(() => {
-        const responseText = nextQuestion || 'Thank you for the information. How else can I help you?';
+        const responseText = nextQuestion || 'Thank you for the information. I\'m analyzing your input now.';
         typewriterEffect(responseText);
-      }, 1000);
+      }, 1500);
 
     } catch (error) {
       console.error('AI Error:', error);
