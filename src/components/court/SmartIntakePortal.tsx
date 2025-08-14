@@ -331,13 +331,22 @@ const liveDebounceRef = useRef<NodeJS.Timeout>();
     const approvedAIFields = Object.entries(aiFields)
       .filter(([_, field]) => field.status === "approved" && field.value)
       .reduce((acc, [key, field]) => {
-        // Map AI fields to draft structure
+        // Map AI fields to draft structure with animations
         switch (key) {
           case 'caseTitle':
             acc.title = field.value;
             break;
           case 'caseSummary':
             acc.summary = field.value;
+            break;
+          case 'jurisdiction':
+            acc.jurisdiction = field.value;
+            break;
+          case 'legalCategory':
+            acc.category = field.value;
+            break;
+          case 'reliefSought':
+            acc.goal = field.value;
             break;
           case 'parties':
             // Parse parties from AI format: "role:name; role:name"
@@ -355,6 +364,9 @@ const liveDebounceRef = useRef<NodeJS.Timeout>();
               acc.evidence = field.value.split(',').map(e => e.trim()).filter(e => e);
             }
             break;
+          case 'timeline':
+            acc.timeline = field.value;
+            break;
           default:
             acc[key] = field.value;
         }
@@ -362,12 +374,19 @@ const liveDebounceRef = useRef<NodeJS.Timeout>();
       }, {} as any);
 
     if (Object.keys(approvedAIFields).length > 0) {
+      // Apply with visual feedback
       update(approvedAIFields);
+      
+      // Show success with animated toast
       toast({
-        title: 'Fields Applied Successfully',
-        description: `${Object.keys(approvedAIFields).length} fields updated from AI suggestions`,
+        title: '✨ Fields Applied Successfully!',
+        description: `${Object.keys(approvedAIFields).length} fields updated with AI suggestions`,
       });
-      resetFields();
+      
+      // Don't reset fields immediately - let user see the applied values
+      setTimeout(() => {
+        resetFields();
+      }, 2000);
     }
   };
 
@@ -758,9 +777,12 @@ const liveDebounceRef = useRef<NodeJS.Timeout>();
                     </div>
                   )}
                 </div>
-                <div className="mt-1 p-2 bg-muted rounded min-h-[36px] flex items-center">
-                  {draft.title || 'Not defined'}
-                </div>
+                <Input
+                  value={draft.title || ''}
+                  onChange={(e) => update({ title: e.target.value })}
+                  placeholder="Enter case title..."
+                  className={`transition-all duration-300 ${draft.title ? 'border-green-500 bg-green-50' : 'border-muted'}`}
+                />
               </div>
               <div>
                 <div className="flex items-center gap-2 mb-1">
@@ -772,9 +794,12 @@ const liveDebounceRef = useRef<NodeJS.Timeout>();
                     </div>
                   )}
                 </div>
-                <div className="mt-1 p-2 bg-muted rounded min-h-[36px] flex items-center">
-                  {draft.jurisdiction || 'Not defined'}
-                </div>
+                <Input
+                  value={draft.jurisdiction || ''}
+                  onChange={(e) => update({ jurisdiction: e.target.value })}
+                  placeholder="Enter jurisdiction..."
+                  className={`transition-all duration-300 ${draft.jurisdiction ? 'border-green-500 bg-green-50' : 'border-muted'}`}
+                />
               </div>
             </div>
 
@@ -788,9 +813,12 @@ const liveDebounceRef = useRef<NodeJS.Timeout>();
                   </div>
                 )}
               </div>
-              <div className="mt-1 p-2 bg-muted rounded min-h-[60px]">
-                {draft.summary || 'Not defined'}
-              </div>
+              <Textarea
+                value={draft.summary || ''}
+                onChange={(e) => update({ summary: e.target.value })}
+                placeholder="Describe your dispute..."
+                className={`transition-all duration-300 min-h-[80px] ${draft.summary ? 'border-green-500 bg-green-50' : 'border-muted'}`}
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -804,13 +832,26 @@ const liveDebounceRef = useRef<NodeJS.Timeout>();
                     </div>
                   )}
                 </div>
-                <div className="mt-1 p-2 bg-muted rounded min-h-[36px] flex items-center">
-                  {draft.category || 'Not defined'}
-                </div>
+                <Select value={draft.category || ''} onValueChange={(value) => update({ category: value })}>
+                  <SelectTrigger className={`transition-all duration-300 ${draft.category ? 'border-green-500 bg-green-50' : 'border-muted'}`}>
+                    <SelectValue placeholder="Select category..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="civil">Civil</SelectItem>
+                    <SelectItem value="criminal">Criminal</SelectItem>
+                    <SelectItem value="family">Family</SelectItem>
+                    <SelectItem value="labor">Labor</SelectItem>
+                    <SelectItem value="corporate">Corporate</SelectItem>
+                    <SelectItem value="property">Property</SelectItem>
+                    <SelectItem value="tax">Tax</SelectItem>
+                    <SelectItem value="immigration">Immigration</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <label className="text-sm font-medium text-muted-foreground">Goal</label>
+                  <label className="text-sm font-medium text-muted-foreground">Relief Sought</label>
                   {showDetails && (
                     <div className={`flex items-center gap-1 ${getFieldStatusColor(fieldStatuses.goal?.status || 'incomplete')}`}>
                       {getFieldStatusIcon(fieldStatuses.goal?.status || 'incomplete')}
@@ -818,9 +859,12 @@ const liveDebounceRef = useRef<NodeJS.Timeout>();
                     </div>
                   )}
                 </div>
-                <div className="mt-1 p-2 bg-muted rounded min-h-[36px] flex items-center">
-                  {draft.goal || 'Not defined'}
-                </div>
+                <Input
+                  value={draft.goal || ''}
+                  onChange={(e) => update({ goal: e.target.value })}
+                  placeholder="What resolution do you seek?"
+                  className={`transition-all duration-300 ${draft.goal ? 'border-green-500 bg-green-50' : 'border-muted'}`}
+                />
               </div>
             </div>
 
