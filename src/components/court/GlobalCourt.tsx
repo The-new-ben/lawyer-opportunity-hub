@@ -50,9 +50,7 @@ const GlobalCourt = () => {
             <div className="mx-auto w-20 h-20 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full flex items-center justify-center">
               <Scale className="w-10 h-10 text-white" />
             </div>
-            <CardTitle className="text-2xl font-bold text-white">
-              Global AI Court
-            </CardTitle>
+            <CardTitle>Global AI Court – supervised by experts and authorities</CardTitle>
             <p className="text-blue-100 text-sm">
               International Legal System Portal
             </p>
