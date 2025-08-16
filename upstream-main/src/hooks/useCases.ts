@@ -1,0 +1,241 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/use-toast';
+import { useAuth } from '@/hooks/useAuth';
+
+export type Case = {
+  id: string;
+  title: string;
+  client_id: string;
+  status: string;
+  priority: string;
+  opened_at: string;
+  assigned_lawyer_id?: string;
+  notes?: string;
+  estimated_budget?: number;
+  legal_category: string;
+  summary?: string | null;
+  reviewed?: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type NewCase = Omit<Case, 'id' | 'created_at' | 'updated_at' | 'summary' | 'reviewed'>;
+
+export type CaseVersion = {
+  id: string;
+  case_id: string;
+  hash: string;
+  data: Case;
+  created_at: string;
+  updated_by: string | null;
+};
+
+async function hashCaseData(data: unknown) {
+  const text = JSON.stringify(data);
+  const buffer = new TextEncoder().encode(text);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+  return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+export const useCases = () => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  const fetchCases = async (): Promise<Case[]> => {
+    const { data, error } = await supabase
+      .from('cases')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return data || [];
+  };
+
+  const { data: cases = [], isLoading, error } = useQuery({
+    queryKey: ['cases'],
+    queryFn: fetchCases,
+  });
+
+  const addCase = useMutation({
+    mutationFn: async (newCase: NewCase) => {
+      const { data, error } = await supabase
+        .from('cases')
+        .insert({
+          ...newCase,
+          status: 'open',
+          opened_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      if (data) {
+        const hash = await hashCaseData(data);
+        await supabase.from('case_versions').insert({
+          case_id: data.id,
+          hash,
+          data,
+          updated_by: user?.id
+        });
+      }
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cases'] });
+      toast({ title: 'תיק חדש נוצר בהצלחה' });
+    },
+    onError: (error) => {
+      toast({ title: 'שגיאה ביצירת תיק', variant: 'destructive', description: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  const updateCase = useMutation({
+    mutationFn: async ({ id, values }: { id: string; values: Partial<Case> }) => {
+      const { data, error } = await supabase
+        .from('cases')
+        .update(values)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      if (data) {
+        const hash = await hashCaseData(data);
+        await supabase.from('case_versions').insert({
+          case_id: data.id,
+          hash,
+          data,
+          updated_by: user?.id
+        });
+      }
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cases'] });
+      toast({ title: 'התיק עודכן בהצלחה' });
+    },
+    onError: () => {
+      toast({ title: 'שגיאה בעדכון התיק', variant: 'destructive' });
+    }
+  });
+
+  const getCaseVersions = (caseId: string) => {
+    return useQuery({
+      queryKey: ['case_versions', caseId],
+      queryFn: async (): Promise<CaseVersion[]> => {
+        const { data, error } = await supabase
+          .from('case_versions')
+          .select('*')
+          .eq('case_id', caseId)
+          .order('created_at', { ascending: false });
+        if (error) throw error;
+        return data || [];
+      }
+    });
+  };
+
+  const restoreCaseVersion = useMutation({
+    mutationFn: async (version: CaseVersion) => {
+      const { data, error } = await supabase
+        .from('cases')
+        .update(version.data)
+        .eq('id', version.case_id)
+        .select()
+        .single();
+      if (error) throw error;
+      if (data) {
+        const hash = await hashCaseData(data);
+        await supabase.from('case_versions').insert({
+          case_id: version.case_id,
+          hash,
+          data,
+          updated_by: user?.id
+        });
+      }
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cases'] });
+      toast({ title: 'הגרסה שוחזרה בהצלחה' });
+    },
+    onError: () => {
+      toast({ title: 'שגיאה בשחזור הגרסה', variant: 'destructive' });
+    }
+  });
+
+  const closeCase = useMutation({
+    mutationFn: async (id: string) => {
+      const { data, error } = await supabase
+        .from('cases')
+        .update({ status: 'closed' })
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cases'] });
+      toast({ title: 'התיק נסגר בהצלחה' });
+    },
+    onError: () => {
+      toast({ title: 'שגיאה בסגירת התיק', variant: 'destructive' });
+    }
+  });
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('cases')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cases' }, (payload) => {
+        queryClient.setQueryData(['cases'], (current: Case[] = []) => {
+          const newCase = payload.new as Case;
+          const oldCase = payload.old as Case;
+          switch (payload.eventType) {
+            case 'INSERT':
+              return [newCase, ...current];
+            case 'UPDATE':
+              return current.map(c => (c.id === newCase.id ? { ...c, ...newCase } : c));
+            case 'DELETE':
+              return current.filter(c => c.id !== oldCase.id);
+            default:
+              return current;
+          }
+        });
+      });
+
+    channel.subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
+  // Get case statistics
+  const getCaseStats = () => {
+    const totalCases = cases.length;
+    const openCases = cases.filter(c => c.status === 'open').length;
+    const highPriorityCases = cases.filter(c => c.priority === 'high').length;
+    const totalAmount = cases.reduce((sum, c) => sum + (c.estimated_budget || 0), 0);
+
+    return {
+      totalCases,
+      openCases,
+      highPriorityCases,
+      totalAmount
+    };
+  };
+
+  return {
+    cases,
+    isLoading,
+    error,
+    addCase,
+    updateCase,
+    closeCase,
+    getCaseStats,
+    getCaseVersions,
+    restoreCaseVersion
+  };
+};
