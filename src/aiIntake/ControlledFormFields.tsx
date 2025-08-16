@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import EvidenceUploader from '@/components/EvidenceUploader';
 
 const jurisdictions = [
   'Federal Court',
@@ -168,8 +169,9 @@ export function PartiesField() {
 }
 
 export function EvidenceField() {
-  const { control } = useFormContext();
-  
+  const { control, watch } = useFormContext();
+  const caseId = watch('id')
+
   return (
     <div className="space-y-2">
       <Label htmlFor="evidence" className="text-sm font-medium">Evidence</Label>
@@ -186,6 +188,7 @@ export function EvidenceField() {
           />
         )}
       />
+      <EvidenceUploader caseId={caseId || 'draft'} fieldId="evidence" />
     </div>
   );
 }
