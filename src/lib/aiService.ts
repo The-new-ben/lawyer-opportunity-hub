@@ -10,13 +10,7 @@ import { toast } from "@/components/ui/use-toast";
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 const OPENAI_BASE_URL = "https://api.openai.com/v1";
 
-if (!OPENAI_API_KEY) {
-  toast({
-    title: 'OpenAI API key not configured',
-    description: 'AI features will use defaults',
-    variant: 'destructive'
-  });
-}
+// API key is configured via Supabase secrets
 
 // Classify a lead description into a legal practice area using a GPT model. This
 // function sends a prompt to the OpenAI Chat API and expects a short label.

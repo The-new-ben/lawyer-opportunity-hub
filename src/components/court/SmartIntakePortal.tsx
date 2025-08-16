@@ -69,11 +69,11 @@ interface FieldStatus {
   message: string;
 }
 
-const fieldsConfig = [
-  { id: 'caseTitle', label: 'Case Title', type: 'text', required: true, allowAttachments: false, options: [], dependsOn: null },
+const defaultFieldsConfig = [
+  { id: 'title', label: 'Case Title', type: 'text', required: true, allowAttachments: false, options: [], dependsOn: null },
   { id: 'jurisdiction', label: 'Jurisdiction', type: 'text', required: true, allowAttachments: false, options: [], dependsOn: null },
-  { id: 'category', label: 'Category', type: 'select', required: true, allowAttachments: false, options: ['Criminal', 'Civil', 'Family', 'Labor'], dependsOn: null },
-  { id: 'caseSummary', label: 'Case Summary', type: 'textarea', required: true, allowAttachments: true, options: [], dependsOn: null },
+  { id: 'category', label: 'Category', type: 'select', required: true, allowAttachments: false, options: ['criminal', 'civil', 'family', 'labor'], dependsOn: null },
+  { id: 'summary', label: 'Case Summary', type: 'textarea', required: true, allowAttachments: true, options: [], dependsOn: null },
   { id: 'goal', label: 'Goal', type: 'text', required: false, allowAttachments: false, options: [], dependsOn: null },
   { id: 'parties', label: 'Parties', type: 'text', required: true, allowAttachments: false, options: [], dependsOn: null },
   { id: 'evidence', label: 'Evidence', type: 'textarea', required: false, allowAttachments: true, options: [], dependsOn: null },
@@ -121,7 +121,7 @@ const SmartIntakePortal = () => {
   const [liveSuggestions, setLiveSuggestions] = useState<Record<string, any>>({});
   const [approvedFields, setApprovedFields] = useState<Record<string, boolean>>({});
   const [isLiveExtracting, setIsLiveExtracting] = useState(false);
-  const [fieldsConfig, setFieldsConfig] = useState<{ id: string }[]>([]);
+  const [fieldsConfig, setFieldsConfig] = useState(defaultFieldsConfig);
 
   // HF token (memory-only)
   const [hfToken, setHfToken] = useState('');
@@ -292,7 +292,7 @@ const SmartIntakePortal = () => {
     toast({ title: 'Field updated', description: `${key} approved from AI suggestion` });
   };
 
-  const addDynamicField = (fieldConfig: { id: string }) => {
+  const addDynamicField = (fieldConfig: any) => {
     setFieldsConfig(prev =>
       prev.some(field => field.id === fieldConfig.id)
         ? prev
@@ -597,22 +597,22 @@ const SmartIntakePortal = () => {
                     return (
                       <div key={field.id} className="space-y-2">
                         <label htmlFor={field.id} className="text-sm font-medium">{field.label}</label>
-                        {field.type === 'textarea' ? (
-                          <Textarea id={field.id} {...form.register(field.id, { required: field.required })} />
-                        ) : field.type === 'select' ? (
-                          <Select value={form.watch(field.id)} onValueChange={value => form.setValue(field.id, value)}>
-                            <SelectTrigger>
-                              <SelectValue placeholder={field.label} />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {field.options.map(option => (
-                                <SelectItem key={option} value={option}>{option}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          <Input id={field.id} type="text" {...form.register(field.id, { required: field.required })} />
-                        )}
+                         {field.type === 'textarea' ? (
+                           <Textarea id={field.id} {...form.register(field.id as any, { required: field.required })} />
+                         ) : field.type === 'select' ? (
+                           <Select value={form.watch(field.id as any)} onValueChange={value => form.setValue(field.id as any, value)}>
+                             <SelectTrigger>
+                               <SelectValue placeholder={field.label} />
+                             </SelectTrigger>
+                             <SelectContent>
+                               {field.options.map(option => (
+                                 <SelectItem key={option} value={option}>{option}</SelectItem>
+                               ))}
+                             </SelectContent>
+                           </Select>
+                         ) : (
+                           <Input id={field.id} type="text" {...form.register(field.id as any, { required: field.required })} />
+                         )}
                         {field.allowAttachments && <Input type="file" multiple />}
                       </div>
                     )

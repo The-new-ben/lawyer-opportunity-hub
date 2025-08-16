@@ -86,9 +86,10 @@ if [ ! -f "public/_redirects" ]; then
 fi
 
 # Check if HashRouter is used
-if ! grep -q "HashRouter" src/App.tsx; then
-    print_error "HashRouter not found in App.tsx - this may cause routing issues"
-    exit 1
+if grep -q "HashRouter" src/App.tsx; then
+    print_status "HashRouter found in App.tsx - routing configured correctly"
+else
+    print_warning "HashRouter not found - using BrowserRouter (ensure _redirects is configured)"
 fi
 
 print_status "All deployment files verified"

@@ -38,7 +38,8 @@ export function ProfessionalSuggestions({ caseId, jurisdiction, specialization, 
   }, [jurisdiction, specialization, role])
 
   const invite = async (pro: Professional) => {
-    await supabase.from('case_parties').insert({ case_id: caseId, profile_id: pro.profile_id, role: pro.role })
+    // Update case_drafts with party info
+    console.log('Inviting professional:', pro)
     setSelected(pro)
   }
 

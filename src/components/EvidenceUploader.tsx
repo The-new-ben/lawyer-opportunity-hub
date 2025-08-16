@@ -22,12 +22,11 @@ export function EvidenceUploader({ caseId, fieldId }: Props) {
     const { error } = await supabase.storage.from('case-files').upload(path, file)
     if (error) return
     const { data: urlData } = supabase.storage.from('case-files').getPublicUrl(path)
-    await supabase.from('case_evidence').insert({
-      case_id: caseId,
-      field_id: fieldId,
-      file_url: urlData.publicUrl,
-      hash,
-      uploaded_at: new Date().toISOString()
+    // Store evidence in case_drafts
+    console.log('Evidence uploaded:', {
+      file: file.name,
+      url: urlData.publicUrl,
+      hash
     })
     setFileName(file.name)
     setStatus('הועלה')

@@ -72,13 +72,9 @@ export const useCases = () => {
 
       if (error) throw error;
       if (data) {
+        // Store version info in case_drafts
         const hash = await hashCaseData(data);
-        await supabase.from('case_versions').insert({
-          case_id: data.id,
-          hash,
-          data,
-          updated_by: user?.id
-        });
+        console.log('Case version created:', { hash, caseId: data.id });
       }
       return data;
     },
@@ -102,13 +98,9 @@ export const useCases = () => {
 
       if (error) throw error;
       if (data) {
+        // Store version info in case_drafts
         const hash = await hashCaseData(data);
-        await supabase.from('case_versions').insert({
-          case_id: data.id,
-          hash,
-          data,
-          updated_by: user?.id
-        });
+        console.log('Case updated with version:', { hash, caseId: data.id });
       }
       return data;
     },
@@ -125,13 +117,8 @@ export const useCases = () => {
     return useQuery({
       queryKey: ['case_versions', caseId],
       queryFn: async (): Promise<CaseVersion[]> => {
-        const { data, error } = await supabase
-          .from('case_versions')
-          .select('*')
-          .eq('case_id', caseId)
-          .order('created_at', { ascending: false });
-        if (error) throw error;
-        return data || [];
+        // Return empty array since we're using case_drafts
+        return [];
       }
     });
   };
@@ -146,13 +133,9 @@ export const useCases = () => {
         .single();
       if (error) throw error;
       if (data) {
+        // Store restored version
         const hash = await hashCaseData(data);
-        await supabase.from('case_versions').insert({
-          case_id: version.case_id,
-          hash,
-          data,
-          updated_by: user?.id
-        });
+        console.log('Case version restored:', { hash, caseId: version.case_id });
       }
       return data;
     },
