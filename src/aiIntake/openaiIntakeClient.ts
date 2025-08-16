@@ -11,6 +11,7 @@ export type IntakeJson = {
   timeline?: string;
   nextQuestion?: string;
   confidence?: Record<string, number>;
+  additionalFields?: Record<string, { value?: string; confidence?: number }>;
 };
 
 export async function runIntake(messages: {role:"system"|"user"|"assistant";content:string}[]): Promise<IntakeJson> {
