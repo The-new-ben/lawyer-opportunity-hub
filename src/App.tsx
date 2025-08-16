@@ -38,6 +38,7 @@ import Intake from "./pages/Intake";
 import HearingJoin from "./pages/HearingJoin";
 import GptOssPortal from "./pages/GptOssPortal";
 import ChatPortal from "./features/ai/ChatPortal";
+import DefendantIntake from "./pages/DefendantIntake";
 
 const App = () => (
   <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
@@ -56,6 +57,7 @@ const App = () => (
                 <Route path="/gpt-oss" element={<GptOssPortal />} />
                 <Route path="/ai-portal" element={<ChatPortal />} />
                 <Route path="/intake" element={<Intake />} />
+                <Route path="/defendant-intake" element={<DefendantIntake />} />
                 <Route path="/" element={<GlobalCourt />} />
                 
                 {/* Protected Routes */}
