@@ -7,6 +7,7 @@ import { InviteManager } from '@/components/social/InviteManager';
 import { PollManager } from '@/components/polls/PollManager';
 import { SubscriptionManager } from '@/components/subscription/SubscriptionManager';
 import { ProfessionalMarketplace } from '@/components/professionals/ProfessionalMarketplace';
+import { ProfessionalSuggestions } from '@/components/professionals/ProfessionalSuggestions';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
@@ -623,7 +624,7 @@ const SmartIntakePortal = () => {
               <Card>
                 <CardContent className="p-4">
                   <div className="flex gap-4">
-                    <Button 
+                    <Button
                       onClick={generateCase}
                       disabled={readinessStatus.score < 80}
                       className="flex-1"
@@ -638,6 +639,15 @@ const SmartIntakePortal = () => {
                   </div>
                 </CardContent>
               </Card>
+
+              {aiFields.jurisdiction?.status === 'approved' && aiFields.legalCategory?.status === 'approved' && (
+                <ProfessionalSuggestions
+                  caseId="demo-case"
+                  jurisdiction={aiFields.jurisdiction.value}
+                  specialization={aiFields.legalCategory.value}
+                  role="lawyer"
+                />
+              )}
             </div>
           </div>
         </div>
