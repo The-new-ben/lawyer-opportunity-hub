@@ -20,22 +20,11 @@ import AIConnectionTest from './AIConnectionTest';
 import { useAIAssistedIntake } from '@/aiIntake/useAIAssistedIntake';
 import { AIFieldsDisplay } from '@/aiIntake/AIFieldsDisplay';
 import AIBridge from '@/aiIntake/AIBridge';
-import { FIELD_MAP, REQUIRED_FIELDS } from '@/aiIntake/fieldMap';
 import { useFormWithAI } from '@/aiIntake/useFormWithAI';
-import { 
-  CaseTitleField, 
-  CaseSummaryField, 
-  JurisdictionField, 
-  CategoryField, 
-  GoalField, 
-  PartiesField, 
-  EvidenceField, 
-  TimelineField 
-} from '@/aiIntake/ControlledFormFields';
-import { 
-  MessageSquare, 
-  Users, 
-  Globe, 
+import {
+  MessageSquare,
+  Users,
+  Globe,
   FileText, 
   Calendar, 
   CreditCard, 
@@ -79,6 +68,17 @@ interface FieldStatus {
   message: string;
 }
 
+const fieldsConfig = [
+  { id: 'caseTitle', label: 'Case Title', type: 'text', required: true, allowAttachments: false, options: [], dependsOn: null },
+  { id: 'jurisdiction', label: 'Jurisdiction', type: 'text', required: true, allowAttachments: false, options: [], dependsOn: null },
+  { id: 'category', label: 'Category', type: 'select', required: true, allowAttachments: false, options: ['Criminal', 'Civil', 'Family', 'Labor'], dependsOn: null },
+  { id: 'caseSummary', label: 'Case Summary', type: 'textarea', required: true, allowAttachments: true, options: [], dependsOn: null },
+  { id: 'goal', label: 'Goal', type: 'text', required: false, allowAttachments: false, options: [], dependsOn: null },
+  { id: 'parties', label: 'Parties', type: 'text', required: true, allowAttachments: false, options: [], dependsOn: null },
+  { id: 'evidence', label: 'Evidence', type: 'textarea', required: false, allowAttachments: true, options: [], dependsOn: null },
+  { id: 'timeline', label: 'Timeline', type: 'textarea', required: false, allowAttachments: false, options: [], dependsOn: null }
+];
+
 const SmartIntakePortal = () => {
   const { toast } = useToast();
   const { form, applyAIToForm, applyOneField, calculateProgress } = useFormWithAI('draft');
@@ -120,6 +120,7 @@ const SmartIntakePortal = () => {
   const [liveSuggestions, setLiveSuggestions] = useState<Record<string, any>>({});
   const [approvedFields, setApprovedFields] = useState<Record<string, boolean>>({});
   const [isLiveExtracting, setIsLiveExtracting] = useState(false);
+  const [fieldsConfig, setFieldsConfig] = useState<{ id: string }[]>([]);
 
   // HF token (memory-only)
   const [hfToken, setHfToken] = useState('');
@@ -288,6 +289,14 @@ const SmartIntakePortal = () => {
       return rest;
     });
     toast({ title: 'Field updated', description: `${key} approved from AI suggestion` });
+  };
+
+  const addDynamicField = (fieldConfig: { id: string }) => {
+    setFieldsConfig(prev =>
+      prev.some(field => field.id === fieldConfig.id)
+        ? prev
+        : [...prev, fieldConfig]
+    );
   };
 
   const applyAIFields = (fieldsToApply: Record<string, any>) => {
@@ -582,23 +591,31 @@ const SmartIntakePortal = () => {
                   <CardTitle>Case Details</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <CaseTitleField />
-                    <JurisdictionField />
-                  </div>
-                  
-                  <CategoryField />
-                  
-                  <CaseSummaryField />
-                  
-                  <GoalField />
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <PartiesField />
-                    <EvidenceField />
-                  </div>
-                  
-                  <TimelineField />
+                  {fieldsConfig.map(field => {
+                    if (field.dependsOn && !form.watch(field.dependsOn)) return null
+                    return (
+                      <div key={field.id} className="space-y-2">
+                        <label htmlFor={field.id} className="text-sm font-medium">{field.label}</label>
+                        {field.type === 'textarea' ? (
+                          <Textarea id={field.id} {...form.register(field.id, { required: field.required })} />
+                        ) : field.type === 'select' ? (
+                          <Select value={form.watch(field.id)} onValueChange={value => form.setValue(field.id, value)}>
+                            <SelectTrigger>
+                              <SelectValue placeholder={field.label} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {field.options.map(option => (
+                                <SelectItem key={option} value={option}>{option}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Input id={field.id} type="text" {...form.register(field.id, { required: field.required })} />
+                        )}
+                        {field.allowAttachments && <Input type="file" multiple />}
+                      </div>
+                    )
+                  })}
                 </CardContent>
               </Card>
 
