@@ -68,3 +68,6 @@ verify_jwt = false
 
 [functions.ai-intake-openai]
 verify_jwt = false
+
+[functions.createCaseDraft]
+verify_jwt = false

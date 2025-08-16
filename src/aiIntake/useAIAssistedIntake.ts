@@ -17,10 +17,11 @@ Rules:
 - legalCategory should be one of: civil, criminal, family, labor, corporate, property, tax, immigration, other
 - parties roles can be: plaintiff, defendant, employer, employee, landlord, tenant, buyer, seller, other`;
 
-export type FieldState = { 
-  value: string; 
-  status: "approved" | "pending" | "missing"; 
-  confidence: number 
+export type FieldState = {
+  value: string;
+  status: "approved" | "pending" | "missing";
+  confidence: number
+  dirty?: boolean
 };
 
 export function useAIAssistedIntake() {
@@ -29,45 +30,58 @@ export function useAIAssistedIntake() {
   const [loading, setLoading] = useState(false);
   const debounceRef = useRef<number | null>(null);
 
-  const updateFromJson = useCallback((json: IntakeJson) => {
-    const createFieldState = (value?: string, confidence?: number): FieldState => {
-      if (!value) return { value: "", status: "missing", confidence: 0 };
-      
-      const conf = confidence ?? 0.6;
-      const status = conf >= 0.8 ? "approved" : conf >= 0.5 ? "pending" : "missing";
-      
-      return { value, status, confidence: conf };
-    };
+  const makeState = useCallback((value?: string, confidence?: number): FieldState => {
+    if (!value) return { value: "", status: "missing", confidence: 0 };
+    const conf = confidence ?? 0.6;
+    const status = conf >= 0.8 ? "approved" : conf >= 0.5 ? "pending" : "missing";
+    return { value, status, confidence: conf };
+  }, []);
 
-    const newFields: Record<string, FieldState> = {
-      caseTitle: createFieldState(json.caseTitle, json.confidence?.caseTitle),
-      caseSummary: createFieldState(json.caseSummary, json.confidence?.caseSummary),
-      jurisdiction: createFieldState(json.jurisdiction, json.confidence?.jurisdiction),
-      legalCategory: createFieldState(json.legalCategory, json.confidence?.legalCategory),
-      reliefSought: createFieldState(json.reliefSought, json.confidence?.reliefSought),
-      parties: createFieldState(
-        json.parties?.map(p => `${p.role}:${p.name ?? ""}`).join("; "), 
+  const addDynamicField = useCallback((key: string, value?: string, confidence?: number) => {
+    setAiFields(prev => {
+      if (prev[key]?.dirty) return prev;
+      return { ...prev, [key]: makeState(value, confidence) };
+    });
+  }, [makeState]);
+
+  const updateFromJson = useCallback((json: IntakeJson) => {
+    const baseFields: Record<string, FieldState> = {
+      caseTitle: makeState(json.caseTitle, json.confidence?.caseTitle),
+      caseSummary: makeState(json.caseSummary, json.confidence?.caseSummary),
+      jurisdiction: makeState(json.jurisdiction, json.confidence?.jurisdiction),
+      legalCategory: makeState(json.legalCategory, json.confidence?.legalCategory),
+      reliefSought: makeState(json.reliefSought, json.confidence?.reliefSought),
+      parties: makeState(
+        json.parties?.map(p => `${p.role}:${p.name ?? ""}`).join("; "),
         json.confidence?.parties
       ),
-      evidence: createFieldState(json.evidence?.join(", "), json.confidence?.evidence),
-      timeline: createFieldState(json.timeline, json.confidence?.timeline),
+      evidence: makeState(json.evidence?.join(", "), json.confidence?.evidence),
+      timeline: makeState(json.timeline, json.confidence?.timeline),
     };
-
-    setAiFields(prev => ({ ...prev, ...newFields }));
+    setAiFields(prev => {
+      const merged = { ...prev };
+      Object.entries(baseFields).forEach(([k, v]) => {
+        if (!prev[k]?.dirty) merged[k] = v;
+      });
+      return merged;
+    });
+    if (json.additionalFields) {
+      Object.entries(json.additionalFields).forEach(([k, v]) => {
+        if (typeof v === "string") addDynamicField(k, v);
+        else addDynamicField(k, v.value, v.confidence);
+      });
+    }
     setNextQuestion(json.nextQuestion ?? null);
-    
-    // הצגת התוצאות למשתמש
-    const approvedFields = Object.entries(newFields)
+    const approvedFields = Object.entries(baseFields)
       .filter(([_, field]) => field.status === "approved" && field.value)
       .length;
-    
     if (approvedFields > 0) {
       toast({
         title: "AI Analysis Complete",
         description: `${approvedFields} fields identified with high confidence`,
       });
     }
-  }, []);
+  }, [addDynamicField, makeState]);
 
   const onUserInput = useCallback(async (text: string) => {
     if (debounceRef.current) {
@@ -113,7 +127,7 @@ export function useAIAssistedIntake() {
   const editField = useCallback((key: string, value: string) => {
     setAiFields(state => ({
       ...state,
-      [key]: { value, status: "approved", confidence: 1.0 }
+      [key]: { value, status: "approved", confidence: 1.0, dirty: true }
     }));
   }, []);
 

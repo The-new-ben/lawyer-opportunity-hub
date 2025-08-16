@@ -167,6 +167,8 @@ export type Database = {
           created_at: string | null
           estimated_budget: number | null
           id: string
+          case_number: string | null
+          invite_token: string | null
           legal_category: string
           notes: string | null
           opened_at: string | null
@@ -181,6 +183,8 @@ export type Database = {
           created_at?: string | null
           estimated_budget?: number | null
           id?: string
+          case_number?: string | null
+          invite_token?: string | null
           legal_category: string
           notes?: string | null
           opened_at?: string | null
@@ -195,6 +199,8 @@ export type Database = {
           created_at?: string | null
           estimated_budget?: number | null
           id?: string
+          case_number?: string | null
+          invite_token?: string | null
           legal_category?: string
           notes?: string | null
           opened_at?: string | null
