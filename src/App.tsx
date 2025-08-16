@@ -58,6 +58,7 @@ const App = () => (
                 <Route path="/ai-portal" element={<ChatPortal />} />
                 <Route path="/intake" element={<Intake />} />
                 <Route path="/defendant-intake" element={<DefendantIntake />} />
+                <Route path="/global-court" element={<GlobalCourt />} />
                 <Route path="/" element={<GlobalCourt />} />
                 
                 {/* Protected Routes */}
