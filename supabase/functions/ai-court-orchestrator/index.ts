@@ -228,7 +228,7 @@ serve(async (req) => {
 
       // Try HF fallback
       const prompt = `Create an IRAC-based intake in ${locale}.
-Return STRICT JSON with keys: intro, method, questions (array of {id,text,type,options?}), disclaimer.
+Return STRICT JSON with keys: intro, method, questions (array of {id,text,type,options?}), disclaimer. If the text includes "breach of contract" or "overtime unpaid" include additionalFields { breachOfContract: boolean, overtimeUnpaid: boolean }.
 Consider context: ${JSON.stringify(body.context || {})}`;
       const gen = await callModelViaHF(prompt, (body as any).model, (body as any).hf_token);
       if (gen) {
