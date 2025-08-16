@@ -120,6 +120,7 @@ const SmartIntakePortal = () => {
   const [liveSuggestions, setLiveSuggestions] = useState<Record<string, any>>({});
   const [approvedFields, setApprovedFields] = useState<Record<string, boolean>>({});
   const [isLiveExtracting, setIsLiveExtracting] = useState(false);
+  const [fieldsConfig, setFieldsConfig] = useState<{ id: string }[]>([]);
 
   // HF token (memory-only)
   const [hfToken, setHfToken] = useState('');
@@ -288,6 +289,14 @@ const SmartIntakePortal = () => {
       return rest;
     });
     toast({ title: 'Field updated', description: `${key} approved from AI suggestion` });
+  };
+
+  const addDynamicField = (fieldConfig: { id: string }) => {
+    setFieldsConfig(prev =>
+      prev.some(field => field.id === fieldConfig.id)
+        ? prev
+        : [...prev, fieldConfig]
+    );
   };
 
   const applyAIFields = (fieldsToApply: Record<string, any>) => {
