@@ -16,7 +16,7 @@ import { toast } from '@/components/ui/use-toast';
 export default function CaseDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { cases, updateCase, closeCase } = useCases();
+  const { cases, updateCase, closeCase, getCaseVersions, restoreCaseVersion } = useCases();
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({
     status: '',
@@ -25,6 +25,7 @@ export default function CaseDetails() {
   });
 
   const caseData = cases.find(c => c.id === id);
+  const { data: versions = [] } = getCaseVersions(id || '');
 
   useEffect(() => {
     if (caseData) {
@@ -251,24 +252,40 @@ export default function CaseDetails() {
             </CardContent>
           </Card>
 
-          {caseData.summary && (
-            <Card>
-              <CardHeader>
-                <CardTitle>סיכום דיון</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="whitespace-pre-line">{caseData.summary}</p>
-                <div className="flex items-center gap-2">
-                  <Label htmlFor="reviewed">Mark Reviewed</Label>
-                  <Switch id="reviewed" checked={caseData.reviewed} onCheckedChange={(checked) => updateCase.mutateAsync({ id: caseData.id, values: { reviewed: checked } })} />
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+            {caseData.summary && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>סיכום דיון</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="whitespace-pre-line">{caseData.summary}</p>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="reviewed">Mark Reviewed</Label>
+                    <Switch id="reviewed" checked={caseData.reviewed} onCheckedChange={(checked) => updateCase.mutateAsync({ id: caseData.id, values: { reviewed: checked } })} />
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
-        {/* Actions */}
-        <div className="space-y-6">
+            {versions.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>היסטוריית גרסאות</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {versions.map(v => (
+                    <div key={v.id} className="flex items-center justify-between">
+                      <span>{new Date(v.created_at).toLocaleString('he-IL')}</span>
+                      <Button size="sm" variant="outline" onClick={() => restoreCaseVersion.mutate(v)}>שחזר</Button>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Actions */}
+          <div className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

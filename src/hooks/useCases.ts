@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 export type Case = {
   id: string;
@@ -22,8 +23,25 @@ export type Case = {
 
 export type NewCase = Omit<Case, 'id' | 'created_at' | 'updated_at' | 'summary' | 'reviewed'>;
 
+export type CaseVersion = {
+  id: string;
+  case_id: string;
+  hash: string;
+  data: Case;
+  created_at: string;
+  updated_by: string | null;
+};
+
+async function hashCaseData(data: unknown) {
+  const text = JSON.stringify(data);
+  const buffer = new TextEncoder().encode(text);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+  return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 export const useCases = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const fetchCases = async (): Promise<Case[]> => {
     const { data, error } = await supabase
@@ -51,8 +69,17 @@ export const useCases = () => {
         })
         .select()
         .single();
-      
+
       if (error) throw error;
+      if (data) {
+        const hash = await hashCaseData(data);
+        await supabase.from('case_versions').insert({
+          case_id: data.id,
+          hash,
+          data,
+          updated_by: user?.id
+        });
+      }
       return data;
     },
     onSuccess: () => {
@@ -72,8 +99,17 @@ export const useCases = () => {
         .eq('id', id)
         .select()
         .single();
-      
+
       if (error) throw error;
+      if (data) {
+        const hash = await hashCaseData(data);
+        await supabase.from('case_versions').insert({
+          case_id: data.id,
+          hash,
+          data,
+          updated_by: user?.id
+        });
+      }
       return data;
     },
     onSuccess: () => {
@@ -82,6 +118,50 @@ export const useCases = () => {
     },
     onError: () => {
       toast({ title: 'שגיאה בעדכון התיק', variant: 'destructive' });
+    }
+  });
+
+  const getCaseVersions = (caseId: string) => {
+    return useQuery({
+      queryKey: ['case_versions', caseId],
+      queryFn: async (): Promise<CaseVersion[]> => {
+        const { data, error } = await supabase
+          .from('case_versions')
+          .select('*')
+          .eq('case_id', caseId)
+          .order('created_at', { ascending: false });
+        if (error) throw error;
+        return data || [];
+      }
+    });
+  };
+
+  const restoreCaseVersion = useMutation({
+    mutationFn: async (version: CaseVersion) => {
+      const { data, error } = await supabase
+        .from('cases')
+        .update(version.data)
+        .eq('id', version.case_id)
+        .select()
+        .single();
+      if (error) throw error;
+      if (data) {
+        const hash = await hashCaseData(data);
+        await supabase.from('case_versions').insert({
+          case_id: version.case_id,
+          hash,
+          data,
+          updated_by: user?.id
+        });
+      }
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cases'] });
+      toast({ title: 'הגרסה שוחזרה בהצלחה' });
+    },
+    onError: () => {
+      toast({ title: 'שגיאה בשחזור הגרסה', variant: 'destructive' });
     }
   });
 
@@ -154,6 +234,8 @@ export const useCases = () => {
     addCase,
     updateCase,
     closeCase,
-    getCaseStats
+    getCaseStats,
+    getCaseVersions,
+    restoreCaseVersion
   };
 };
