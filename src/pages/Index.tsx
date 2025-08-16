@@ -14,8 +14,8 @@ const Index = () => {
   }
   
   // If user is authenticated, redirect to dashboard
-  // Otherwise, show the Global Court homepage
-  return <Navigate to={user ? "/dashboard" : "/"} replace />;
+  // Otherwise, show the landing page
+  return <Navigate to={user ? "/dashboard" : "/landing"} replace />;
 };
 
 export default Index;
