@@ -21,6 +21,10 @@ vi.mock('@/pages/Intake', () => ({
   default: () => <div data-testid="intake">Intake Page</div>
 }));
 
+vi.mock('@/pages/court/CourtDashboard', () => ({
+  default: () => <div data-testid="court-dashboard">Court Dashboard</div>
+}));
+
 vi.mock('@/hooks/useAuth', () => ({
   AuthProvider: ({ children }: { children: React.ReactNode }) => children,
   useAuth: () => ({ user: null, loading: false })

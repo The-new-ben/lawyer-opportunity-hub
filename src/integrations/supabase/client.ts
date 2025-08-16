@@ -2,9 +2,9 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-// Get configuration from environment variables with fallbacks
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://mlnwpocuvjnelttvscja.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1sbndwb2N1dmpuZWx0dHZzY2phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMzNzI0NDgsImV4cCI6MjA2ODk0ODQ0OH0.aDFfPvBZt58KFf9RjqYVpoLA2KwEbFjX2CPRfBhMWq0";
+// Get configuration from environment variables
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 // Validate required configuration
 if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
