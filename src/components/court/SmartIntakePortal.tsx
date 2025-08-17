@@ -20,7 +20,7 @@ import { supabase } from '@/integrations/supabase/client';
 import AIConnectionTest from './AIConnectionTest';
 import { useAIAssistedIntake } from '@/aiIntake/useAIAssistedIntake';
 import { AIFieldsDisplay } from '@/aiIntake/AIFieldsDisplay';
-import AIBridge from '@/aiIntake/AIBridge';
+import { useFormWithAI as AIBridge } from '@/aiIntake/AIBridge';
 import { SmartActionButtons } from '@/aiIntake/SmartActionButtons';
 import { SmartFieldVisualizer } from '@/aiIntake/SmartFieldVisualizer';
 import { useFormWithAI } from '@/aiIntake/useFormWithAI';
@@ -557,12 +557,12 @@ const SmartIntakePortal = () => {
                     <div ref={chatEndRef} />
                   </div>
 
-                  {/* AI Bridge Component */}
-                  <AIBridge 
-                    aiFields={aiFields} 
-                     onApplyFields={applyAIToForm}
-                    onApplyOne={applyOneField}
-                    isLocked={() => false}
+                  {/* Smart Field Visualizer */}
+                  <SmartFieldVisualizer 
+                    fieldUpdates={aiFields}
+                    onFieldApprove={approveField}
+                    onFieldEdit={editField}
+                    progress={{ score: readinessStatus.score, message: readinessStatus.message, completedFields: [] }}
                   />
 
                   {/* Input Area */}

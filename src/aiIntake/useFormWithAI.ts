@@ -67,26 +67,19 @@ export function useFormWithAI(caseId: string = 'draft') {
       
       setValue(formPath, val, { 
         shouldDirty: false,
-          shouldTouch: false,
-    shouldValidate: true
-  });
+        shouldTouch: false,
+        shouldValidate: true
+      });
 
-  
+      const el = document.querySelector(`[name="${formPath}"]`) as HTMLElement | null;
+      if (el) {
+        el.classList.add('ring', 'ring-blue-400');
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => el.classList.remove('ring', 'ring-blue-400'), 2000);
+      }
+    };
 
-          const el = document.querySelector(`[name="${formPath}"]`) as HTMLElement | null;
-
-if (el) {
-  el.classList.add('ring', 'ring-blue-400');
-  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  setTimeout(() => el.classList.remove('ring', 'ring-blue-400'), 2000);
-}
-
-
-
-        
-
-        
-      write('caseTitle', ai.caseTitle);
+    write('caseTitle', ai.caseTitle);
     write('caseSummary', ai.caseSummary);
     write('jurisdiction', ai.jurisdiction);
     write('legalCategory', ai.legalCategory);

@@ -2,7 +2,7 @@
  * Scenario Field Registry - Dynamic field definitions based on case scenarios
  */
 
-import { AIFieldRegistry } from './aiFieldBridge';
+import type { AIFieldRegistry } from './aiFieldBridge';
 
 export const scenarioFieldRegistry: Record<string, AIFieldRegistry> = {
   // Personal Injury Cases

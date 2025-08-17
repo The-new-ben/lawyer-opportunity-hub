@@ -2,38 +2,44 @@
  * AI Field Patching Tests
  */
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { applyAIPatches, applySingleAIPatch, AIFieldPatch, AIFieldRegistry } from '../lib/aiFieldBridge';
 
-// Mock react-hook-form
+// Mock form methods
 const mockForm = {
-  getValues: vi.fn(),
   setValue: vi.fn(),
+  getValues: vi.fn(),
+  watch: vi.fn(),
+  trigger: vi.fn(),
+  reset: vi.fn(),
+  handleSubmit: vi.fn(),
+  formState: { errors: {}, isDirty: false, isValid: true }
 };
 
-// Mock toast
-vi.mock('@/hooks/use-toast', () => ({
-  toast: vi.fn(),
-}));
-
+// Test field registry
 const testFieldRegistry: AIFieldRegistry = {
-  incident_date: {
-    type: 'date',
-    label: 'תאריך האירוע',
+  caseTitle: {
+    type: 'text',
+    label: 'Case Title',
     validation: { required: true }
   },
-  injury_description: {
-    type: 'textarea',
-    label: 'תיאור הפציעה',
-    validation: { required: true, minLength: 10 }
+  jurisdiction: {
+    type: 'text',
+    label: 'Jurisdiction',
+    validation: { required: true }
   }
+};
+
+// Reset function
+const resetMocks = () => {
+  vi.clearAllMocks();
 };
 
 describe('AI Field Patching', () => {
   // Reset mocks before each test
-  const resetMocks = () => {
-    vi.clearAllMocks();
-  };
+  beforeEach(() => {
+    resetMocks();
+  });
 
   it('applies high-confidence patches to empty fields', () => {
     resetMocks();
@@ -41,26 +47,24 @@ describe('AI Field Patching', () => {
     
     const patches: AIFieldPatch[] = [
       {
-        field: 'incident_date',
-        value: '2024-01-15',
-        confidence: 0.9,
-        source: 'ai'
+        path: 'caseTitle',
+        value: 'Personal Injury Case',
+        confidence: 0.9
       }
     ];
 
     applyAIPatches(mockForm as any, patches, testFieldRegistry);
     
-    expect(mockForm.setValue).toHaveBeenCalledWith('incident_date', '2024-01-15', { shouldValidate: true });
+    expect(mockForm.setValue).toHaveBeenCalledWith('caseTitle', 'Personal Injury Case');
   });
 
   it('skips low-confidence patches', () => {
     resetMocks();
     const patches: AIFieldPatch[] = [
       {
-        field: 'incident_date',
-        value: '2024-01-15',
-        confidence: 0.5, // Low confidence
-        source: 'ai'
+        path: 'caseTitle',
+        value: 'Low Confidence Case',
+        confidence: 0.4
       }
     ];
 
@@ -71,14 +75,13 @@ describe('AI Field Patching', () => {
 
   it('skips patches for non-empty fields', () => {
     resetMocks();
-    mockForm.getValues.mockReturnValue('existing value'); // Non-empty field
+    mockForm.getValues.mockReturnValue('Existing Value');
     
     const patches: AIFieldPatch[] = [
       {
-        field: 'incident_date',
-        value: '2024-01-15',
-        confidence: 0.9,
-        source: 'ai'
+        path: 'caseTitle',
+        value: 'Updated Case Title',
+        confidence: 0.8
       }
     ];
 
@@ -91,25 +94,25 @@ describe('AI Field Patching', () => {
     resetMocks();
     const result = applySingleAIPatch(
       mockForm as any,
-      'injury_description',
-      'פציעה בגב',
-      testFieldRegistry
+      'jurisdiction',
+      'Federal Court',
+      0.8
     );
     
-    expect(result).toBe(true);
-    expect(mockForm.setValue).toHaveBeenCalledWith('injury_description', 'פציעה בגב', { shouldValidate: true });
+    expect(result.success).toBe(true);
+    expect(mockForm.setValue).toHaveBeenCalledWith('jurisdiction', 'Federal Court');
   });
 
-  it('returns false for unknown fields', () => {
+  it('rejects single field patch with low confidence', () => {
     resetMocks();
     const result = applySingleAIPatch(
       mockForm as any,
-      'unknown_field',
-      'value',
-      testFieldRegistry
+      'jurisdiction',
+      'Low Confidence Court',
+      0.3
     );
     
-    expect(result).toBe(false);
+    expect(result.success).toBe(false);
     expect(mockForm.setValue).not.toHaveBeenCalled();
   });
 });

@@ -1,6 +1,6 @@
 import { useForm } from 'react-hook-form';
 import type { AIPatch, FieldDef } from './patch';
-import { ScenarioFieldRegistry } from../lib/scenarioFields;
+import { ScenarioFieldRegistry } from '../lib/scenarioFields';
 
 export type CaseForm = Record<string, any>;
 
