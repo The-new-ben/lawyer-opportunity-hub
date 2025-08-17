@@ -363,3 +363,4 @@ export function getAvailableScenarios(): Array<{ key: string; label: string; }> 
     { key: 'employment_wage_claim', label: 'תביעת שכר עבודה' }
   ];
 }
+export const ScenarioFieldRegistry = scenarioFieldRegistry;
