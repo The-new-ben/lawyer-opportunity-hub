@@ -1,180 +1,75 @@
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { FIELD_MAP, REQUIRED_FIELDS, FieldMapKey } from './fieldMap';
-import { FieldState } from './useAIAssistedIntake';
-import { Zap, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import type { AIPatch, FieldDef } from './patch';
+import { ScenarioFieldRegistry } from './scenarioFields';
 
-interface AIBridgeProps {
-  aiFields: Record<string, FieldState>;
-  onApplyFields: (fieldsToApply: Record<string, any>) => void;
-  onApplyOne?: (fieldKey: string, value: any) => void;
-  isLocked?: (formPath: string) => boolean;
+export type CaseForm = Record<string, any>;
+
+/**
+ * Hook that bridges between AI patches and react-hook-form.
+ * It applies patch operations, highlights updated fields and scrolls to them.
+ */
+export function useFormWithAI(defaults: Partial<CaseForm>) {
+  const form = useForm<CaseForm>({ defaultValues: defaults });
+
+  function applyPatch(p: AIPatch) {
+    if (p.op === 'set') {
+      // Set a value on the form
+      form.setValue(p.path as any, p.value, { shouldDirty: true, shouldValidate: true });
+      // Highlight and scroll to the updated field
+      const el = document.querySelector(`[name="${p.path}"]`) as HTMLElement | null;
+      if (el) {
+        el.classList.add('ring', 'ring-blue-400');
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => el.classList.remove('ring', 'ring-blue-400'), 2000);
+      }
+    }
+    if (p.op === 'append') {
+      // Append to an array field
+      const prev = form.getValues(p.path as any) ?? [];
+      form.setValue(p.path as any, [...prev, p.value], { shouldDirty: true, shouldValidate: true });
+      const el = document.querySelector(`[name="${p.path}"]`) as HTMLElement | null;
+      if (el) {
+        el.classList.add('ring', 'ring-blue-400');
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => el.classList.remove('ring', 'ring-blue-400'), 2000);
+      }
+    }
+    if (p.op === 'addFields') {
+      // Inject new dynamic fields
+      const defs =
+        (p as any).fields?.length && Array.isArray((p as any).fields)
+          ? (p as any).fields
+          : ScenarioFieldRegistry[(p as any).scenario] || [];
+      addDynamicFields(defs);
+    }
+  }
+
+  function applyPatches(patches: AIPatch[]) {
+    patches.forEach(applyPatch);
+  }
+
+  return { form, applyPatches };
 }
 
-export default function AIBridge({ 
-  aiFields, 
-  onApplyFields, 
-  onApplyOne, 
-  isLocked 
-}: AIBridgeProps) {
-  
-  // Get all approved fields that can be applied
-  const getApplicableFields = () => {
-    const applicable: Record<string, any> = {};
-    
-    Object.entries(aiFields).forEach(([aiKey, field]) => {
-      const map = (FIELD_MAP as any)[aiKey];
-      if (!map) return;
-      
-      const formPath = map.formPath;
-      if (isLocked && isLocked(formPath)) return;
-      if (field.status !== 'approved') return;
-      
-      // Map AI field value to form structure
-      switch (aiKey) {
-        case 'parties':
-          if (field.value) {
-            const parsedParties = field.value.split(';').map(p => {
-              const [role, name] = p.split(':').map(s => s.trim());
-              return { role: role || 'party', name: name || '' };
-            }).filter(p => p.role);
-            applicable.parties = parsedParties;
-          }
-          break;
-        case 'evidence':
-          if (field.value) {
-            const parsedEvidence = field.value.split(',').map(e => e.trim()).filter(e => e);
-            applicable.evidence = parsedEvidence;
-          }
-          break;
-        default:
-          applicable[formPath] = field.value;
-      }
-    });
-    
-    return applicable;
-  };
+// Minimal dynamic-fields store (state or context)
+let dynamicStore: FieldDef[] = [];
 
-  const applyAllFields = () => {
-    const fieldsToApply = getApplicableFields();
-    if (Object.keys(fieldsToApply).length > 0) {
-      onApplyFields(fieldsToApply);
-    }
-  };
+/** Add new field definitions and dedupe by path */
+export function addDynamicFields(defs: FieldDef[]) {
+  dynamicStore = dedupeByPath([...dynamicStore, ...defs]);
+}
 
-  const applyOneField = (fieldKey: string) => {
-    const field = aiFields[fieldKey];
-    if (!field || field.status !== 'approved') return;
-    
-    const map = (FIELD_MAP as any)[fieldKey];
-    if (!map) return;
-    
-    const formPath = map.formPath;
-    if (isLocked && isLocked(formPath)) return;
-    
-    let value: any = field.value;
-    
-    // Transform value based on field type
-    switch (fieldKey) {
-      case 'parties':
-        if (field.value) {
-          value = field.value.split(';').map(p => {
-            const [role, name] = p.split(':').map(s => s.trim());
-            return { role: role || 'party', name: name || '' };
-          }).filter(p => p.role);
-        }
-        break;
-      case 'evidence':
-        if (field.value) {
-          value = field.value.split(',').map(e => e.trim()).filter(e => e);
-        }
-        break;
-    }
-    
-    if (onApplyOne) {
-      onApplyOne(formPath, value);
-    }
-  };
+/** Dedupe fields by their path */
+function dedupeByPath(xs: FieldDef[]) {
+  const seen = new Set<string>();
+  return xs.filter(f => {
+    if (seen.has(f.path)) return false;
+    seen.add(f.path);
+    return true;
+  });
+}
 
-  const approvedCount = Object.values(aiFields).filter(f => f.status === 'approved').length;
-  const applicableFields = getApplicableFields();
-  const applicableCount = Object.keys(applicableFields).length;
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'approved': return <CheckCircle className="w-3 h-3 text-green-500" />;
-      case 'pending': return <Clock className="w-3 h-3 text-orange-500" />;
-      default: return <AlertCircle className="w-3 h-3 text-red-500" />;
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'approved': return 'bg-green-100 text-green-800 border-green-200';
-      case 'pending': return 'bg-orange-100 text-orange-800 border-orange-200';
-      default: return 'bg-red-100 text-red-800 border-red-200';
-    }
-  };
-
-  return (
-    <div className="space-y-4 p-4 border rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20">
-      <div className="flex items-center gap-2">
-        <Zap className="w-5 h-5 text-blue-600" />
-        <h3 className="font-semibold text-lg">AI Field Bridge</h3>
-        <Badge variant="secondary">{approvedCount} Ready</Badge>
-      </div>
-      
-      {Object.keys(aiFields).length > 0 && (
-        <div className="space-y-2">
-          <div className="flex flex-wrap gap-2">
-            {Object.entries(aiFields).map(([key, field]) => (
-              <div key={key} className="flex items-center gap-2">
-                <Badge className={getStatusColor(field.status)}>
-                  {getStatusIcon(field.status)}
-                  <span className="ml-1 text-xs">{key}</span>
-                  {field.confidence && (
-                    <span className="ml-1 text-xs opacity-70">
-                      {Math.round(field.confidence * 100)}%
-                    </span>
-                  )}
-                </Badge>
-                {field.status === 'approved' && onApplyOne && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => applyOneField(key)}
-                    className="text-xs px-2 py-1 h-6"
-                  >
-                    Apply
-                  </Button>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-      
-      {applicableCount > 0 && (
-        <div className="flex items-center gap-2 pt-2 border-t">
-          <Button 
-            onClick={applyAllFields}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
-          >
-            <Zap className="w-4 h-4 mr-2" />
-            Apply All AI Fields ({applicableCount})
-          </Button>
-          <Badge variant="outline" className="text-xs">
-            One-Click Apply Ready
-          </Badge>
-        </div>
-      )}
-      
-      {Object.keys(aiFields).length === 0 && (
-        <p className="text-sm text-muted-foreground italic">
-          Start chatting with AI to see field suggestions appear here
-        </p>
-      )}
-    </div>
-  );
+/** Hook to access the current list of dynamic fields */
+export function useDynamicFields(): FieldDef[] {
+  return dynamicStore;
 }
