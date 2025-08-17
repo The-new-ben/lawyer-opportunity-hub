@@ -1,5 +1,6 @@
 // Smart Conversation Engine - Lovable-level conversational AI
 import { EnhancedAIParser, ConversationContext } from './EnhancedAIParser';
+import { detectLanguage, t, type Lang } from '@/features/ai/i18n';
 
 export interface ConversationTurn {
   userInput: string;
@@ -35,10 +36,12 @@ export interface ActionSuggestion {
 export class SmartConversationEngine {
   private context: ConversationContext;
   private sessionMemory: Record<string, any> = {};
+  private lang: Lang;
 
   constructor(initialContext: ConversationContext) {
     this.context = initialContext;
     this.sessionMemory = initialContext.sessionMemory || {};
+    this.lang = detectLanguage();
   }
 
   async processUserInput(input: string): Promise<ConversationTurn> {
@@ -116,15 +119,15 @@ export class SmartConversationEngine {
     const fields = parseResult.commands.map(cmd => cmd.field).join(', ');
     
     const responses = [
-      `✅ מעולה! עדכנתי ${commandCount} שדות: ${fields}. `,
-      `🎯 הבנתי בדיוק מה שרצית! עדכנתי: ${fields}. `,
-      `⚡ ביצעתי את העדכונים: ${fields}. `,
+      `✅ ${t(this.lang, 'commandUpdated').replace('{count}', commandCount.toString()).replace('{fields}', fields)} `,
+      `🎯 ${t(this.lang, 'commandUnderstood').replace('{fields}', fields)} `,
+      `⚡ ${t(this.lang, 'commandExecuted').replace('{fields}', fields)} `,
     ];
     
     const baseResponse = responses[Math.floor(Math.random() * responses.length)];
     const nextQuestion = EnhancedAIParser.generateSmartQuestion(this.context);
     
-    return baseResponse + (nextQuestion ? `\n\n${nextQuestion}` : 'איך אוכל לעזור עוד?');
+    return baseResponse + (nextQuestion ? `\n\n${nextQuestion}` : t(this.lang, 'commandHowElse'));
   }
 
   private generateConversationalResponse(parseResult: any): string {
@@ -133,12 +136,12 @@ export class SmartConversationEngine {
     
     if (caseType && turnCount === 1) {
       const caseTypeResponses = {
-        contract: "🤝 אני רואה שזה תיק הפרת חוזה. אני אכין עבורך שדות מיוחדים לסוג תיק הזה.",
-        employment: "💼 זה נשמע כמו תיק עבודה. אני אוסיף שדות רלוונטיים לתחום העבודה.",
-        tort: "⚖️ נראה שזה תיק נזיקין. אני אכין שדות מותאמים לסוג תיק הזה.",
-        family: "👨‍👩‍👧‍👦 זה תיק משפחה. אני אוסיף שדות רלוונטיים לדיני משפחה.",
-        criminal: "🚨 זה נראה כמו תיק פלילי. אני אכין שדות מיוחדים לתחום הפלילי.",
-        property: "🏠 זה קשור לנדלן. אני אוסיף שדות רלוונטיים לעולם הנדלן."
+        contract: `🤝 ${t(this.lang, 'contractCase')}`,
+        employment: `💼 ${t(this.lang, 'employmentCase')}`,
+        tort: `⚖️ ${t(this.lang, 'tortCase')}`,
+        family: `👨‍👩‍👧‍👦 ${t(this.lang, 'familyCase')}`,
+        criminal: `🚨 ${t(this.lang, 'criminalCase')}`,
+        property: `🏠 ${t(this.lang, 'propertyCase')}`
       };
       
       const response = caseTypeResponses[caseType as keyof typeof caseTypeResponses];
@@ -164,10 +167,10 @@ export class SmartConversationEngine {
 
   private generateContextualResponse(): string {
     const responses = [
-      "אני כאן לעזור לך לבנות את התיק הכי חזק שאפשר. ספר לי עוד פרטים.",
-      "ממשיכים לבנות את התיק שלך. מה עוד חשוב שאדע?",
-      "אני רושם ומנתח את כל המידע. תמשיך לספר לי על המצב.",
-      "זה נשמע מעניין. אני צריך עוד פרטים כדי לעזור לך הכי טוב.",
+      t(this.lang, 'aiGreeting'),
+      t(this.lang, 'aiContinue'),
+      t(this.lang, 'aiAnalyzing'),
+      t(this.lang, 'aiInterested'),
     ];
     
     return responses[Math.floor(Math.random() * responses.length)];
@@ -189,8 +192,8 @@ export class SmartConversationEngine {
     if (progress < 50) {
       suggestions.push({
         id: 'complete-basic-info',
-        label: 'השלם מידע בסיסי',
-        description: 'בואנו נשלים את השדות החיוניים לתיק',
+        label: t(this.lang, 'completeBasicInfo'),
+        description: t(this.lang, 'completeBasicInfoDesc'),
         action: 'guided-completion',
         icon: '📝',
         category: 'system',
@@ -201,8 +204,8 @@ export class SmartConversationEngine {
     if (progress >= 50 && progress < 80) {
       suggestions.push({
         id: 'add-evidence',
-        label: 'הוסף ראיות',
-        description: 'עלה מסמכים ותמונות תומכות',
+        label: t(this.lang, 'addEvidence'),
+        description: t(this.lang, 'addEvidenceDesc'),
         action: 'upload-evidence',
         icon: '📎',
         category: 'legal',
@@ -214,18 +217,18 @@ export class SmartConversationEngine {
       suggestions.push(
         {
           id: 'find-lawyer',
-          label: 'מצא עורך דין מומחה',
-          description: `מומחים ל${this.getCaseTypeHebrew(caseType)} באזור שלך`,
+          label: t(this.lang, 'findLawyer'),
+          description: t(this.lang, 'findLawyerDesc').replace('{caseType}', this.getCaseTypeTranslated(caseType)),
           action: 'find-professionals',
           icon: '⚖️',
           category: 'professional',
           priority: 'high',
-          estimatedTime: '5 דקות'
+          estimatedTime: '5 min'
         },
         {
           id: 'schedule-consultation',
-          label: 'קבע ייעוץ',
-          description: 'ייעוץ ראשוני עם מומחה משפטי',
+          label: t(this.lang, 'scheduleConsultation'),
+          description: t(this.lang, 'scheduleConsultationDesc'),
           action: 'schedule-meeting',
           icon: '📅',
           category: 'professional',
@@ -234,8 +237,8 @@ export class SmartConversationEngine {
         },
         {
           id: 'generate-documents',
-          label: 'הכן מסמכים',
-          description: 'יצירה אוטומטית של טיוטת כתב טענות',
+          label: t(this.lang, 'generateDocuments'),
+          description: t(this.lang, 'generateDocumentsDesc'),
           action: 'generate-pleading',
           icon: '📄',
           category: 'legal',
@@ -248,8 +251,8 @@ export class SmartConversationEngine {
     if (caseType === 'contract') {
       suggestions.push({
         id: 'breach-analysis',
-        label: 'ניתוח הפרת החוזה',
-        description: 'בדיקה משפטית מעמיקה של ההפרה',
+        label: t(this.lang, 'breachAnalysis'),
+        description: t(this.lang, 'breachAnalysisDesc'),
         action: 'analyze-breach',
         icon: '🔍',
         category: 'legal',
@@ -260,8 +263,8 @@ export class SmartConversationEngine {
     if (caseType === 'employment') {
       suggestions.push({
         id: 'labor-rights',
-        label: 'בדיקת זכויות עובד',
-        description: 'וידוא שכל הזכויות נמצאות במקום',
+        label: t(this.lang, 'laborRights'),
+        description: t(this.lang, 'laborRightsDesc'),
         action: 'check-rights',
         icon: '🛡️',
         category: 'legal',
@@ -273,8 +276,8 @@ export class SmartConversationEngine {
     suggestions.push(
       {
         id: 'invite-parties',
-        label: 'זמן צדדים נוספים',
-        description: 'הזמן את הצד השני או עדים לתהליך',
+        label: t(this.lang, 'inviteParties'),
+        description: t(this.lang, 'invitePartiesDesc'),
         action: 'invite-parties',
         icon: '👥',
         category: 'procedural',
@@ -283,8 +286,8 @@ export class SmartConversationEngine {
       },
       {
         id: 'register-account',
-        label: 'הירשם למעקב מלא',
-        description: 'נהל את התיק עם כלים מתקדמים',
+        label: t(this.lang, 'registerAccount'),
+        description: t(this.lang, 'registerAccountDesc'),
         action: 'register',
         icon: '🔐',
         category: 'system',
@@ -317,11 +320,11 @@ export class SmartConversationEngine {
     );
     
     let message = '';
-    if (score >= 90) message = 'התיק מוכן להגשה! 🎉';
-    else if (score >= 70) message = 'התיק כמעט מוכן - עוד פרט קטן 🔥';
-    else if (score >= 50) message = 'אנחנו בדרך הנכונה! 📈';
-    else if (score >= 30) message = 'בואנו נמשיך לבנות 🏗️';
-    else message = 'רק התחלנו - יש לנו הרבה עבודה 🚀';
+    if (score >= 90) message = t(this.lang, 'progressReady');
+    else if (score >= 70) message = t(this.lang, 'progressAlmostDone');
+    else if (score >= 50) message = t(this.lang, 'progressOnTrack');
+    else if (score >= 30) message = t(this.lang, 'progressContinue');
+    else message = t(this.lang, 'progressStarted');
     
     return {
       score,
@@ -330,17 +333,9 @@ export class SmartConversationEngine {
     };
   }
 
-  private getCaseTypeHebrew(caseType?: string): string {
-    const translations = {
-      contract: 'חוזים',
-      employment: 'דיני עבודה',
-      tort: 'נזיקין',
-      family: 'דיני משפחה',
-      criminal: 'דין פלילי',
-      property: 'דיני נדלן'
-    };
-    
-    return translations[caseType as keyof typeof translations] || 'תחום כללי';
+  private getCaseTypeTranslated(caseType?: string): string {
+    const caseTypeKey = caseType || 'general';
+    return t(this.lang, caseTypeKey) || t(this.lang, 'general');
   }
 
   // Public method to get current session state

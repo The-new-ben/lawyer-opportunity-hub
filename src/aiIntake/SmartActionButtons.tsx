@@ -16,6 +16,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { ActionSuggestion } from './SmartConversationEngine';
+import { detectLanguage, t, type Lang } from '@/features/ai/i18n';
 
 interface SmartActionButtonsProps {
   actions: ActionSuggestion[];
@@ -65,6 +66,7 @@ export const SmartActionButtons: React.FC<SmartActionButtonsProps> = ({
   progress,
   isAuthenticated = false
 }) => {
+  const lang = detectLanguage();
   // Group actions by category
   const groupedActions = actions.reduce((groups, action) => {
     const category = action.category;
@@ -76,18 +78,18 @@ export const SmartActionButtons: React.FC<SmartActionButtonsProps> = ({
   }, {} as Record<string, ActionSuggestion[]>);
 
   const categoryTitles = {
-    legal: 'פעולות משפטיות',
-    professional: 'מומחים ויעוץ',
-    procedural: 'הליכים',
-    system: 'מערכת'
+    legal: t(lang, 'legalActions'),
+    professional: t(lang, 'professionalExperts'),
+    procedural: t(lang, 'procedures'),
+    system: t(lang, 'system')
   };
 
   const getProgressMessage = () => {
-    if (progress >= 90) return '🎉 התיק מוכן! בואו נתקדם לשלבים הבאים';
-    if (progress >= 70) return '🔥 כמעט סיימנו! עוד כמה פרטים';
-    if (progress >= 50) return '📈 אנחנו באמצע הדרך';
-    if (progress >= 30) return '🏗️ ממשיכים לבנות את התיק';
-    return '🚀 בואו נתחיל לבנות את התיק שלך';
+    if (progress >= 90) return t(lang, 'progressMessage90');
+    if (progress >= 70) return t(lang, 'progressMessage70');
+    if (progress >= 50) return t(lang, 'progressMessage50');
+    if (progress >= 30) return t(lang, 'progressMessage30');
+    return t(lang, 'progressMessage0');
   };
 
   if (actions.length === 0) {
@@ -96,7 +98,7 @@ export const SmartActionButtons: React.FC<SmartActionButtonsProps> = ({
         <CardContent className="pt-6">
           <div className="text-center text-muted-foreground">
             <Sparkles className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>ברגע שנוסיף עוד מידע, אציע לך פעולות חכמות</p>
+            <p>{t(lang, 'noActionsAvailable')}</p>
           </div>
         </CardContent>
       </Card>
@@ -115,7 +117,9 @@ export const SmartActionButtons: React.FC<SmartActionButtonsProps> = ({
             </span>
           </div>
           <div className="text-sm text-blue-700">
-            התקדמות: {progress}% • {actions.filter(a => a.priority === 'high').length} פעולות בעדיפות גבוהה
+            {t(lang, 'progressStatus')
+              .replace('{progress}', progress.toString())
+              .replace('{highPriorityCount}', actions.filter(a => a.priority === 'high').length.toString())}
           </div>
         </CardContent>
       </Card>
@@ -157,7 +161,7 @@ export const SmartActionButtons: React.FC<SmartActionButtonsProps> = ({
                             <span className="font-medium">{action.label}</span>
                             {action.priority === 'high' && (
                               <Badge variant="destructive" className="text-xs">
-                                דחוף
+                                {t(lang, 'urgent')}
                               </Badge>
                             )}
                             {action.estimatedTime && (
@@ -175,7 +179,7 @@ export const SmartActionButtons: React.FC<SmartActionButtonsProps> = ({
                         
                         {action.requiresAuth && !isAuthenticated && (
                           <p className="text-xs text-amber-600 mt-2 text-right">
-                            🔒 דרושה הרשמה
+                            {t(lang, 'requiresRegistration')}
                           </p>
                         )}
                       </div>
@@ -189,7 +193,7 @@ export const SmartActionButtons: React.FC<SmartActionButtonsProps> = ({
               <>
                 <Separator className="my-4" />
                 <div className="text-xs text-muted-foreground text-center">
-                  💡 טיפ: פעולות אלו יעזרו לך להתקדם בתיק
+                  {t(lang, 'tipText')}
                 </div>
               </>
             )}
@@ -201,8 +205,8 @@ export const SmartActionButtons: React.FC<SmartActionButtonsProps> = ({
       <Card className="bg-muted/50">
         <CardContent className="pt-4">
           <div className="flex justify-between text-sm text-muted-foreground">
-            <span>📊 סה״כ פעולות זמינות: {actions.length}</span>
-            <span>⚡ פעולות דחופות: {actions.filter(a => a.priority === 'high').length}</span>
+            <span>{t(lang, 'totalActionsAvailable').replace('{count}', actions.length.toString())}</span>
+            <span>{t(lang, 'urgentActions').replace('{count}', actions.filter(a => a.priority === 'high').length.toString())}</span>
           </div>
         </CardContent>
       </Card>

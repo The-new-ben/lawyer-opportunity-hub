@@ -170,7 +170,7 @@ export class EnhancedAIParser {
     return null;
   }
 
-  // Generate dynamic fields based on case type
+  // Generate dynamic fields based on case type (default English)
   static generateDynamicFields(caseType: string): Array<{
     id: string;
     label: string;
@@ -180,34 +180,34 @@ export class EnhancedAIParser {
   }> {
     const fieldSets = {
       contract: [
-        { id: 'contractDate', label: 'תאריך החוזה', type: 'date', required: true },
-        { id: 'contractType', label: 'סוג חוזה', type: 'select', required: true, 
-          options: ['מכר', 'שכירות', 'עבודה', 'שירותים', 'קבלנות'] },
-        { id: 'breachDetails', label: 'פרטי ההפרה', type: 'textarea', required: true },
-        { id: 'damages', label: 'נזקים כספיים', type: 'number', required: false }
+        { id: 'contractDate', label: 'Contract Date', type: 'date', required: true },
+        { id: 'contractType', label: 'Contract Type', type: 'select', required: true, 
+          options: ['Sale', 'Rental', 'Employment', 'Services', 'Construction'] },
+        { id: 'breachDetails', label: 'Breach Details', type: 'textarea', required: true },
+        { id: 'damages', label: 'Financial Damages', type: 'number', required: false }
       ],
       employment: [
-        { id: 'employmentStart', label: 'תחילת עבודה', type: 'date', required: true },
-        { id: 'employmentEnd', label: 'סיום עבודה', type: 'date', required: false },
-        { id: 'position', label: 'תפקיד', type: 'text', required: true },
-        { id: 'issueType', label: 'סוג הבעיה', type: 'select', required: true,
-          options: ['פיטורין', 'הטרדה', 'אפליה', 'שכר', 'שעות עבודה', 'תנאי עבודה'] },
-        { id: 'salary', label: 'שכר חודשי', type: 'number', required: false }
+        { id: 'employmentStart', label: 'Employment Start', type: 'date', required: true },
+        { id: 'employmentEnd', label: 'Employment End', type: 'date', required: false },
+        { id: 'position', label: 'Position', type: 'text', required: true },
+        { id: 'issueType', label: 'Issue Type', type: 'select', required: true,
+          options: ['Termination', 'Harassment', 'Discrimination', 'Salary', 'Working Hours', 'Working Conditions'] },
+        { id: 'salary', label: 'Monthly Salary', type: 'number', required: false }
       ],
       tort: [
-        { id: 'incidentDate', label: 'תאריך האירוע', type: 'date', required: true },
-        { id: 'incidentLocation', label: 'מקום האירוע', type: 'text', required: true },
-        { id: 'injuryType', label: 'סוג הפגיעה', type: 'select', required: true,
-          options: ['גופני', 'נפשי', 'כספי', 'לרכוש', 'לשם'] },
-        { id: 'medicalTreatment', label: 'טיפול רפואי', type: 'textarea', required: false },
-        { id: 'witnesses', label: 'עדים', type: 'textarea', required: false }
+        { id: 'incidentDate', label: 'Incident Date', type: 'date', required: true },
+        { id: 'incidentLocation', label: 'Incident Location', type: 'text', required: true },
+        { id: 'injuryType', label: 'Injury Type', type: 'select', required: true,
+          options: ['Physical', 'Mental', 'Financial', 'Property', 'Reputation'] },
+        { id: 'medicalTreatment', label: 'Medical Treatment', type: 'textarea', required: false },
+        { id: 'witnesses', label: 'Witnesses', type: 'textarea', required: false }
       ],
       family: [
-        { id: 'marriageDate', label: 'תאריך נישואין', type: 'date', required: false },
-        { id: 'children', label: 'ילדים', type: 'textarea', required: false },
-        { id: 'assets', label: 'נכסים', type: 'textarea', required: false },
-        { id: 'familyIssue', label: 'סוג הבעיה', type: 'select', required: true,
-          options: ['גירושין', 'משמורת', 'מזונות', 'רכוש', 'יחסי אב-בן'] }
+        { id: 'marriageDate', label: 'Marriage Date', type: 'date', required: false },
+        { id: 'children', label: 'Children', type: 'textarea', required: false },
+        { id: 'assets', label: 'Assets', type: 'textarea', required: false },
+        { id: 'familyIssue', label: 'Family Issue', type: 'select', required: true,
+          options: ['Divorce', 'Custody', 'Alimony', 'Property', 'Parent-Child Relations'] }
       ]
     };
 
