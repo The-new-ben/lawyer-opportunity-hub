@@ -36,18 +36,18 @@ interface SmartFieldVisualizerProps {
 }
 
 const FIELD_LABELS = {
-  title: 'כותרת התיק',
-  summary: 'תקציר המקרה',
-  jurisdiction: 'תחום שיפוט',
-  category: 'קטגוריה משפטית',
-  goal: 'מטרת התיק',
-  parties: 'הצדדים',
-  evidence: 'ראיות',
-  timeline: 'ציר זמן',
-  location: 'מיקום',
-  claimAmount: 'סכום התביעה',
-  contractDate: 'תאריך החוזה',
-  incidentDate: 'תאריך האירוע'
+  title: 'Case Title',
+  summary: 'Case Summary',
+  jurisdiction: 'Jurisdiction',
+  category: 'Legal Category',
+  goal: 'Case Goal',
+  parties: 'Parties',
+  evidence: 'Evidence',
+  timeline: 'Timeline',
+  location: 'Location',
+  claimAmount: 'Claim Amount',
+  contractDate: 'Contract Date',
+  incidentDate: 'Incident Date'
 };
 
 const getFieldIcon = (field: string) => {
@@ -118,7 +118,7 @@ export const SmartFieldVisualizer: React.FC<SmartFieldVisualizerProps> = ({
             className="w-full"
           >
             <Eye className="w-4 h-4 mr-2" />
-            הצג שדות שזוהו על ידי AI
+            Show AI-Detected Fields
           </Button>
         </CardContent>
       </Card>
@@ -131,7 +131,7 @@ export const SmartFieldVisualizer: React.FC<SmartFieldVisualizerProps> = ({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-blue-600" />
-            שדות חכמים
+            Smart Fields
             {onToggleVisibility && (
               <Button
                 variant="ghost"
@@ -150,10 +150,10 @@ export const SmartFieldVisualizer: React.FC<SmartFieldVisualizerProps> = ({
               <Sparkles className="w-8 h-8 text-blue-600 animate-pulse" />
             </div>
             <h3 className="font-semibold text-gray-900 mb-2">
-              AI מחכה לקלט שלך
+              AI is waiting for your input
             </h3>
             <p className="text-gray-600 text-sm">
-              התחל לכתוב על התיק שלך והמערכת תזהה אוטומטית את השדות הרלוונטיים
+              Start writing about your case and the system will automatically detect relevant fields
             </p>
           </div>
         </CardContent>
@@ -169,7 +169,7 @@ export const SmartFieldVisualizer: React.FC<SmartFieldVisualizerProps> = ({
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-blue-600" />
-            שדות שזוהו אוטומטית
+            Auto-Detected Fields
             <Badge variant="secondary" className="bg-blue-100 text-blue-700">
               {fieldEntries.length}
             </Badge>
@@ -241,10 +241,10 @@ export const SmartFieldVisualizer: React.FC<SmartFieldVisualizerProps> = ({
                     <div className="flex gap-2">
                       <Button size="sm" onClick={handleSaveEdit}>
                         <CheckCircle className="w-3 h-3 mr-1" />
-                        שמור
+                        Save
                       </Button>
                       <Button size="sm" variant="outline" onClick={handleCancelEdit}>
-                        ביטול
+                        Cancel
                       </Button>
                     </div>
                   </div>
@@ -261,7 +261,7 @@ export const SmartFieldVisualizer: React.FC<SmartFieldVisualizerProps> = ({
                         className="bg-green-600 hover:bg-green-700 text-white"
                       >
                         <CheckCircle className="w-3 h-3 mr-1" />
-                        אישור
+                        Approve
                       </Button>
                       <Button
                         size="sm"
@@ -269,7 +269,7 @@ export const SmartFieldVisualizer: React.FC<SmartFieldVisualizerProps> = ({
                         onClick={() => handleStartEdit(field, value)}
                       >
                         <Edit3 className="w-3 h-3 mr-1" />
-                        עריכה
+                        Edit
                       </Button>
                     </div>
                   </div>
@@ -286,10 +286,10 @@ export const SmartFieldVisualizer: React.FC<SmartFieldVisualizerProps> = ({
             className="w-full"
           >
             {showAllFields ? (
-              <>הסתר חלק מהשדות</>
+              <>Hide Some Fields</>
             ) : (
               <>
-                הצג עוד {fieldEntries.length - 4} שדות
+                Show {fieldEntries.length - 4} More Fields
                 <ArrowRight className="w-4 h-4 mr-2" />
               </>
             )}
@@ -310,13 +310,13 @@ export const SmartFieldVisualizer: React.FC<SmartFieldVisualizerProps> = ({
                   className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
                 >
                   <Zap className="w-4 h-4 mr-2" />
-                  אשר הכל ({fieldEntries.length})
+                  Approve All ({fieldEntries.length})
                 </Button>
               </div>
             </div>
             
             <div className="text-xs text-center text-gray-500">
-              💡 טיפ: אישור מהיר של כל השדות יזרז את התהליך
+              💡 Tip: Quick approval of all fields will speed up the process
             </div>
           </>
         )}

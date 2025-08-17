@@ -133,38 +133,38 @@ export class EnhancedAIParser {
     return null;
   }
 
-  // Generate smart follow-up questions based on context
+  // Generate smart follow-up questions based on context (all in English)
   static generateSmartQuestion(context: ConversationContext): string | null {
     const fields = context.extractedFields;
     const caseType = context.sessionMemory.detectedCaseType;
 
     // Priority-based questioning
     if (!fields.title) {
-      return "אני רואה שאתה מתחיל לבנות תיק. איך תרצה לקרוא לתיק הזה? (למשל: 'תיק הפרת חוזה מול חברת XYZ')";
+      return "I see you're starting to build a case. What would you like to call this case? (e.g., 'Breach of Contract vs XYZ Company')";
     }
 
     if (!fields.jurisdiction) {
-      return "באיזה בית משפט תרצה להגיש את התיק? (למשל: בית משפט השלום תל אביב, בית דין רבני, וכו')";
+      return "Which court would you like to file this case in? (e.g., Tel Aviv Magistrate Court, Rabbinical Court, etc.)";
     }
 
     if (!fields.category && !caseType) {
-      return "איזה סוג תיק משפטי זה? (למשל: חוזים, נזיקין, משפחה, עבודה, פלילי)";
+      return "What type of legal case is this? (e.g., contracts, torts, family, employment, criminal)";
     }
 
     if (caseType === 'contract' && !fields.contractDetails) {
-      return "כיוון שזה תיק חוזה, תוכל לספר לי על החוזה - מתי נחתם, מה התנאים העיקריים שהופרו?";
+      return "Since this is a contract case, can you tell me about the contract - when was it signed, what key terms were breached?";
     }
 
     if (caseType === 'employment' && !fields.employmentDetails) {
-      return "ברור שזה קשור לעבודה. תוכל לספר מה המצב - פיטורין? בעיות שכר? הטרדה?";
+      return "I understand this is employment-related. Can you tell me the situation - termination? salary issues? harassment?";
     }
 
     if (!fields.parties) {
-      return "מי הצדדים המעורבים בתיק? (למשל: אני נגד חברת ABC בע\"מ)";
+      return "Who are the parties involved in this case? (e.g., me vs ABC Company Ltd.)";
     }
 
     if (!fields.timeline) {
-      return "מתי התרחש האירוع? תוכל לתת לי ציר זמן של האירועים העיקריים?";
+      return "When did the incident occur? Can you give me a timeline of the main events?";
     }
 
     return null;
