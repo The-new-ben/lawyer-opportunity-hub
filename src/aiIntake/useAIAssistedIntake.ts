@@ -1,6 +1,8 @@
 import { useRef, useState, useCallback } from "react";
 import { runIntake, IntakeJson } from "./openaiIntakeClient";
 import { toast } from "@/components/ui/use-toast";
+import { EnhancedAIParser, ConversationContext } from './EnhancedAIParser';
+import { SmartConversationEngine, ConversationTurn } from './SmartConversationEngine';
 
 const SYSTEM_PROMPT = `You are a court intake assistant for a legal-tech app. 
 Extract STRUCTURED JSON ONLY (no prose) with keys:
@@ -28,6 +30,10 @@ export function useAIAssistedIntake() {
   const [aiFields, setAiFields] = useState<Record<string, FieldState>>({});
   const [nextQuestion, setNextQuestion] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [smartEngine, setSmartEngine] = useState<SmartConversationEngine | null>(null);
+  const [conversationTurn, setConversationTurn] = useState<ConversationTurn | null>(null);
+  const [actionSuggestions, setActionSuggestions] = useState<any[]>([]);
+  const [dynamicFields, setDynamicFields] = useState<any[]>([]);
   const debounceRef = useRef<number | null>(null);
 
   const makeState = useCallback((value?: string, confidence?: number): FieldState => {
@@ -93,6 +99,49 @@ export function useAIAssistedIntake() {
     debounceRef.current = window.setTimeout(async () => {
       setLoading(true);
       try {
+        // Initialize smart engine if not exists
+        if (!smartEngine) {
+          const context: ConversationContext = {
+            previousMessages: [],
+            extractedFields: aiFields,
+            sessionMemory: {}
+          };
+          const engine = new SmartConversationEngine(context);
+          setSmartEngine(engine);
+          
+          // Process the input with smart engine
+          const turn = await engine.processUserInput(text);
+          setConversationTurn(turn);
+          setActionSuggestions(turn.nextActions);
+          setDynamicFields(turn.dynamicFields);
+          
+          // Update AI fields with enhanced parsing
+          const updatedFields: Record<string, FieldState> = {};
+          Object.entries(turn.fieldUpdates).forEach(([key, value]) => {
+            updatedFields[key] = makeState(String(value), 0.9); // High confidence for parsed commands
+          });
+          setAiFields(prev => ({ ...prev, ...updatedFields }));
+          
+          // Set next question from smart engine
+          setNextQuestion(turn.aiResponse);
+        } else {
+          // Use existing engine
+          const turn = await smartEngine.processUserInput(text);
+          setConversationTurn(turn);
+          setActionSuggestions(turn.nextActions);
+          setDynamicFields(turn.dynamicFields);
+          
+          // Update AI fields
+          const updatedFields: Record<string, FieldState> = {};
+          Object.entries(turn.fieldUpdates).forEach(([key, value]) => {
+            updatedFields[key] = makeState(String(value), 0.9);
+          });
+          setAiFields(prev => ({ ...prev, ...updatedFields }));
+          
+          setNextQuestion(turn.aiResponse);
+        }
+        
+        // Fallback to original system for complex extraction
         const messages = [
           { role: "system" as const, content: SYSTEM_PROMPT },
           { role: "user" as const, content: text },
@@ -102,7 +151,7 @@ export function useAIAssistedIntake() {
         updateFromJson(result);
         
       } catch (error) {
-        console.error('AI intake error:', error);
+        console.error('Enhanced AI intake error:', error);
         toast({
           title: "AI Analysis Failed",
           description: error instanceof Error ? error.message : "Unknown error occurred",
@@ -111,8 +160,8 @@ export function useAIAssistedIntake() {
       } finally {
         setLoading(false);
       }
-    }, 500); // Debounce של חצי שנייה
-  }, [updateFromJson]);
+    }, 300); // Faster response time
+  }, [updateFromJson, smartEngine, aiFields, makeState]);
 
   const approveField = useCallback((key: string) => {
     setAiFields(state => {
@@ -143,6 +192,11 @@ export function useAIAssistedIntake() {
     onUserInput, 
     approveField, 
     editField,
-    resetFields
+    resetFields,
+    // Enhanced features
+    conversationTurn,
+    actionSuggestions,
+    dynamicFields,
+    smartEngine
   };
 }

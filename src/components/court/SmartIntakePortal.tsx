@@ -21,6 +21,8 @@ import AIConnectionTest from './AIConnectionTest';
 import { useAIAssistedIntake } from '@/aiIntake/useAIAssistedIntake';
 import { AIFieldsDisplay } from '@/aiIntake/AIFieldsDisplay';
 import AIBridge from '@/aiIntake/AIBridge';
+import { SmartActionButtons } from '@/aiIntake/SmartActionButtons';
+import { SmartFieldVisualizer } from '@/aiIntake/SmartFieldVisualizer';
 import { useFormWithAI } from '@/aiIntake/useFormWithAI';
 import {
   MessageSquare,
@@ -90,7 +92,11 @@ const SmartIntakePortal = () => {
     onUserInput, 
     approveField, 
     editField,
-    resetFields 
+    resetFields,
+    conversationTurn,
+    actionSuggestions,
+    dynamicFields,
+    smartEngine
   } = useAIAssistedIntake();
   
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -198,7 +204,8 @@ const SmartIntakePortal = () => {
       
       i++;
       if (i < text.length) {
-        typingTimeoutRef.current = setTimeout(typeChar, Math.random() * 50 + 20);
+        // Faster typing for better UX
+        typingTimeoutRef.current = setTimeout(typeChar, Math.random() * 30 + 10);
       } else {
         setIsTyping(false);
         setChatHistory(prev => {
@@ -206,6 +213,12 @@ const SmartIntakePortal = () => {
           newHistory[newHistory.length - 1].typing = false;
           return newHistory;
         });
+        
+        // Auto-scroll to the latest message
+        setTimeout(() => {
+          chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+        
         callback?.();
       }
     };
@@ -338,27 +351,44 @@ const SmartIntakePortal = () => {
     try {
       setIsAIActive(true);
       
-      // Trigger AI analysis with actual user input
+      // Trigger enhanced AI analysis
       await onUserInput(userMessage);
       
-      // Apply AI results to form automatically
-      // This will happen through the AI bridge
+      // Use smart conversation response if available
+      const responseText = conversationTurn?.aiResponse || nextQuestion || 'מעבד את המידע שלך...';
       
-      // Show typing effect with next question if available
+      // Show immediate typing effect for better UX
       setTimeout(() => {
-        const responseText = nextQuestion || 'Thank you for the information. I\'m analyzing your input now.';
         typewriterEffect(responseText);
-      }, 1500);
+      }, 800);
+
+      // Apply field updates with visual feedback
+      if (conversationTurn?.fieldUpdates && Object.keys(conversationTurn.fieldUpdates).length > 0) {
+        setTimeout(() => {
+          Object.entries(conversationTurn.fieldUpdates).forEach(([field, value]) => {
+            form.setValue(field as any, value, { 
+              shouldDirty: true, 
+              shouldTouch: true, 
+              shouldValidate: true 
+            });
+          });
+          
+          toast({
+            title: '✨ שדות עודכנו!',
+            description: `${Object.keys(conversationTurn.fieldUpdates).length} שדות עודכנו אוטומטית`,
+          });
+        }, 1200);
+      }
 
     } catch (error) {
       console.error('AI Error:', error);
       setTimeout(() => {
-        typewriterEffect('Sorry, I encountered an issue. Let\'s try again.');
+        typewriterEffect('מצטער, נתקלתי בבעיה טכנית. בואנו ננסה שוב.');
       }, 500);
       
       toast({
-        title: 'AI Connection Error',
-        description: 'Please try again',
+        title: 'שגיאת חיבור AI',
+        description: 'אנא נסה שוב',
         variant: 'destructive'
       });
     } finally {
