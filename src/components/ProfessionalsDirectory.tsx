@@ -57,6 +57,9 @@ const ProfessionalsDirectory = () => {
 
   const fetchProfessionals = async () => {
     try {
+      console.log('Fetching professionals...');
+      
+      // First, get basic lawyer data with profiles
       const { data: lawyersData, error: lawyersError } = await supabase
         .from('lawyers')
         .select(`
@@ -70,38 +73,92 @@ const ProfessionalsDirectory = () => {
           bio,
           location,
           verification_status,
-          profiles!inner(full_name, avatar_url),
-          lawyer_tiers(tier, tier_score),
-          lawyer_specializations(specialization, experience_years, success_rate),
-          ratings(score, comment, cases(title))
+          profiles!left(full_name, avatar_url)
         `)
         .eq('verification_status', 'verified')
         .eq('is_active', true);
 
-      if (lawyersError) throw lawyersError;
+      console.log('Lawyers data:', lawyersData);
 
-      const formattedData: Professional[] = lawyersData.map((lawyer: any) => ({
-        id: lawyer.id,
-        full_name: lawyer.profiles.full_name,
-        avatar_url: lawyer.profiles.avatar_url,
-        location: lawyer.location,
-        law_firm: lawyer.law_firm,
-        bio: lawyer.bio,
-        years_experience: lawyer.years_experience,
-        hourly_rate: lawyer.hourly_rate,
-        rating: lawyer.rating,
-        total_cases: lawyer.total_cases,
-        specializations: lawyer.specializations || [],
-        verification_status: lawyer.verification_status,
-        tier: lawyer.lawyer_tiers?.[0]?.tier,
-        tier_score: lawyer.lawyer_tiers?.[0]?.tier_score,
-        specialization_details: lawyer.lawyer_specializations || [],
-        ratings: lawyer.ratings?.map((rating: any) => ({
-          score: rating.score,
-          comment: rating.comment,
-          case_title: rating.cases?.title
-        })) || []
-      }));
+      if (lawyersError) {
+        console.error('Error fetching lawyers:', lawyersError);
+        throw lawyersError;
+      }
+
+      if (!lawyersData || lawyersData.length === 0) {
+        console.log('No lawyers found');
+        setProfessionals([]);
+        return;
+      }
+
+      // Get lawyer IDs for additional queries
+      const lawyerIds = lawyersData.map(lawyer => lawyer.id);
+
+      // Fetch tiers separately
+      const { data: tiersData } = await supabase
+        .from('lawyer_tiers')
+        .select('lawyer_id, tier, tier_score')
+        .in('lawyer_id', lawyerIds);
+
+      console.log('Tiers data:', tiersData);
+
+      // Fetch specializations separately
+      const { data: specializationsData } = await supabase
+        .from('lawyer_specializations')
+        .select('lawyer_id, specialization, experience_years, success_rate')
+        .in('lawyer_id', lawyerIds);
+
+      console.log('Specializations data:', specializationsData);
+
+      // Fetch ratings separately
+      const { data: ratingsData } = await supabase
+        .from('ratings')
+        .select('lawyer_id, score, comment')
+        .in('lawyer_id', lawyerIds)
+        .order('created_at', { ascending: false });
+
+      console.log('Ratings data:', ratingsData);
+
+      // Combine all data
+      const formattedData: Professional[] = lawyersData.map((lawyer: any) => {
+        // Find tier data for this lawyer
+        const tierInfo = tiersData?.find(tier => tier.lawyer_id === lawyer.id);
+        
+        // Find specializations for this lawyer
+        const lawyerSpecializations = specializationsData?.filter(spec => spec.lawyer_id === lawyer.id) || [];
+        
+        // Find ratings for this lawyer
+        const lawyerRatings = ratingsData?.filter(rating => rating.lawyer_id === lawyer.id) || [];
+
+        return {
+          id: lawyer.id,
+          full_name: lawyer.profiles?.full_name || 'לא צוין',
+          avatar_url: lawyer.profiles?.avatar_url,
+          location: lawyer.location,
+          law_firm: lawyer.law_firm,
+          bio: lawyer.bio,
+          years_experience: lawyer.years_experience,
+          hourly_rate: lawyer.hourly_rate,
+          rating: lawyer.rating || 0,
+          total_cases: lawyer.total_cases || 0,
+          specializations: lawyer.specializations || [],
+          verification_status: lawyer.verification_status,
+          tier: tierInfo?.tier,
+          tier_score: tierInfo?.tier_score,
+          specialization_details: lawyerSpecializations.map(spec => ({
+            specialization: spec.specialization,
+            experience_years: spec.experience_years,
+            success_rate: spec.success_rate
+          })),
+          ratings: lawyerRatings.map(rating => ({
+            score: rating.score,
+            comment: rating.comment,
+            case_title: undefined // We'll add case titles later if needed
+          }))
+        };
+      });
+
+      console.log('Formatted professionals:', formattedData);
 
       setProfessionals(formattedData);
     } catch (error) {
