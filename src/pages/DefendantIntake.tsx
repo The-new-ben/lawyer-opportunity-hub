@@ -9,7 +9,7 @@ const DefendantIntake = () => {
       const params = new URLSearchParams(window.location.search)
       const token = params.get('token')
       if (token) {
-        const { data } = await supabase.from('cases').select('id,title,legal_category,notes').eq('invite_token', token).single()
+        const { data } = await supabase.from('cases').select('id,title,legal_category,notes').eq('id', token).maybeSingle()
         if (data) {
           const draft = {
             title: data.title,
