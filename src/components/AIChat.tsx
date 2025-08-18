@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { useFormWithAI } from '@/lib/aiFieldBridge';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -11,23 +12,60 @@ export default function AIChat({ formCtl }: { formCtl: ReturnType<typeof useForm
   const inputRef = useRef<HTMLInputElement>(null);
   const transcriptRef = useRef('');
 
+  // Function to clean markdown formatting from AI responses
+  function cleanMarkdown(text: string): string {
+    return text
+      .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold **text**
+      .replace(/\*(.*?)\*/g, '$1')     // Remove italic *text*
+      .replace(/`(.*?)`/g, '$1')       // Remove code `text`
+      .replace(/#{1,6}\s*/g, '')       // Remove headers # ## ###
+      .trim();
+  }
+
   async function sendMessage(text: string) {
     setMessages(prev => [...prev, { role: 'user', text }]);
-    const nextTranscript = transcriptRef.current + `\nUser: ${text}`;
-    transcriptRef.current = nextTranscript;
+    
+    try {
+      const messages = [
+        { role: 'system', content: 'You are a legal assistant helping with case intake. Respond in Hebrew and provide clear, helpful guidance.' },
+        { role: 'user', content: text }
+      ];
 
-    const r = await fetch('/.netlify/functions/ai-intake', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        transcript: nextTranscript,
-        currentCase: formCtl.form.getValues(),
-      }),
-    });
-    const { patches = [], reply = '' } = await r.json();
-    formCtl.applyPatches(patches);
+      const { data, error } = await supabase.functions.invoke('ai-intake-openai', {
+        body: { messages }
+      });
 
-    if (reply) setMessages(prev => [...prev, { role: 'assistant', text: reply }]);
+      if (error) {
+        console.error('Supabase function error:', error);
+        setMessages(prev => [...prev, { role: 'assistant', text: 'מצטער, יש בעיה בשרת. נסה שוב.' }]);
+        return;
+      }
+
+      // Clean the AI response from markdown formatting
+      const cleanedResponse = cleanMarkdown(data?.caseTitle || data?.caseSummary || 'תודה על המידע. אוכל לעזור לך להמשיך.');
+      
+      if (cleanedResponse) {
+        setMessages(prev => [...prev, { role: 'assistant', text: cleanedResponse }]);
+      }
+
+      // Apply any field updates if available
+      if (data && typeof data === 'object') {
+        const patches = [];
+        if (data.caseTitle) patches.push({ op: 'set', field: 'caseTitle', value: data.caseTitle });
+        if (data.caseSummary) patches.push({ op: 'set', field: 'caseSummary', value: data.caseSummary });
+        if (data.jurisdiction) patches.push({ op: 'set', field: 'jurisdiction', value: data.jurisdiction });
+        if (data.legalCategory) patches.push({ op: 'set', field: 'legalCategory', value: data.legalCategory });
+        
+        if (patches.length > 0) {
+          formCtl.applyPatches(patches);
+        }
+      }
+
+    } catch (error) {
+      console.error('Chat error:', error);
+      setMessages(prev => [...prev, { role: 'assistant', text: 'מצטער, יש בעיה בחיבור. נסה שוב.' }]);
+    }
+
     setTimeout(() => {
       const chatList = document.getElementById('chat-list');
       chatList?.scrollTo({ top: chatList.scrollHeight, behavior: 'smooth' });
