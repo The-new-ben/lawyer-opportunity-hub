@@ -1,15 +1,13 @@
-export interface AIPatch {
-  op: 'set' | 'append' | 'addFields';
+export type FieldDef = {
   path: string;
-  value?: any;
-  fields?: FieldDef[];
-  scenario?: string;
-}
-
-export interface FieldDef {
-  path: string;
+  type: 'text' | 'textarea' | 'select' | 'boolean' | 'date' | 'currency' | 'file';
   label: string;
-  type: string;
+  description?: string;
   required?: boolean;
-  options?: string[];
-}
+  options?: { value: string; label: string }[];
+};
+
+export type AIPatch =
+  | { op: 'set'; path: string; value: any }
+  | { op: 'append'; path: string; value: any }
+  | { op: 'addFields'; scenario: string; fields?: FieldDef[] };
