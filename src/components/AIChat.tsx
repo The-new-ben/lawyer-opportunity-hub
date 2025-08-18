@@ -2,6 +2,17 @@ import { useRef, useState } from 'react';
 import type { useFormWithAI } from '@/aiIntake/useFormWithAI';
 import { supabase } from '@/integrations/supabase/client';
 
+/** טיפוס בסיסי לאובייקט שה־AI מחזיר */
+interface AIResponse {
+  caseTitle?: string;
+  caseSummary?: string;
+  jurisdiction?: string;
+  legalCategory?: string;
+  reliefSought?: string;
+  // שדות נוספים במידת הצורך...
+  [key: string]: any;
+}
+
 interface Message {
   role: 'user' | 'assistant';
   text: string;
@@ -10,29 +21,30 @@ interface Message {
 export default function AIChat({ formCtl }: { formCtl: ReturnType<typeof useFormWithAI> }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
-  const transcriptRef = useRef('');
 
-  // Function to clean markdown formatting from AI responses
+  /** פונקציה להסרת סימוני Markdown פשוטים */
   function cleanMarkdown(text: string): string {
     return text
-      .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold **text**
-      .replace(/\*(.*?)\*/g, '$1')     // Remove italic *text*
-      .replace(/`(.*?)`/g, '$1')       // Remove code `text`
-      .replace(/#{1,6}\s*/g, '')       // Remove headers # ## ###
+      .replace(/\*\*(.*?)\*\*/g, '$1')   // **מודגש**
+      .replace(/\*(.*?)\*/g, '$1')       // *נטוי*
+      .replace(/`([^`]*)`/g, '$1')       // `קוד`
+      .replace(/#{1,6}\s+/g, '')         // כותרות #
       .trim();
   }
 
   async function sendMessage(text: string) {
     setMessages(prev => [...prev, { role: 'user', text }]);
-    
+
     try {
-      const messages = [
+      // בניית ההיסטוריה לשיחה – כאן ניתן להוסיף הודעות קודמות במידת הצורך
+      const payload = [
         { role: 'system', content: 'You are a legal assistant helping with case intake. Respond in Hebrew and provide clear, helpful guidance.' },
-        { role: 'user', content: text }
+        { role: 'user',   content: text }
       ];
 
-      const { data, error } = await supabase.functions.invoke('ai-intake-openai', {
-        body: { messages }
+      // קריאה לפונקציית Edge של Supabase
+      const { data, error } = await supabase.functions.invoke<AIResponse>('ai-intake-openai', {
+        body: { messages: payload }
       });
 
       if (error) {
@@ -41,23 +53,41 @@ export default function AIChat({ formCtl }: { formCtl: ReturnType<typeof useForm
         return;
       }
 
-      // Clean the AI response from markdown formatting
-      const cleanedResponse = cleanMarkdown(data?.caseTitle || data?.caseSummary || 'תודה על המידע. אוכל לעזור לך להמשיך.');
-      
-      if (cleanedResponse) {
-        setMessages(prev => [...prev, { role: 'assistant', text: cleanedResponse }]);
-      }
+      // הצגת תגובת ה־AI בצ'אט
+      const reply = cleanMarkdown(
+        data?.caseTitle ??
+        data?.caseSummary ??
+        'תודה על המידע. אוכל לעזור לך להמשיך.'
+      );
+      setMessages(prev => [...prev, { role: 'assistant', text: reply }]);
 
-      // Apply field updates using the new form structure
+      // עדכון הטופס – תמיכה בשתי המתודות האפשריות
       if (data && typeof data === 'object') {
-        formCtl.applyAIToForm(data);
-      }
+        // אם ההוק מחזיר applyAIToForm – נעדכן בעזרתו
+        if (typeof (formCtl as any).applyAIToForm === 'function') {
+          (formCtl as any).applyAIToForm(data);
+        }
+        // אחרת נבנה רשימת פאצ'ים ונקרא ל‑applyPatches
+        else if (typeof (formCtl as any).applyPatches === 'function') {
+          const patches = [];
+          if (data.caseTitle)   patches.push({ op: 'set', path: 'title',        value: cleanMarkdown(data.caseTitle) });
+          if (data.caseSummary) patches.push({ op: 'set', path: 'summary',      value: cleanMarkdown(data.caseSummary) });
+          if (data.jurisdiction)patches.push({ op: 'set', path: 'jurisdiction', value: cleanMarkdown(data.jurisdiction) });
+          if (data.legalCategory)patches.push({ op: 'set', path: 'category',    value: cleanMarkdown(data.legalCategory) });
+          if (data.reliefSought)patches.push({ op: 'set', path: 'goal',         value: cleanMarkdown(data.reliefSought) });
+          // הוספת שדות נוספים לפי הצורך...
 
-    } catch (error) {
-      console.error('Chat error:', error);
+          if (patches.length > 0) {
+            (formCtl as any).applyPatches(patches);
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Chat error:', err);
       setMessages(prev => [...prev, { role: 'assistant', text: 'מצטער, יש בעיה בחיבור. נסה שוב.' }]);
     }
 
+    // גלילה לתחתית הצ'אט כדי לראות את ההודעה החדשה
     setTimeout(() => {
       const chatList = document.getElementById('chat-list');
       chatList?.scrollTo({ top: chatList.scrollHeight, behavior: 'smooth' });
