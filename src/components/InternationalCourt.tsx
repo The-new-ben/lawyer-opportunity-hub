@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import {
-  Card, CardContent, CardHeader, CardTitle,
-  Tabs, TabsContent, TabsList, TabsTrigger,
-  Progress, Badge, Button, Textarea
-} from '@/components/ui';
-import {
-  MessageSquare, Scale, Users, Gavel, Star, CheckCircle, Clock,
-  Award, TrendingUp, Target, Zap, UserCheck, Globe, Heart,
-  DollarSign, Sparkles, Building, MapPin, User, FileText,
-  Calendar, AlertCircle, Trophy
+  MessageSquare, Scale, Users, Gavel, Star, Award, TrendingUp, Target, Zap,
+  UserCheck, Heart, DollarSign, Sparkles, Building, MapPin,
+  FileText, Calendar, AlertCircle, Trophy
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useCaseDraft } from '@/hooks/useCaseDraft';
@@ -23,25 +23,22 @@ import { SocialLogin } from './auth/SocialLogin';
 import AIChat from './AIChat';
 import { useFormWithAI } from '@/aiIntake/useFormWithAI';
 
-/**
- * מסך בית המשפט הבינלאומי – מכיל צ’אט AI מלא, סימולציה, מציאת אנשי מקצוע, מרקטפלייס, רשת חברתית ומוניטיזציה.
- */
 const InternationalCourt: React.FC = () => {
-  // מצב טאב נוכחי, נקודות משתמש, והאם המשתמש מחובר
+  // State management
   const [activeTab, setActiveTab] = useState('ai-chat');
   const [userPoints, setUserPoints] = useState(1250);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Hooks נוספים (עדכון תיק, התאמות מקצועיות, דירוגים)
+  // Hooks
   const { toast } = useToast();
   const { update } = useCaseDraft();
   const matchingHooks = useMatching();
   const ratingsHooks = useRatings();
 
-  // יצירת טופס בשילוב ה‑AI; אפשר להעביר ערכי ברירת מחדל אם יש
+  // Create the AI‑integrated form control
   const formCtl = useFormWithAI({});
 
-  // הגדרת השדות והאייקונים לתיק
+  // Define case fields (label, key, icon, required)
   const caseFields = [
     { key: 'title', label: 'Case Title', formKey: 'title', icon: FileText, required: true },
     { key: 'summary', label: 'Case Summary', formKey: 'summary', icon: MessageSquare, required: true },
@@ -53,32 +50,30 @@ const InternationalCourt: React.FC = () => {
     { key: 'goal', label: 'Desired Outcome', formKey: 'goal', icon: Target, required: false }
   ];
 
-  /**
-   * חישוב ציון מוכנות לפי כמות שדות חובה ושדות אופציונליים שמולאו.
-   * שדות חובה שווים יחד 70% מהציון; השאר 30%.
-   */
+  // Compute readiness score based on filled fields
   const readinessScore = () => {
-    const values = formCtl.form.getValues(); // נקודת גישה נכונה לערכי הטופס
+    const values = formCtl.form.getValues();
     const requiredFields = caseFields.filter(f => f.required);
     const optionalFields = caseFields.filter(f => !f.required);
 
-    const completedReq = requiredFields.filter(f => {
+    const completedRequired = requiredFields.filter(f => {
+      const val = values[f.formKey];
+      return val && val.toString().trim().length > 0;
+    });
+    const completedOptional = optionalFields.filter(f => {
       const val = values[f.formKey];
       return val && val.toString().trim().length > 0;
     });
 
-    const completedOpt = optionalFields.filter(f => {
-      const val = values[f.formKey];
-      return val && val.toString().trim().length > 0;
-    });
-
-    const reqScore = (completedReq.length / requiredFields.length) * 70;
-    const optScore = (completedOpt.length / optionalFields.length) * 30;
+    const reqScore = (completedRequired.length / requiredFields.length) * 70;
+    const optScore = optionalFields.length
+      ? (completedOptional.length / optionalFields.length) * 30
+      : 0;
 
     return Math.round(reqScore + optScore);
   };
 
-  /** בדיקת התחברות דרך Supabase */
+  // Check authentication
   useEffect(() => {
     (async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -86,7 +81,7 @@ const InternationalCourt: React.FC = () => {
     })();
   }, []);
 
-  /** יצירת תיק – רק אם ציון המוכנות ≥ 60 */
+  // Generate case
   const generateCase = async () => {
     const score = readinessScore();
     if (score < 60) {
@@ -98,8 +93,9 @@ const InternationalCourt: React.FC = () => {
       return;
     }
     try {
-      const data = formCtl.form.getValues();
-      // כאן ניתן לשמור את התיק ב־Supabase או להפעיל פונקציה
+      // Access form values
+      const caseData = formCtl.form.getValues();
+      // Use update() or Supabase insert here if needed
       setActiveTab('professionals');
       toast({
         title: 'Case Generated Successfully',
@@ -114,10 +110,10 @@ const InternationalCourt: React.FC = () => {
     }
   };
 
-  /** קומפוננטת שער התחברות */
+  // Authentication gate
   const AuthenticationGate = () => (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-purple-50 to-indigo-50 p-4">
-      <Card className="border-blue-200 shadow-xl max-w-md w-full space-y-6">
+      <Card className="max-w-md w-full space-y-6 border-blue-200 shadow-xl">
         <CardHeader className="text-center space-y-4">
           <div className="mx-auto p-4 bg-blue-100 rounded-full w-fit">
             <Scale className="w-12 h-12 text-blue-600" />
@@ -165,14 +161,12 @@ const InternationalCourt: React.FC = () => {
     </div>
   );
 
-  // אם המשתמש לא מחובר – מציגים שער התחברות
   if (!isAuthenticated) return <AuthenticationGate />;
 
-  /** הממשק הראשי לאחר התחברות */
+  // Main interface
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4">
       <div className="container mx-auto max-w-7xl">
-        {/* כותרת עליונה */}
         <Card className="mb-6 border-primary/20 bg-white/80 backdrop-blur">
           <CardHeader>
             <div className="flex justify-between items-center">
@@ -198,9 +192,7 @@ const InternationalCourt: React.FC = () => {
           </CardHeader>
         </Card>
 
-        {/* גוף הדף */}
         <div className="grid lg:grid-cols-3 gap-6">
-          {/* לוח לשוניות – שמאל */}
           <div className="lg:col-span-2">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
               <TabsList className="grid w-full grid-cols-6">
@@ -230,32 +222,21 @@ const InternationalCourt: React.FC = () => {
                 </TabsTrigger>
               </TabsList>
 
-              {/* צ’אט AI – משתמש בקומפוננטה AIChat החדשה ומעביר formCtl */}
               <TabsContent value="ai-chat" className="space-y-6">
                 <AIChat formCtl={formCtl} />
               </TabsContent>
-
-              {/* סימולציה */}
               <TabsContent value="simulation" className="space-y-6">
                 <SimulationArena />
               </TabsContent>
-
-              {/* בעלי מקצוע */}
               <TabsContent value="professionals" className="space-y-6">
                 <ProfessionalsCatalog />
               </TabsContent>
-
-              {/* מרקטפלייס */}
               <TabsContent value="marketplace" className="space-y-6">
                 <ProfessionalMarketplace />
               </TabsContent>
-
-              {/* רשת חברתית / הזמנות */}
               <TabsContent value="social" className="space-y-6">
                 <InviteManager />
               </TabsContent>
-
-              {/* מערכת דירוגים ומוניטיזציה */}
               <TabsContent value="monetization" className="space-y-6">
                 <Card>
                   <CardHeader>
@@ -265,7 +246,6 @@ const InternationalCourt: React.FC = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    {/* נקודות ומוניטין */}
                     <div className="grid grid-cols-2 gap-4">
                       <Card className="p-4 bg-gradient-to-r from-blue-50 to-blue-100">
                         <div className="flex items-center justify-between">
@@ -286,7 +266,6 @@ const InternationalCourt: React.FC = () => {
                         </div>
                       </Card>
                     </div>
-                    {/* משימות להרוויח נקודות */}
                     <div className="space-y-3">
                       <h3 className="font-semibold">Ways to Earn Points:</h3>
                       <div className="grid gap-2">
@@ -298,7 +277,7 @@ const InternationalCourt: React.FC = () => {
                           <span>Participate in simulation</span>
                           <Badge variant="secondary">+15 points</Badge>
                         </div>
-                        <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
+                        <div className="flex justify בין items-center p-3 bg-muted rounded-lg">
                           <span>Professional engagement</span>
                           <Badge variant="secondary">+20 points</Badge>
                         </div>
@@ -314,7 +293,6 @@ const InternationalCourt: React.FC = () => {
             </Tabs>
           </div>
 
-          {/* לוח פרטי תיק – ימין */}
           <div className="space-y-6">
             <Card>
               <CardHeader>
@@ -324,7 +302,6 @@ const InternationalCourt: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* פס התקדמות */}
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span>Completion</span>
@@ -332,7 +309,6 @@ const InternationalCourt: React.FC = () => {
                   </div>
                   <Progress value={readinessScore()} className="h-2" />
                 </div>
-                {/* השדות הדינמיים לתיק */}
                 <div className="grid gap-4">
                   {caseFields.map((field) => {
                     const Icon = field.icon;
@@ -350,7 +326,7 @@ const InternationalCourt: React.FC = () => {
                           </div>
                           <Badge variant={
                             isComplete ? 'default' :
-                            isPartial ? 'secondary' : 'outline'
+                              isPartial ? 'secondary' : 'outline'
                           }>
                             {isComplete ? 'Complete' :
                               isPartial ? 'Partial' : 'Empty'}
@@ -365,7 +341,6 @@ const InternationalCourt: React.FC = () => {
                     );
                   })}
                 </div>
-                {/* כפתורי פעולה */}
                 <div className="space-y-3 pt-4">
                   <Button
                     onClick={generateCase}
