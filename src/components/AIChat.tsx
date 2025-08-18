@@ -51,10 +51,11 @@ export default function AIChat({ formCtl }: { formCtl: ReturnType<typeof useForm
       // Apply any field updates if available
       if (data && typeof data === 'object') {
         const patches = [];
-        if (data.caseTitle) patches.push({ op: 'set', field: 'caseTitle', value: data.caseTitle });
-        if (data.caseSummary) patches.push({ op: 'set', field: 'caseSummary', value: data.caseSummary });
-        if (data.jurisdiction) patches.push({ op: 'set', field: 'jurisdiction', value: data.jurisdiction });
-        if (data.legalCategory) patches.push({ op: 'set', field: 'legalCategory', value: data.legalCategory });
+        if (data.caseTitle) patches.push({ op: 'set', path: 'caseTitle', value: cleanMarkdown(data.caseTitle) });
+        if (data.caseSummary) patches.push({ op: 'set', path: 'caseSummary', value: cleanMarkdown(data.caseSummary) });
+        if (data.jurisdiction) patches.push({ op: 'set', path: 'jurisdiction', value: cleanMarkdown(data.jurisdiction) });
+        if (data.legalCategory) patches.push({ op: 'set', path: 'legalCategory', value: cleanMarkdown(data.legalCategory) });
+        if (data.reliefSought) patches.push({ op: 'set', path: 'reliefSought', value: cleanMarkdown(data.reliefSought) });
         
         if (patches.length > 0) {
           formCtl.applyPatches(patches);

@@ -231,83 +231,58 @@ Please describe your legal situation, dispute, or question. Be as detailed as yo
     setInput('');
 
     try {
-      // Advanced legal prompting
-      const legalPrompt = `You are an expert legal assistant specialized in international law and case preparation.
-
-Current Case Context:
-- Title: ${draft.title || 'Not set'}
-- Summary: ${draft.summary || 'Not set'}  
-- Jurisdiction: ${draft.jurisdiction || 'Not determined'}
-- Category: ${draft.category || 'Not classified'}
-- Goal: ${draft.goal || 'Not defined'}
-
-User Query: "${userMessage}"
-
-Instructions:
-1. Analyze the legal context and identify the primary legal issues
-2. Extract any new case information (title, summary, jurisdiction, category, goal, parties, evidence, timeline)
-3. Ask ONE focused follow-up question to gather the most critical missing information
-4. Provide brief legal context where helpful (1-2 sentences)
-5. Suggest practical next steps if appropriate
-6. Maintain a professional but approachable tone
-7. If this appears to be an international dispute, highlight jurisdictional considerations
-
-Respond concisely and professionally.`;
-
-      // Send to OpenAI
-      const { data, error } = await supabase.functions.invoke('openai-chat', {
+      // שימוש בצ'אט החדש
+      const { data, error } = await supabase.functions.invoke('ai-intake-openai', {
         body: {
           messages: [
-            { role: 'system', content: legalPrompt },
             { role: 'user', content: userMessage }
-          ],
-          model: 'gpt-4.1-2025-04-14',
-          temperature: 0.7,
-          max_tokens: 500
+          ]
         }
       });
 
       if (error) throw error;
 
-      // Extract fields automatically using AI
-      const extractResponse = await supabase.functions.invoke('ai-court-orchestrator', {
-        body: {
-          action: 'intake_extract',
-          locale: 'en',
-          context: {
-            history: [...history.map(h => ({ role: 'user', content: h.user })), { role: 'user', content: userMessage }],
-            required_fields: ['title', 'summary', 'jurisdiction', 'category', 'goal', 'parties', 'evidence', 'timeline'],
-            current_fields: draft
-          }
-        }
-      });
-
+      // עיבוד תגובת AI ועדכון שדות
+      let aiResponse = data?.nextQuestion || 'תודה על המידע. איך אוכל לעזור לך עוד?';
       let extractedFields = {};
-      if (extractResponse.data?.updated_fields) {
-        extractedFields = extractResponse.data.updated_fields;
+
+      if (data && typeof data === 'object') {
+        // הסרת markdown מכל השדות
+        const cleanData = {} as any;
+        Object.entries(data).forEach(([key, value]) => {
+          if (typeof value === 'string') {
+            cleanData[key] = value.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1').trim();
+          } else {
+            cleanData[key] = value;
+          }
+        });
+
+        extractedFields = cleanData;
         
-        // Update case draft with extracted fields
-        update(extractedFields);
-        
-        // Set legal category for matching
-        if (extractedFields && 'category' in extractedFields && extractedFields.category) {
-          setLegalCategory(extractedFields.category as string);
-        }
-        
-        const updatedFieldNames = Object.keys(extractedFields);
-        if (updatedFieldNames.length > 0) {
-          setUserPoints(prev => prev + updatedFieldNames.length * 2); // Reward for progress
+        // עדכון הטיוטה
+        if (Object.keys(extractedFields).length > 0) {
+          update(extractedFields);
+          
+          if ('legalCategory' in extractedFields && extractedFields.legalCategory) {
+            setLegalCategory(extractedFields.legalCategory as string);
+          }
+          
+          setUserPoints(prev => prev + Object.keys(extractedFields).length * 2);
           toast({
-            title: 'Case Fields Updated Successfully',
-            description: `Updated: ${updatedFieldNames.join(', ')} (+${updatedFieldNames.length * 2} points)`
+            title: 'השדות עודכנו בהצלחה!',
+            description: `עודכנו: ${Object.keys(extractedFields).join(', ')} (+${Object.keys(extractedFields).length * 2} נקודות)`
           });
+        }
+
+        if (cleanData.nextQuestion) {
+          aiResponse = cleanData.nextQuestion;
         }
       }
 
-      // Add to history
+      // הוספה להיסטוריה
       const newMessage: ChatMessage = {
         user: userMessage,
-        ai: data.text,
+        ai: aiResponse,
         timestamp: new Date(),
         extracted_fields: extractedFields
       };

@@ -1,108 +1,132 @@
-import { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Shield, Globe, Users, Scale, Gavel } from 'lucide-react';
-import SmartIntakePortal from './SmartIntakePortal';
-import { SocialLogin } from '@/components/auth/SocialLogin';
+import { useFormWithAI } from '@/lib/aiFieldBridge';
+import AIChat from '@/components/AIChat';
+import { Scale, Globe, FileText, Users } from 'lucide-react';
 
-const GlobalCourt = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [password, setPassword] = useState('');
+export default function GlobalCourt() {
+  const formCtl = useFormWithAI({
+    caseTitle: '',
+    caseSummary: '',
+    jurisdiction: '',
+    legalCategory: '',
+    reliefSought: '',
+    parties: [],
+    evidence: [],
+    timeline: ''
+  });
 
-  useEffect(() => {
-    document.title = 'Global AI Court - International Legal System';
-    
-    const metaDescription = document.querySelector('meta[name="description"]');
-    if (metaDescription) {
-      metaDescription.setAttribute('content', 'Advanced AI-powered international court system for global legal disputes and professional collaboration');
-    } else {
-      const meta = document.createElement('meta');
-      meta.name = 'description';
-      meta.content = 'Advanced AI-powered international court system for global legal disputes and professional collaboration';
-      document.head.appendChild(meta);
-    }
+  const { form } = formCtl;
+  const watchedValues = form.watch();
 
-    const canonicalLink = document.querySelector('link[rel="canonical"]');
-    if (canonicalLink) {
-      canonicalLink.setAttribute('href', window.location.href);
-    } else {
-      const link = document.createElement('link');
-      link.rel = 'canonical';
-      link.href = window.location.href;
-      document.head.appendChild(link);
-    }
-  }, []);
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-4">
+      <div className="max-w-7xl mx-auto">
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <Scale className="w-8 h-8 text-blue-600" />
+            <h1 className="text-3xl font-bold">Global AI Court</h1>
+          </div>
+          <p className="text-muted-foreground">
+            AI-powered legal assistance for international cases
+          </p>
+        </div>
 
-  const handleLogin = () => {
-    if (password === 'demo2024' || password === 'court@global') {
-      setIsAuthenticated(true);
-    }
-  };
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* צ'אט AI */}
+          <Card className="h-[600px]">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Globe className="w-5 h-5" />
+                AI Legal Assistant
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="h-[500px]">
+              <AIChat formCtl={formCtl} />
+            </CardContent>
+          </Card>
 
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 flex items-center justify-center p-4">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iNCIvPjwvZz48L2c+PC9zdmc+')] opacity-50"></div>
-        
-        <Card className="w-full max-w-md backdrop-blur-md bg-white/10 border-white/20 shadow-2xl">
-          <CardHeader className="text-center space-y-4">
-            <div className="mx-auto w-20 h-20 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full flex items-center justify-center">
-              <Scale className="w-10 h-10 text-white" />
-            </div>
-            <CardTitle>Global AI Court – supervised by experts and authorities</CardTitle>
-            <p className="text-blue-100 text-sm">
-              International Legal System Portal
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-4">
-              <Input
-                type="password"
-                placeholder="Enter access code"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-                className="bg-white/10 border-white/20 text-white placeholder-white/60"
-              />
-              <Button onClick={handleLogin} className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600">
-                <Shield className="w-4 h-4 mr-2" />
-                Access Portal
-              </Button>
-            </div>
-            
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-white/20" />
+          {/* שדות הטופס */}
+          <Card className="h-[600px]">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                Case Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 overflow-y-auto h-[500px]">
+              <div>
+                <label className="text-sm font-medium mb-2 block">Case Title</label>
+                <Input
+                  {...form.register('caseTitle')}
+                  placeholder="Enter case title..."
+                  className="transition-all duration-200"
+                />
+                {watchedValues.caseTitle && (
+                  <p className="text-xs text-green-600 mt-1">✓ Populated by AI</p>
+                )}
               </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-transparent px-2 text-white/60">Or continue with</span>
-              </div>
-            </div>
 
-            <SocialLogin />
+              <div>
+                <label className="text-sm font-medium mb-2 block">Case Summary</label>
+                <textarea
+                  {...form.register('caseSummary')}
+                  placeholder="Detailed case summary..."
+                  className="w-full min-h-[100px] p-3 border border-input rounded-md bg-background text-foreground"
+                />
+                {watchedValues.caseSummary && (
+                  <p className="text-xs text-green-600 mt-1">✓ Populated by AI</p>
+                )}
+              </div>
 
-            <div className="grid grid-cols-3 gap-2 text-center text-xs text-white/70">
-              <div className="flex flex-col items-center space-y-1">
-                <Globe className="w-4 h-4" />
-                <span>Global Access</span>
+              <div>
+                <label className="text-sm font-medium mb-2 block">Jurisdiction</label>
+                <Input
+                  {...form.register('jurisdiction')}
+                  placeholder="Legal jurisdiction..."
+                />
+                {watchedValues.jurisdiction && (
+                  <p className="text-xs text-green-600 mt-1">✓ Populated by AI</p>
+                )}
               </div>
-              <div className="flex flex-col items-center space-y-1">
-                <Users className="w-4 h-4" />
-                <span>Professional Network</span>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">Legal Category</label>
+                <Input
+                  {...form.register('legalCategory')}
+                  placeholder="Type of legal case..."
+                />
+                {watchedValues.legalCategory && (
+                  <p className="text-xs text-green-600 mt-1">✓ Populated by AI</p>
+                )}
               </div>
-              <div className="flex flex-col items-center space-y-1">
-                <Gavel className="w-4 h-4" />
-                <span>AI-Powered</span>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">Relief Sought</label>
+                <Input
+                  {...form.register('reliefSought')}
+                  placeholder="What outcome do you seek..."
+                />
+                {watchedValues.reliefSought && (
+                  <p className="text-xs text-green-600 mt-1">✓ Populated by AI</p>
+                )}
               </div>
-            </div>
-          </CardContent>
-        </Card>
+
+              <div className="pt-4">
+                <Button 
+                  className="w-full"
+                  disabled={!watchedValues.caseTitle || !watchedValues.caseSummary}
+                >
+                  <Users className="w-4 h-4 mr-2" />
+                  Proceed to Court Session
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-    );
-  }
-
-  return <SmartIntakePortal />;
-};
-
-export default GlobalCourt;
+    </div>
+  );
+}

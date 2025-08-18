@@ -36,10 +36,31 @@ serve(async (req) => {
       );
     }
 
+    // הודעת מערכת מותאמת למיצוי שדות JSON
+    const systemMessage = {
+      role: "system",
+      content: `You are a legal assistant that extracts case information from user input and returns it as a structured JSON object.
+
+Extract relevant information and return ONLY a valid JSON object with these fields:
+{
+  "caseTitle": "Brief descriptive title of the case",
+  "caseSummary": "Detailed summary of the legal issue",
+  "jurisdiction": "Legal jurisdiction (e.g., Israeli Law, International, US Federal)",
+  "legalCategory": "Type of law (e.g., civil, criminal, family, commercial)",
+  "reliefSought": "What the client wants to achieve",
+  "parties": [{"role": "plaintiff", "name": "Party name"}],
+  "evidence": ["List of evidence mentioned"],
+  "timeline": "Important dates and timeline",
+  "nextQuestion": "One focused follow-up question in Hebrew"
+}
+
+Only include fields that have actual information from the user input. Always provide at least caseTitle and nextQuestion fields.`
+    };
+
     const requestBody = {
       model: MODEL,
-      response_format: { type: "json_object" }, // הכרחת JSON תקין
-      messages,
+      response_format: { type: "json_object" },
+      messages: [systemMessage, ...messages.filter(m => m.role !== 'system')],
       temperature: 0.2,
       max_tokens: 800,
     };
@@ -68,13 +89,31 @@ serve(async (req) => {
     
     console.log('OpenAI response received, content length:', content.length);
 
-    // מחזירים את ה-JSON כמו שהוא
-    return new Response(content, { 
-      headers: { 
-        ...corsHeaders, 
-        "Content-Type": "application/json" 
-      } 
-    });
+    // ניסיון לפרש ולוודא שהתוכן הוא JSON תקין
+    try {
+      const parsedContent = JSON.parse(content);
+      console.log('Successfully parsed JSON:', Object.keys(parsedContent));
+      
+      // מחזירים JSON אובייקט ולא string
+      return new Response(JSON.stringify(parsedContent), { 
+        headers: { 
+          ...corsHeaders, 
+          "Content-Type": "application/json" 
+        } 
+      });
+    } catch (parseError) {
+      console.error('Failed to parse AI response as JSON:', parseError);
+      // fallback - מחזירים JSON פשוט עם ההודעה
+      return new Response(JSON.stringify({ 
+        caseSummary: content,
+        nextQuestion: "אנא ספר לי יותר על המקרה שלך" 
+      }), { 
+        headers: { 
+          ...corsHeaders, 
+          "Content-Type": "application/json" 
+        } 
+      });
+    }
 
   } catch (error) {
     console.error('Error in ai-intake-openai function:', error);

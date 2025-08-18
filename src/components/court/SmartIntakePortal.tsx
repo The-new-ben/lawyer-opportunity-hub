@@ -351,33 +351,58 @@ const SmartIntakePortal = () => {
     try {
       setIsAIActive(true);
       
-      // Trigger enhanced AI analysis
-      await onUserInput(userMessage);
+      // שימוש ב-Edge Function החדש
+      const { data, error } = await supabase.functions.invoke('ai-intake-openai', {
+        body: {
+          messages: [
+            { role: 'user', content: userMessage }
+          ]
+        }
+      });
+
+      if (error) throw error;
+
+      // עיבוד התגובה ועדכון שדות
+      let responseText = data?.nextQuestion || 'תודה על המידע. איך אוכל לעזור לך עוד?';
       
-      // Use smart conversation response if available
-      const responseText = conversationTurn?.aiResponse || nextQuestion || 'מעבד את המידע שלך...';
-      
-      // Show immediate typing effect for better UX
+      // הסרת markdown מהתגובה
+      responseText = responseText
+        .replace(/\*\*(.*?)\*\*/g, '$1')
+        .replace(/\*(.*?)\*/g, '$1')
+        .replace(/`(.*?)`/g, '$1')
+        .trim();
+
+      // הצגת התגובה עם אפקט הקלדה
       setTimeout(() => {
         typewriterEffect(responseText);
       }, 800);
 
-      // Apply field updates with visual feedback
-      if (conversationTurn?.fieldUpdates && Object.keys(conversationTurn.fieldUpdates).length > 0) {
-        setTimeout(() => {
-          Object.entries(conversationTurn.fieldUpdates).forEach(([field, value]) => {
-            form.setValue(field as any, value, { 
-              shouldDirty: true, 
-              shouldTouch: true, 
-              shouldValidate: true 
+      // עדכון שדות אם יש מידע
+      if (data && typeof data === 'object') {
+        const fieldsToUpdate = {} as any;
+        
+        if (data.caseTitle) fieldsToUpdate.title = data.caseTitle.replace(/\*\*(.*?)\*\*/g, '$1').trim();
+        if (data.caseSummary) fieldsToUpdate.summary = data.caseSummary.replace(/\*\*(.*?)\*\*/g, '$1').trim();
+        if (data.jurisdiction) fieldsToUpdate.jurisdiction = data.jurisdiction.replace(/\*\*(.*?)\*\*/g, '$1').trim();
+        if (data.legalCategory) fieldsToUpdate.category = data.legalCategory.replace(/\*\*(.*?)\*\*/g, '$1').trim();
+        if (data.reliefSought) fieldsToUpdate.goal = data.reliefSought.replace(/\*\*(.*?)\*\*/g, '$1').trim();
+
+        if (Object.keys(fieldsToUpdate).length > 0) {
+          setTimeout(() => {
+            Object.entries(fieldsToUpdate).forEach(([field, value]) => {
+              form.setValue(field as any, value, { 
+                shouldDirty: true, 
+                shouldTouch: true, 
+                shouldValidate: true 
+              });
             });
-          });
-          
-          toast({
-            title: '✨ שדות עודכנו!',
-            description: `${Object.keys(conversationTurn.fieldUpdates).length} שדות עודכנו אוטומטית`,
-          });
-        }, 1200);
+            
+            toast({
+              title: '✨ שדות עודכנו!',
+              description: `${Object.keys(fieldsToUpdate).length} שדות עודכנו אוטומטית`,
+            });
+          }, 1200);
+        }
       }
 
     } catch (error) {
