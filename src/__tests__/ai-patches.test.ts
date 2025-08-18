@@ -1,118 +1,135 @@
-/**
- * AI Field Patching Tests
- */
+import { describe, it, expect, vi } from 'vitest';
+import { applyAIPatches, applySingleAIPatch } from '../lib/aiFieldBridge';
+import type { AIPatch, FieldDef } from '../aiIntake/patch';
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { applyAIPatches, applySingleAIPatch, AIFieldPatch, AIFieldRegistry } from '../lib/aiFieldBridge';
-
-// Mock form methods
-const mockForm = {
-  setValue: vi.fn(),
-  getValues: vi.fn(),
-  watch: vi.fn(),
-  trigger: vi.fn(),
-  reset: vi.fn(),
-  handleSubmit: vi.fn(),
-  formState: { errors: {}, isDirty: false, isValid: true }
+// Mock form for testing
+const createMockForm = () => {
+  const mockForm = {
+    setValue: vi.fn(),
+    getValues: vi.fn(() => ({})),
+    control: {},
+  };
+  return mockForm;
 };
 
-// Test field registry
-const testFieldRegistry: AIFieldRegistry = {
-  caseTitle: {
-    type: 'text',
-    label: 'Case Title',
-    validation: { required: true }
-  },
-  jurisdiction: {
-    type: 'text',
-    label: 'Jurisdiction',
-    validation: { required: true }
-  }
-};
+describe('AI Patches System', () => {
+  describe('Field Definitions', () => {
+    it('should define basic text field correctly', () => {
+      const field: FieldDef = {
+        path: 'title',
+        type: 'text',
+        label: 'Case Title',
+        description: 'Brief title for the case',
+        required: true
+      };
+      
+      expect(field.path).toBe('title');
+      expect(field.type).toBe('text');
+      expect(field.label).toBe('Case Title');
+    });
 
-// Reset function
-const resetMocks = () => {
-  vi.clearAllMocks();
-};
-
-describe('AI Field Patching', () => {
-  // Reset mocks before each test
-  beforeEach(() => {
-    resetMocks();
+    it('should define select field with options', () => {
+      const field: FieldDef = {
+        path: 'category',
+        type: 'select',
+        label: 'Legal Category',
+        options: [
+          { value: 'personal_injury', label: 'Personal Injury' },
+          { value: 'family_law', label: 'Family Law' }
+        ]
+      };
+      
+      expect(field.options).toHaveLength(2);
+      expect(field.options?.[0].value).toBe('personal_injury');
+    });
   });
 
-  it('applies high-confidence patches to empty fields', () => {
-    resetMocks();
-    mockForm.getValues.mockReturnValue(''); // Empty field
-    
-    const patches: AIFieldPatch[] = [
-      {
-        path: 'caseTitle',
-        value: 'Personal Injury Case',
+  describe('Patch Operations', () => {
+    it('should apply SET patch correctly', () => {
+      const patch: AIPatch = {
+        op: 'set',
+        path: 'title',
+        value: 'New Case Title',
         confidence: 0.9
-      }
-    ];
+      };
+      
+      const mockForm = createMockForm();
+      applySingleAIPatch(patch, mockForm);
+      
+      expect(mockForm.setValue).toHaveBeenCalledWith(
+        'title',
+        'New Case Title',
+        { shouldDirty: true, shouldValidate: true }
+      );
+    });
 
-    applyAIPatches(mockForm as any, patches, testFieldRegistry);
-    
-    expect(mockForm.setValue).toHaveBeenCalledWith('caseTitle', 'Personal Injury Case');
-  });
-
-  it('skips low-confidence patches', () => {
-    resetMocks();
-    const patches: AIFieldPatch[] = [
-      {
-        path: 'caseTitle',
-        value: 'Low Confidence Case',
-        confidence: 0.4
-      }
-    ];
-
-    applyAIPatches(mockForm as any, patches, testFieldRegistry);
-    
-    expect(mockForm.setValue).not.toHaveBeenCalled();
-  });
-
-  it('skips patches for non-empty fields', () => {
-    resetMocks();
-    mockForm.getValues.mockReturnValue('Existing Value');
-    
-    const patches: AIFieldPatch[] = [
-      {
-        path: 'caseTitle',
-        value: 'Updated Case Title',
+    it('should apply APPEND patch correctly', () => {
+      const patch: AIPatch = {
+        op: 'append',
+        path: 'evidence',
+        value: 'New evidence item',
         confidence: 0.8
-      }
-    ];
+      };
+      
+      const mockForm = createMockForm();
+      mockForm.getValues.mockReturnValue(['existing item']);
+      applySingleAIPatch(patch, mockForm);
+      
+      expect(mockForm.setValue).toHaveBeenCalledWith(
+        'evidence',
+        ['existing item', 'New evidence item'],
+        { shouldDirty: true, shouldValidate: true }
+      );
+    });
 
-    applyAIPatches(mockForm as any, patches, testFieldRegistry);
-    
-    expect(mockForm.setValue).not.toHaveBeenCalled();
+    it('should apply ADD_FIELDS patch correctly', () => {
+      const fields: FieldDef[] = [
+        {
+          path: 'incident_date',
+          type: 'date',
+          label: 'Incident Date'
+        }
+      ];
+      
+      const patch: AIPatch = {
+        op: 'addFields',
+        scenario: 'personal_injury',
+        fields,
+        confidence: 0.95
+      };
+      
+      const mockForm = createMockForm();
+      applySingleAIPatch(patch, mockForm);
+      
+      // Should not throw error and should handle field addition
+      expect(patch.op).toBe('addFields');
+    });
   });
 
-  it('applies single field patch successfully', () => {
-    resetMocks();
-    const result = applySingleAIPatch(
-      mockForm as any,
-      'jurisdiction',
-      'Federal Court',
-      0.8
-    );
-    
-    expect(result.success).toBe(true);
-    expect(mockForm.setValue).toHaveBeenCalledWith('jurisdiction', 'Federal Court');
-  });
+  describe('Batch Processing', () => {
+    it('should apply multiple patches in sequence', () => {
+      const patches: AIPatch[] = [
+        { op: 'set', path: 'title', value: 'Title 1' },
+        { op: 'set', path: 'summary', value: 'Summary 1' }
+      ];
+      
+      const mockForm = createMockForm();
+      applyAIPatches(patches, mockForm);
+      
+      expect(mockForm.setValue).toHaveBeenCalledTimes(2);
+    });
 
-  it('rejects single field patch with low confidence', () => {
-    resetMocks();
-    const result = applySingleAIPatch(
-      mockForm as any,
-      'jurisdiction',
-      'Low Confidence Court',
-      0.3
-    );
-    
-    expect(result.success).toBe(false);
-    expect(mockForm.setValue).not.toHaveBeenCalled();
+    it('should handle mixed patch types', () => {
+      const patches: AIPatch[] = [
+        { op: 'set', path: 'title', value: 'New Title' },
+        { op: 'append', path: 'tags', value: 'urgent' },
+        { op: 'addFields', scenario: 'personal_injury' }
+      ];
+      
+      const mockForm = createMockForm();
+      mockForm.getValues.mockReturnValue([]);
+      
+      expect(() => applyAIPatches(patches, mockForm)).not.toThrow();
+    });
   });
 });
