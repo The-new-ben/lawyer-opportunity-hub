@@ -2,21 +2,12 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useFormWithAI } from '@/lib/aiFieldBridge';
+import { useFormWithAI } from '@/aiIntake/useFormWithAI';
 import AIChat from '@/components/AIChat';
 import { Scale, Globe, FileText, Users } from 'lucide-react';
 
 export default function GlobalCourt() {
-  const formCtl = useFormWithAI({
-    caseTitle: '',
-    caseSummary: '',
-    jurisdiction: '',
-    legalCategory: '',
-    reliefSought: '',
-    parties: [],
-    evidence: [],
-    timeline: ''
-  });
+  const formCtl = useFormWithAI('global-court');
 
   const { form } = formCtl;
   const watchedValues = form.watch();
@@ -60,11 +51,11 @@ export default function GlobalCourt() {
               <div>
                 <label className="text-sm font-medium mb-2 block">Case Title</label>
                 <Input
-                  {...form.register('caseTitle')}
+                  {...form.register('title')}
                   placeholder="Enter case title..."
                   className="transition-all duration-200"
                 />
-                {watchedValues.caseTitle && (
+                {watchedValues.title && (
                   <p className="text-xs text-green-600 mt-1">✓ Populated by AI</p>
                 )}
               </div>
@@ -72,11 +63,11 @@ export default function GlobalCourt() {
               <div>
                 <label className="text-sm font-medium mb-2 block">Case Summary</label>
                 <textarea
-                  {...form.register('caseSummary')}
+                  {...form.register('summary')}
                   placeholder="Detailed case summary..."
                   className="w-full min-h-[100px] p-3 border border-input rounded-md bg-background text-foreground"
                 />
-                {watchedValues.caseSummary && (
+                {watchedValues.summary && (
                   <p className="text-xs text-green-600 mt-1">✓ Populated by AI</p>
                 )}
               </div>
@@ -95,10 +86,10 @@ export default function GlobalCourt() {
               <div>
                 <label className="text-sm font-medium mb-2 block">Legal Category</label>
                 <Input
-                  {...form.register('legalCategory')}
+                  {...form.register('category')}
                   placeholder="Type of legal case..."
                 />
-                {watchedValues.legalCategory && (
+                {watchedValues.category && (
                   <p className="text-xs text-green-600 mt-1">✓ Populated by AI</p>
                 )}
               </div>
@@ -106,10 +97,10 @@ export default function GlobalCourt() {
               <div>
                 <label className="text-sm font-medium mb-2 block">Relief Sought</label>
                 <Input
-                  {...form.register('reliefSought')}
+                  {...form.register('goal')}
                   placeholder="What outcome do you seek..."
                 />
-                {watchedValues.reliefSought && (
+                {watchedValues.goal && (
                   <p className="text-xs text-green-600 mt-1">✓ Populated by AI</p>
                 )}
               </div>
@@ -117,7 +108,7 @@ export default function GlobalCourt() {
               <div className="pt-4">
                 <Button 
                   className="w-full"
-                  disabled={!watchedValues.caseTitle || !watchedValues.caseSummary}
+                  disabled={!watchedValues.title || !watchedValues.summary}
                 >
                   <Users className="w-4 h-4 mr-2" />
                   Proceed to Court Session

@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { useFormWithAI } from '@/lib/aiFieldBridge';
+import type { useFormWithAI } from '@/aiIntake/useFormWithAI';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Message {
@@ -48,18 +48,9 @@ export default function AIChat({ formCtl }: { formCtl: ReturnType<typeof useForm
         setMessages(prev => [...prev, { role: 'assistant', text: cleanedResponse }]);
       }
 
-      // Apply any field updates if available
+      // Apply field updates using the new form structure
       if (data && typeof data === 'object') {
-        const patches = [];
-        if (data.caseTitle) patches.push({ op: 'set', path: 'caseTitle', value: cleanMarkdown(data.caseTitle) });
-        if (data.caseSummary) patches.push({ op: 'set', path: 'caseSummary', value: cleanMarkdown(data.caseSummary) });
-        if (data.jurisdiction) patches.push({ op: 'set', path: 'jurisdiction', value: cleanMarkdown(data.jurisdiction) });
-        if (data.legalCategory) patches.push({ op: 'set', path: 'legalCategory', value: cleanMarkdown(data.legalCategory) });
-        if (data.reliefSought) patches.push({ op: 'set', path: 'reliefSought', value: cleanMarkdown(data.reliefSought) });
-        
-        if (patches.length > 0) {
-          formCtl.applyPatches(patches);
-        }
+        formCtl.applyAIToForm(data);
       }
 
     } catch (error) {
