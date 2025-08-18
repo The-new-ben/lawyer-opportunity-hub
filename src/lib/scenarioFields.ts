@@ -2,9 +2,9 @@
  * Scenario Field Registry - Dynamic field definitions based on case scenarios
  */
 
-import type { AIFieldRegistry } from './aiFieldBridge';
+import type { FieldDef } from '../aiIntake/patch';
 
-export const scenarioFieldRegistry: Record<string, AIFieldRegistry> = {
+export const scenarioFieldRegistry: Record<string, Record<string, FieldDef>> = {
   // Personal Injury Cases
   personal_injury: {
     incident_date: {
@@ -346,7 +346,7 @@ export const scenarioFieldRegistry: Record<string, AIFieldRegistry> = {
 /**
  * Get field registry for a specific scenario
  */
-export function getScenarioFields(scenario: string): AIFieldRegistry {
+export function getScenarioFields(scenario: string): Record<string, FieldDef> {
   return scenarioFieldRegistry[scenario] || {};
 }
 

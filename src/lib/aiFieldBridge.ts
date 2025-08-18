@@ -1,6 +1,10 @@
 import { useForm } from 'react-hook-form';
 import type { AIPatch, FieldDef } from '../aiIntake/patch';
 
+// Export types for backward compatibility
+export type AIFieldPatch = AIPatch;
+export type AIFieldRegistry = Record<string, FieldDef[]>;
+
 /** מאגר שדות דינמיים – נשמר בזיכרון בלבד */
 let dynamicStore: FieldDef[] = [];
 
@@ -60,3 +64,21 @@ export function useFormWithAI(defaults: Partial<CaseForm>) {
 
   return { form, applyPatches };
 }
+
+// Export functions for backward compatibility
+export const applyAIPatches = (patches: AIPatch[], form: any) => {
+  patches.forEach(patch => {
+    if (patch.op === 'set') {
+      form.setValue(patch.path, patch.value, { shouldDirty: true, shouldValidate: true });
+    } else if (patch.op === 'append') {
+      const prev = form.getValues(patch.path) ?? [];
+      form.setValue(patch.path, [...prev, patch.value], { shouldDirty: true, shouldValidate: true });
+    } else if (patch.op === 'addFields' && patch.fields) {
+      addDynamicFields(patch.fields);
+    }
+  });
+};
+
+export const applySingleAIPatch = (patch: AIPatch, form: any) => {
+  applyAIPatches([patch], form);
+};
