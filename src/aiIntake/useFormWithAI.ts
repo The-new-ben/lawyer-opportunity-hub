@@ -174,10 +174,28 @@ export function useFormWithAI(caseId: string = 'draft') {
     loadDraft();
   }, [caseId, setValue]);
 
+  // Add applyPatches method for compatibility with AIChat
+  const applyPatches = (patches: any[]) => {
+    patches.forEach(patch => {
+      if (patch.op === 'set') {
+        const fieldMap = (FIELD_MAP as any)[patch.path];
+        if (fieldMap) {
+          const formPath = fieldMap.formPath as keyof CaseFormData;
+          setValue(formPath, patch.value, { 
+            shouldDirty: true, 
+            shouldTouch: true, 
+            shouldValidate: true 
+          });
+        }
+      }
+    });
+  };
+
   return {
     form,
     applyAIToForm,
     applyOneField,
+    applyPatches,
     calculateProgress,
     values: getValues()
   };

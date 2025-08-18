@@ -282,7 +282,12 @@ const SmartIntakePortal = () => {
               </TabsContent>
 
               <TabsContent value="professionals" className="space-y-6">
-                <ProfessionalSuggestions />
+                <ProfessionalSuggestions 
+                  caseId="draft"
+                  jurisdiction={formCtl.values.jurisdiction || ""}
+                  specialization={formCtl.values.category || ""}
+                  role="lawyer"
+                />
               </TabsContent>
 
               <TabsContent value="social" className="space-y-6">
