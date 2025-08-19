@@ -10,6 +10,10 @@ interface PasswordOverlayProps {
 }
 
 export function PasswordOverlay({ children }: PasswordOverlayProps) {
+  // TEMP: bypass — הסר/י שתי השורות הבאות כדי להחזיר את ההגנה
+  return <>{children}</>;
+
+  // ----- הקוד המקורי (לא ירוץ בזמן העקיפה) -----
   const [password, setPassword] = useState('')
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [error, setError] = useState('')
@@ -23,7 +27,6 @@ export function PasswordOverlay({ children }: PasswordOverlayProps) {
     }
     setIsLoading(false)
   }, [])
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     
