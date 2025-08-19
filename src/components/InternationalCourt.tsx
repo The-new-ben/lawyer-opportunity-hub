@@ -36,7 +36,7 @@ const InternationalCourt: React.FC = () => {
   const ratingsHooks = useRatings();
 
   // Create the AI‑integrated form control
-  const formCtl = useFormWithAI({});
+  const formCtl = useFormWithAI();
 
   // Define case fields (label, key, icon, required)
   const caseFields = [
