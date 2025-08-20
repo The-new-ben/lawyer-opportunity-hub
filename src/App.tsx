@@ -61,7 +61,7 @@ const App = () => (
                 <Route path="/defendant-intake" element={<DefendantIntake />} />
                 <Route path="/professionals" element={<ProfessionalsDirectory />} />
                 <Route path="/global-court" element={<GlobalCourt />} />
-                <Route path="/" element={<GlobalCourt />} />
+                <Route path="/" element={<Index />} />
                 
                 {/* Protected Routes */}
                 <Route
