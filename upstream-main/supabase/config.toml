@@ -1,0 +1,73 @@
+project_id = "mlnwpocuvjnelttvscja"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+major_version = 15
+
+[auth]
+enabled = true
+port = 54324
+site_url = "https://jus-tice.com"
+additional_redirect_urls = ["https://www.jus-tice.com", "http://localhost:3000", "http://localhost:5173"]
+jwt_expiry = 3600
+refresh_token_rotation_enabled = true
+refresh_token_reuse_interval = 10
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false
+
+[functions.whatsapp-webhook]
+verify_jwt = false
+
+[functions.ai-summary]
+verify_jwt = true
+
+[functions.test-integrations]
+verify_jwt = false
+
+[functions.demo-simulation]
+verify_jwt = false
+
+[functions.simple-test]
+verify_jwt = false
+
+[functions.full-demo]
+verify_jwt = false
+
+[functions.automated-lead-pipeline]
+verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.ai-court-orchestrator]
+verify_jwt = false
+
+[functions.ai-intake-extract]
+verify_jwt = false
+
+[functions.notification-digest]
+verify_jwt = false
+schedule = "0 9 * * *"
+
+[functions.ai-gateway]
+verify_jwt = false
+
+[functions.openai-chat]
+verify_jwt = false
+
+[functions.ai-intake-openai]
+verify_jwt = false
+
+[functions.createCaseDraft]
+verify_jwt = false
