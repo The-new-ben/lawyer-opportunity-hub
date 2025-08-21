@@ -8,6 +8,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Layout } from "@/components/Layout";
 import { QueryProvider } from "@/providers/QueryProvider";
+import { FloatingAIProvider, FloatingAssistant } from "@/components/floating-assistant";
 import Dashboard from "./pages/Dashboard";
 import Leads from "./pages/Leads";
 import Auth from "./pages/Auth";
@@ -45,10 +46,22 @@ const App = () => (
   <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
     <QueryProvider>
       <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <Router>
+        <FloatingAIProvider
+          config={{
+            assistantName: "Legal AI Assistant",
+            enableProactiveSuggestions: true,
+            enableContextAwareness: true,
+            showQuickActions: true,
+            enableTypingAnimation: true,
+            responseStyle: "conversational",
+            defaultLanguage: "auto"
+          }}
+        >
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <FloatingAssistant />
+            <Router>
             <Routes>
                 {/* Public Routes */}
                 <Route path="/landing" element={<Landing />} />
@@ -171,9 +184,10 @@ const App = () => (
               </Routes>
             </Router>
           </TooltipProvider>
-        </AuthProvider>
-      </QueryProvider>
-    </ThemeProvider>
+        </FloatingAIProvider>
+      </AuthProvider>
+    </QueryProvider>
+  </ThemeProvider>
 );
 
 export default App;
