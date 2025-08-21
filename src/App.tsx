@@ -57,11 +57,11 @@ const App = () => (
             defaultLanguage: "auto"
           }}
         >
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <FloatingAssistant />
-            <Router>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <Router>
+                <FloatingAssistant />
             <Routes>
                 {/* Public Routes */}
                 <Route path="/landing" element={<Landing />} />

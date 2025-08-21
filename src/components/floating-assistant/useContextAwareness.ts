@@ -18,7 +18,13 @@ export interface ContextAwareness {
 }
 
 export function useContextAwareness(): ContextAwareness {
-  const location = useLocation();
+  let location;
+  try {
+    location = useLocation();
+  } catch (error) {
+    // Fallback when not inside Router context
+    location = { pathname: '/' };
+  }
   const [context, setContext] = useState<ContextAwareness>({
     currentRoute: '/',
     pageTitle: '',
