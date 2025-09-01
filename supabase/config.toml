@@ -71,3 +71,6 @@ verify_jwt = false
 
 [functions.createCaseDraft]
 verify_jwt = false
+
+[functions.ai-multi-agent]
+verify_jwt = false
