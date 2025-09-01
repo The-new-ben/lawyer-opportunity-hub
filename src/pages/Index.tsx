@@ -5,84 +5,85 @@ import { Badge } from "@/components/ui/badge";
 import { Scale, Shield, Users, MessageSquare, Gavel, Calendar, FileText, Bot, UserCheck, BookOpen } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import LovableStyleInput from "@/components/LovableStyleInput";
 
 const Index = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    document.title = "Justice.com - מערכת ניהול משרד עורכי דין מתקדמת";
+    document.title = "Justice.com - Advanced Legal Practice Management System";
     const metaDesc = document.querySelector('meta[name="description"]');
     if (!metaDesc) {
       const m = document.createElement('meta');
       m.name = 'description';
-      m.content = 'מערכת ניהול מתקדמת למשרדי עורכי דין - ניהול לקוחות, תיקים, תשלומים ובית משפט דיגיטלי עם בינה מלאכותית';
+      m.content = 'Advanced legal practice management system - client management, cases, payments and digital court with artificial intelligence';
       document.head.appendChild(m);
     } else {
-      metaDesc.setAttribute('content', 'מערכת ניהול מתקדמת למשרדי עורכי דין - ניהול לקוחות, תיקים, תשלומים ובית משפט דיגיטלי עם בינה מלאכותית');
+      metaDesc.setAttribute('content', 'Advanced legal practice management system - client management, cases, payments and digital court with artificial intelligence');
     }
   }, []);
 
   const services = [
     {
-      title: "בית משפט דיגיטלי",
-      description: "בית משפט עם בינה מלאכותית לניהול תיקים וקבלת החלטות",
+      title: "Digital Court",
+      description: "AI-powered court for case management and legal decisions",
       icon: Gavel,
       path: "/global-court",
       color: "bg-primary",
       public: true
     },
     {
-      title: "קליטת תיקים חכמה",
-      description: "מערכת קליטה אוטומטית של תיקים עם עיבוד טקסט בבינה מלאכותית",
+      title: "Smart Case Intake",
+      description: "Automated case intake system with AI text processing",
       icon: FileText,
       path: "/intake",
       color: "bg-accent",
       public: true
     },
     {
-      title: "ספריית אנשי מקצוע",
-      description: "מאגר מקיף של עורכי דין, שופטים ויועצים משפטיים",
+      title: "Professional Directory",
+      description: "Comprehensive database of lawyers, judges and legal consultants",
       icon: UserCheck,
       path: "/professionals",
       color: "bg-secondary",
       public: true
     },
     {
-      title: "פורטל AI מתקדם",
-      description: "צ'אט בוט משפטי מתקדם לייעוץ וטיפול בתיקים",
+      title: "Advanced AI Portal",
+      description: "Advanced legal chatbot for consultation and case handling",
       icon: Bot,
       path: "/ai-portal",
       color: "bg-success",
       public: true
     },
     {
-      title: "דף בקרה למנהלים",
-      description: "ממשק ניהול מלא למשרד עורכי דין",
+      title: "Admin Dashboard",
+      description: "Complete management interface for law firms",
       icon: Shield,
       path: "/dashboard",
       color: "bg-warning",
       public: false
     },
     {
-      title: "ניהול לקוחות",
-      description: "מעקב אחר לקוחות, הזמנות ותיקים פעילים",
+      title: "Client Management",
+      description: "Track clients, appointments and active cases",
       icon: Users,
       path: "/clients",
       color: "bg-muted",
       public: false
     },
     {
-      title: "יומן ופגישות",
-      description: "ניהול זמנים, פגישות ודיונים",
+      title: "Calendar & Meetings",
+      description: "Schedule management, meetings and hearings",
       icon: Calendar,
       path: "/calendar",
       color: "bg-primary-muted",
       public: false
     },
     {
-      title: "מערכת תשלומים",
-      description: "ניהול חשבוניות, תשלומים ועמלות",
+      title: "Payment System",
+      description: "Manage invoices, payments and commissions",
       icon: Scale,
       path: "/payments",
       color: "bg-destructive/20",
@@ -107,26 +108,26 @@ const Index = () => {
             <Scale className="h-8 w-8 text-primary" />
             <div>
               <h1 className="text-2xl font-bold text-primary">Justice.com</h1>
-              <p className="text-sm text-muted-foreground">מערכת ניהול משפטית מתקדמת</p>
+              <p className="text-sm text-muted-foreground">Advanced Legal Management System</p>
             </div>
           </div>
           <div className="flex gap-4 items-center">
             {user ? (
               <div className="flex items-center gap-3">
                 <Badge variant="secondary" className="text-xs">
-                  מחובר: {user.email}
+                  Logged in: {user.email}
                 </Badge>
                 <Button variant="outline" asChild>
-                  <Link to="/dashboard">דף בקרה</Link>
+                  <Link to="/dashboard">Dashboard</Link>
                 </Button>
               </div>
             ) : (
               <>
                 <Button variant="ghost" asChild>
-                  <Link to="/auth">התחברות</Link>
+                  <Link to="/auth">Login</Link>
                 </Button>
                 <Button asChild>
-                  <Link to="/auth">הרשמה</Link>
+                  <Link to="/auth">Register</Link>
                 </Button>
               </>
             )}
@@ -134,23 +135,31 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="container mx-auto px-4 py-16 text-center">
-        <h2 className="text-4xl md:text-6xl font-bold mb-6 text-foreground">
-          מערכת ניהול משפטית מתקדמת
-        </h2>
-        <p className="text-xl text-muted-foreground mb-8 max-w-4xl mx-auto leading-relaxed">
-          פלטפורמה מקיפה לניהול משרדי עורכי דין הכוללת בית משפט דיגיטלי, קליטת תיקים אוטומטית, 
-          ניהול לקוחות ומערכת AI מתקדמת לטיפול משפטי מקצועי
-        </p>
+      {/* Hero Section with Lovable-Style Input */}
+      <section className="container mx-auto px-4 py-16">
+        <div className="text-center mb-12">
+          <h2 className="text-4xl md:text-6xl font-bold mb-6 text-foreground">
+            Advanced Legal Management System
+          </h2>
+          <p className="text-xl text-muted-foreground mb-8 max-w-4xl mx-auto leading-relaxed">
+            Comprehensive platform for law firm management including digital court, automated case intake, 
+            client management and advanced AI system for professional legal handling
+          </p>
+        </div>
+        
+        {/* Lovable-Style Input Component */}
+        <div className="mb-12">
+          <LovableStyleInput />
+        </div>
+        
         <div className="flex gap-4 justify-center flex-wrap">
           <Button size="lg" onClick={() => handleServiceClick(services[0])}>
-            <Gavel className="ml-2 h-5 w-5" />
-            כניסה לבית המשפט הדיגיטלי
+            <Gavel className="mr-2 h-5 w-5" />
+            Enter Digital Court
           </Button>
           {!user && (
             <Button size="lg" variant="outline" asChild>
-              <Link to="/auth">התחל חינם</Link>
+              <Link to="/auth">Start Free</Link>
             </Button>
           )}
         </div>
@@ -159,9 +168,9 @@ const Index = () => {
       {/* Services Grid */}
       <section className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">
-          <h3 className="text-3xl font-bold mb-4 text-foreground">השירותים שלנו</h3>
+          <h3 className="text-3xl font-bold mb-4 text-foreground">Our Services</h3>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            כל הכלים הדרושים לניהול משרד עורכי דין מודרני ויעיל
+            All the tools needed to manage a modern and efficient law firm
           </p>
         </div>
         
@@ -182,7 +191,7 @@ const Index = () => {
                     <CardTitle className="text-lg leading-tight">{service.title}</CardTitle>
                     {!service.public && (
                       <Badge variant="outline" className="text-xs mr-2">
-                        {user ? "זמין" : "נדרש חשבון"}
+                        {user ? "Available" : "Account Required"}
                       </Badge>
                     )}
                   </div>
@@ -196,7 +205,7 @@ const Index = () => {
                     size="sm" 
                     className="w-full"
                   >
-                    {service.public ? "כניסה חופשית" : user ? "כניסה למערכת" : "נדרשת הרשמה"}
+                    {service.public ? "Free Access" : user ? "Enter System" : "Registration Required"}
                   </Button>
                 </CardContent>
               </Card>
@@ -209,15 +218,15 @@ const Index = () => {
       <section className="bg-muted/50 py-16">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold mb-4 text-foreground">מה כולל המערכת?</h3>
+            <h3 className="text-3xl font-bold mb-4 text-foreground">What Does the System Include?</h3>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card className="text-center">
               <CardHeader>
                 <Scale className="h-10 w-10 text-primary mb-2 mx-auto" />
-                <CardTitle>ניהול תיקים</CardTitle>
+                <CardTitle>Case Management</CardTitle>
                 <CardDescription>
-                  מעקב מלא אחר סטטוס תיקים ודיונים
+                  Complete tracking of case status and hearings
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -225,9 +234,9 @@ const Index = () => {
             <Card className="text-center">
               <CardHeader>
                 <MessageSquare className="h-10 w-10 text-primary mb-2 mx-auto" />
-                <CardTitle>בינה מלאכותית</CardTitle>
+                <CardTitle>Artificial Intelligence</CardTitle>
                 <CardDescription>
-                  עיבוד אוטומטי של מסמכים ויעוץ משפטי
+                  Automatic document processing and legal consultation
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -235,9 +244,9 @@ const Index = () => {
             <Card className="text-center">
               <CardHeader>
                 <BookOpen className="h-10 w-10 text-primary mb-2 mx-auto" />
-                <CardTitle>ספרייה משפטית</CardTitle>
+                <CardTitle>Legal Library</CardTitle>
                 <CardDescription>
-                  מאגר מקיף של חוקים ופסיקות
+                  Comprehensive database of laws and rulings
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -245,9 +254,9 @@ const Index = () => {
             <Card className="text-center">
               <CardHeader>
                 <Shield className="h-10 w-10 text-primary mb-2 mx-auto" />
-                <CardTitle>אבטחת מידע</CardTitle>
+                <CardTitle>Data Security</CardTitle>
                 <CardDescription>
-                  הגנה מלאה על מידע רגיש ופרטיות לקוחות
+                  Complete protection of sensitive information and client privacy
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -263,7 +272,7 @@ const Index = () => {
             <span className="text-lg font-semibold text-primary">Justice.com</span>
           </div>
           <p className="text-muted-foreground text-sm">
-            © 2024 Justice.com - כל הזכויות שמורות | מערכת ניהול משפטית מתקדמת
+            © 2024 Justice.com - All Rights Reserved | Advanced Legal Management System
           </p>
         </div>
       </footer>
