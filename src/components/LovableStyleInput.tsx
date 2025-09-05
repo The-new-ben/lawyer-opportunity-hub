@@ -247,15 +247,17 @@ const LovableStyleInput = () => {
       // Get connected agent IDs
       const agentIds = getConnectedAgentNames(connectedAgents);
       
-      // Create context object
+      // Enhanced context with legal case building focus
       const context = {
         currentRoute: window.location.pathname,
         userType: user ? 'authenticated' : 'anonymous',
         inputLength: input.length,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        mode: 'legal_case_building',
+        focus: 'structured_information_collection'
       };
       
-      // Query multiple AI agents
+      // Query multiple AI agents with enhanced legal case building
       const result = await queryMultipleAI(agentIds, input, context);
       
       if (result.success && result.responses.length > 0) {
