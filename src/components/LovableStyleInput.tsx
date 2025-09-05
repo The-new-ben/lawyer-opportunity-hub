@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useSmartConversation } from "@/hooks/useSmartConversation";
 import { cn } from "@/lib/utils";
 
 interface Suggestion {
@@ -50,7 +51,7 @@ const LovableStyleInput = () => {
     getNextSteps,
     getSuggestedActions,
     isReadyForNextStep
-  } = require('@/hooks/useSmartConversation').useSmartConversation();
+  } = useSmartConversation();
 
   const allSuggestions: Suggestion[] = [
     {
