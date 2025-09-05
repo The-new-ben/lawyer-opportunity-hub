@@ -3,8 +3,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Gavel, 
   Scale, 
@@ -14,18 +12,10 @@ import {
   FileText, 
   Calendar, 
   Shield,
-  Plus,
-  Settings,
-  Zap,
   Brain,
   Network,
-  ChevronDown,
   CheckCircle,
-  Circle,
-  Sparkles,
-  Globe,
-  Code,
-  Layers
+  Sparkles
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -40,77 +30,27 @@ interface Suggestion {
   public: boolean;
 }
 
-interface AIAgent {
-  id: string;
-  name: string;
-  description: string;
-  icon: any;
-  model: string;
-  capabilities: string[];
-  connected: boolean;
-}
-
-interface AIResponse {
-  agent: string;
-  content: string;
-  confidence: number;
-  timestamp: Date;
-}
-
 const LovableStyleInput = () => {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [connectedAgents, setConnectedAgents] = useState<AIAgent[]>([]);
-  const [showConnectors, setShowConnectors] = useState(false);
-  const [selectedAgents, setSelectedAgents] = useState<string[]>([]);
-  const [aiResponses, setAiResponses] = useState<AIResponse[]>([]);
-  const [isAIMode, setIsAIMode] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { user } = useAuth();
   const navigate = useNavigate();
-
-  // Available AI Agents
-  const availableAgents: AIAgent[] = [
-    {
-      id: "gpt-4",
-      name: "GPT-4 Legal Expert",
-      description: "Advanced legal reasoning and case analysis",
-      icon: Brain,
-      model: "gpt-4",
-      capabilities: ["Legal Analysis", "Case Research", "Document Review"],
-      connected: false
-    },
-    {
-      id: "claude",
-      name: "Claude Legal Assistant",
-      description: "Constitutional law and litigation support",
-      icon: Sparkles,
-      model: "claude-3-sonnet",
-      capabilities: ["Constitutional Law", "Litigation", "Ethics"],
-      connected: false
-    },
-    {
-      id: "gemini",
-      name: "Gemini Court Advisor",
-      description: "Procedural guidance and court protocols",
-      icon: Globe,
-      model: "gemini-pro",
-      capabilities: ["Court Procedures", "Filing", "Scheduling"],
-      connected: false
-    },
-    {
-      id: "custom",
-      name: "Custom Legal AI",
-      description: "Connect your own AI endpoint",
-      icon: Code,
-      model: "custom",
-      capabilities: ["Custom Logic", "Specialized Knowledge"],
-      connected: false
-    }
-  ];
+  
+  // Import the new smart conversation hook
+  const { 
+    context, 
+    isProcessing, 
+    lastResponse, 
+    autoConnectedAI, 
+    processUserInput,
+    getProgressPercentage,
+    getNextSteps,
+    getSuggestedActions,
+    isReadyForNextStep
+  } = require('@/hooks/useSmartConversation').useSmartConversation();
 
   const allSuggestions: Suggestion[] = [
     {
@@ -184,24 +124,17 @@ const LovableStyleInput = () => {
     setInput(value);
     setIsTyping(true);
     
-    // Filter suggestions based on input
+    // Immediate processing like Lovable
     if (value.trim()) {
-      const filtered = allSuggestions.filter(suggestion =>
-        suggestion.keywords.some(keyword => 
-          keyword.toLowerCase().includes(value.toLowerCase())
-        ) ||
-        suggestion.title.toLowerCase().includes(value.toLowerCase()) ||
-        suggestion.description.toLowerCase().includes(value.toLowerCase())
-      );
-      setSuggestions(filtered);
-      setShowSuggestions(true);
+      processUserInput(value);
+      setShowSuggestions(false);
     } else {
       setSuggestions(allSuggestions);
       setShowSuggestions(true);
     }
 
-    // Stop typing animation after 1 second
-    setTimeout(() => setIsTyping(false), 1000);
+    // Stop typing animation quickly
+    setTimeout(() => setIsTyping(false), 500);
   };
 
   const handleSuggestionClick = (suggestion: Suggestion) => {
@@ -213,84 +146,9 @@ const LovableStyleInput = () => {
   };
 
   const handleFocus = () => {
-    if (!showSuggestions) {
+    if (!showSuggestions && !lastResponse) {
       setSuggestions(allSuggestions);
       setShowSuggestions(true);
-    }
-  };
-
-  const handleAgentToggle = (agentId: string) => {
-    setConnectedAgents(prev => {
-      const agent = availableAgents.find(a => a.id === agentId);
-      if (!agent) return prev;
-      
-      const isConnected = prev.some(a => a.id === agentId);
-      if (isConnected) {
-        return prev.filter(a => a.id !== agentId);
-      } else {
-        return [...prev, { ...agent, connected: true }];
-      }
-    });
-  };
-
-  const handleAIQuery = async () => {
-    if (!input.trim() || connectedAgents.length === 0) return;
-    
-    setIsProcessing(true);
-    setIsAIMode(true);
-    setShowSuggestions(false);
-    
-    try {
-      // Import the multi-agent client
-      const { queryMultipleAI, getConnectedAgentNames } = await import('@/lib/aiMultiAgent');
-      
-      // Get connected agent IDs
-      const agentIds = getConnectedAgentNames(connectedAgents);
-      
-      // Enhanced context with legal case building focus
-      const context = {
-        currentRoute: window.location.pathname,
-        userType: user ? 'authenticated' : 'anonymous',
-        inputLength: input.length,
-        timestamp: new Date().toISOString(),
-        mode: 'legal_case_building',
-        focus: 'structured_information_collection'
-      };
-      
-      // Query multiple AI agents with enhanced legal case building
-      const result = await queryMultipleAI(agentIds, input, context);
-      
-      if (result.success && result.responses.length > 0) {
-        // Convert responses to our format
-        const convertedResponses: AIResponse[] = result.responses.map(response => ({
-          agent: response.agent,
-          content: response.content,
-          confidence: response.confidence,
-          timestamp: new Date(response.timestamp)
-        }));
-        
-        setAiResponses(convertedResponses);
-      } else {
-        // Fallback to error message
-        const errorResponse: AIResponse = {
-          agent: 'System',
-          content: result.error || 'Unable to process your request at this time. Please try again later.',
-          confidence: 0,
-          timestamp: new Date()
-        };
-        setAiResponses([errorResponse]);
-      }
-    } catch (error) {
-      console.error('AI query failed:', error);
-      const errorResponse: AIResponse = {
-        agent: 'System',
-        content: 'I apologize, but I\'m having trouble connecting right now. Please try again in a moment, or contact support if the issue persists.',
-        confidence: 0,
-        timestamp: new Date()
-      };
-      setAiResponses([errorResponse]);
-    } finally {
-      setIsProcessing(false);
     }
   };
 
@@ -299,17 +157,15 @@ const LovableStyleInput = () => {
       case 'court_simulation':
         navigate('/global-court');
         break;
-      case 'summon_defendant':
-        navigate('/summons');
-        break;
-      case 'find_lawyer':
-        navigate('/professionals');
-        break;
       case 'create_case':
         navigate('/intake');
         break;
-      case 'ai_consultation':
-        handleAIQuery();
+      case 'find_professional':
+        navigate('/professionals');
+        break;
+      case 'continue':
+        // Focus back on input for continuing conversation
+        textareaRef.current?.focus();
         break;
       default:
         console.log('Unknown action:', action);
@@ -327,88 +183,30 @@ const LovableStyleInput = () => {
     <div className="w-full max-w-5xl mx-auto relative">
       {/* Enhanced Lovable-Style Main Window */}
       <Card className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-slate-700/50 shadow-2xl">
-        {/* Header with AI Connectors */}
+        {/* Smart Header with Auto-Connected AI */}
         <div className="flex items-center justify-between p-4 border-b border-slate-700/50 bg-slate-800/50">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-green-500 to-blue-600 flex items-center justify-center">
               <Brain className="h-4 w-4 text-white" />
             </div>
             <div>
-              <h3 className="font-semibold text-white">AI Legal Assistant</h3>
-              <p className="text-xs text-slate-400">
-                {connectedAgents.length > 0 
-                  ? `${connectedAgents.length} agents connected` 
-                  : "Connect AI agents to get started"
-                }
+              <h3 className="font-semibold text-white">AI חכם מחובר</h3>
+              <p className="text-xs text-green-400">
+                {autoConnectedAI ? "מוכן לקרוא את המחשבות שלך" : "מתחבר..."}
               </p>
             </div>
           </div>
           
-          {/* Plus Button for Connectors */}
-          <Popover open={showConnectors} onOpenChange={setShowConnectors}>
-            <PopoverTrigger asChild>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="bg-slate-700/50 border-slate-600 hover:bg-slate-600/50 text-white"
-              >
-                <Plus className="h-4 w-4 mr-1" />
-                Connect
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-80 p-0 bg-slate-800 border-slate-700" align="end">
-              <div className="p-4 border-b border-slate-700">
-                <h4 className="font-semibold text-white mb-1">AI Connectors</h4>
-                <p className="text-sm text-slate-400">Choose AI agents to assist you</p>
-              </div>
-              <div className="p-2 space-y-2 max-h-80 overflow-y-auto">
-                {availableAgents.map((agent) => {
-                  const IconComponent = agent.icon;
-                  const isConnected = connectedAgents.some(a => a.id === agent.id);
-                  return (
-                    <div
-                      key={agent.id}
-                      className={cn(
-                        "flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all",
-                        isConnected 
-                          ? "bg-blue-500/20 border border-blue-500/30" 
-                          : "bg-slate-700/50 hover:bg-slate-600/50"
-                      )}
-                      onClick={() => handleAgentToggle(agent.id)}
-                    >
-                      <div className={cn(
-                        "h-8 w-8 rounded-lg flex items-center justify-center",
-                        isConnected ? "bg-blue-500/20" : "bg-slate-600/50"
-                      )}>
-                        <IconComponent className={cn(
-                          "h-4 w-4",
-                          isConnected ? "text-blue-400" : "text-slate-400"
-                        )} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium text-white text-sm">{agent.name}</p>
-                          {isConnected ? (
-                            <CheckCircle className="h-3 w-3 text-blue-400" />
-                          ) : (
-                            <Circle className="h-3 w-3 text-slate-500" />
-                          )}
-                        </div>
-                        <p className="text-xs text-slate-400 truncate">{agent.description}</p>
-                        <div className="flex gap-1 mt-1">
-                          {agent.capabilities.slice(0, 2).map((cap, idx) => (
-                            <Badge key={idx} variant="outline" className="text-xs py-0 px-1 border-slate-600 text-slate-400">
-                              {cap}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </PopoverContent>
-          </Popover>
+          {/* Progress Indicator */}
+          <div className="flex items-center gap-2">
+            <div className="w-20 h-2 bg-slate-700 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-green-400 to-blue-500 transition-all duration-300"
+                style={{ width: `${getProgressPercentage()}%` }}
+              />
+            </div>
+            <span className="text-xs text-slate-400">{getProgressPercentage()}%</span>
+          </div>
         </div>
 
         {/* Main Input Area */}
@@ -420,9 +218,11 @@ const LovableStyleInput = () => {
               onChange={handleInputChange}
               onFocus={handleFocus}
               placeholder={
-                connectedAgents.length > 0 
-                  ? "Describe your legal situation and I'll analyze it with multiple AI perspectives..."
-                  : "What legal service do you need? Connect AI agents above for enhanced assistance..."
+                autoConnectedAI 
+                  ? lastResponse
+                    ? getNextSteps()[0] || "המשך לספר..."
+                    : "ספר לי מה קרה - אני מבין ומנתח מיד..."
+                  : "טוען AI חכם..."
               }
               className={cn(
                 "min-h-[150px] max-h-[400px] text-lg border-none bg-transparent resize-none focus:ring-0 focus:outline-none text-white placeholder:text-slate-400",
@@ -439,165 +239,135 @@ const LovableStyleInput = () => {
                   <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                 </div>
                 {isProcessing && (
-                  <span className="text-xs text-blue-400 ml-2">AI processing...</span>
+                  <span className="text-xs text-blue-400 ml-2">AI מעבד...</span>
                 )}
               </div>
             )}
           </div>
           
-          {/* Enhanced Action Buttons */}
-          {input.trim() && (
-            <div className="mt-4 space-y-3">
-              {/* AI Actions */}
-              {connectedAgents.length > 0 && (
-                <div className="flex gap-2">
-                  <Button 
-                    onClick={handleAIQuery}
-                    disabled={isProcessing}
-                    className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0"
-                  >
-                    <Brain className="h-4 w-4 mr-2" />
-                    {isProcessing ? "Processing..." : `Analyze with ${connectedAgents.length} AI${connectedAgents.length > 1 ? 's' : ''}`}
-                  </Button>
+          {/* Smart Response Area */}
+          {lastResponse && (
+            <div className="mt-4 p-4 bg-gradient-to-r from-blue-900/20 to-purple-900/20 rounded-lg border border-blue-500/20">
+              <div className="flex items-start gap-3">
+                <div className="h-6 w-6 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0 mt-1">
+                  <Bot className="h-3 w-3 text-white" />
                 </div>
-              )}
-              
-              {/* Smart Actions */}
-              <div className="grid grid-cols-2 gap-2">
-                <Button 
-                  variant="outline"
-                  onClick={() => handleSmartAction('court_simulation')}
-                  className="bg-slate-700/50 border-slate-600 hover:bg-slate-600/50 text-white"
-                >
-                  <Gavel className="h-4 w-4 mr-2" />
-                  Court Simulation
-                </Button>
-                <Button 
-                  variant="outline"
-                  onClick={() => handleSmartAction('create_case')}
-                  className="bg-slate-700/50 border-slate-600 hover:bg-slate-600/50 text-white"
-                >
-                  <FileText className="h-4 w-4 mr-2" />
-                  Create Case
-                </Button>
-                <Button 
-                  variant="outline"
-                  onClick={() => handleSmartAction('find_lawyer')}
-                  className="bg-slate-700/50 border-slate-600 hover:bg-slate-600/50 text-white"
-                >
-                  <Users className="h-4 w-4 mr-2" />
-                  Find Professional
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => {
-                    setInput("");
-                    setSuggestions(allSuggestions);
-                    setIsAIMode(false);
-                    setAiResponses([]);
-                  }}
-                  className="bg-slate-700/50 border-slate-600 hover:bg-slate-600/50 text-white"
-                >
-                  Clear
-                </Button>
+                <div className="flex-1">
+                  <p className="text-white text-sm leading-relaxed">{lastResponse.text}</p>
+                  
+                  {/* Dynamic Action Buttons */}
+                  {getSuggestedActions().length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {getSuggestedActions().slice(0, 3).map((action) => (
+                        <Button
+                          key={action.id}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleSmartAction(action.action)}
+                          className="bg-blue-600/20 border-blue-500/30 hover:bg-blue-600/30 text-blue-200 text-xs"
+                        >
+                          <span className="mr-1">{action.icon}</span>
+                          {action.label}
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Progress indicators */}
+                  {isReadyForNextStep() && (
+                    <div className="mt-3 p-2 bg-green-900/20 rounded border border-green-500/30">
+                      <p className="text-green-400 text-xs">✅ יש לנו מספיק מידע - מוכן לשלב הבא!</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
-        </div>
-
-        {/* Footer */}
-        <div className="px-6 pb-4 flex items-center justify-between text-xs text-slate-400">
-          <div className="flex items-center gap-4">
-            <span>Workspace</span>
-            <span>Supabase</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="h-2 w-2 bg-green-400 rounded-full"></div>
-            <span>Connected</span>
-          </div>
+          
+          {/* Quick Actions for Empty State */}
+          {!lastResponse && autoConnectedAI && (
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <Button 
+                variant="outline"
+                onClick={() => handleSmartAction('court_simulation')}
+                className="bg-slate-700/30 border-slate-600/50 hover:bg-slate-600/50 text-white"
+              >
+                <Gavel className="h-4 w-4 mr-2" />
+                סימולציית בית משפט
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => handleSmartAction('create_case')}
+                className="bg-slate-700/30 border-slate-600/50 hover:bg-slate-600/50 text-white"
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                פתח תיק חדש
+              </Button>
+            </div>
+          )}
         </div>
       </Card>
-
-      {/* AI Responses */}
-      {isAIMode && aiResponses.length > 0 && (
-        <Card className="mt-4 bg-slate-900/90 border-slate-700/50">
-          <div className="p-4 border-b border-slate-700/50">
-            <h4 className="font-semibold text-white flex items-center gap-2">
-              <Layers className="h-4 w-4" />
-              AI Analysis Results
-            </h4>
+      
+      {/* Conversation History */}
+      {context.conversationHistory.length > 1 && (
+        <Card className="mt-4 bg-slate-800/60 border-slate-700/50">
+          <div className="p-3 border-b border-slate-700/50">
+            <h4 className="font-medium text-white text-sm">היסטוריית השיחה</h4>
           </div>
-          <div className="space-y-4 p-4">
-            {aiResponses.map((response, index) => (
-              <div key={index} className="border border-slate-700/50 rounded-lg p-4 bg-slate-800/50">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="h-6 w-6 rounded bg-blue-500/20 flex items-center justify-center">
-                      <Bot className="h-3 w-3 text-blue-400" />
-                    </div>
-                    <span className="font-medium text-white text-sm">{response.agent}</span>
-                  </div>
-                  <Badge variant="outline" className="border-green-500/50 text-green-400">
-                    {Math.round(response.confidence * 100)}% confidence
-                  </Badge>
-                </div>
-                <p className="text-slate-300 text-sm leading-relaxed">{response.content}</p>
-                <div className="mt-3 flex gap-2">
-                  <Button size="sm" variant="outline" className="bg-slate-700/50 border-slate-600 text-white hover:bg-slate-600/50">
-                    <Scale className="h-3 w-3 mr-1" />
-                    Create Case
-                  </Button>
-                  <Button size="sm" variant="outline" className="bg-slate-700/50 border-slate-600 text-white hover:bg-slate-600/50">
-                    <Users className="h-3 w-3 mr-1" />
-                    Find Lawyer
-                  </Button>
-                </div>
+          <div className="p-3 space-y-2 max-h-60 overflow-y-auto">
+            {context.conversationHistory.slice(-4).map((msg, index) => (
+              <div key={index} className={cn(
+                "p-2 rounded text-xs",
+                msg.role === 'user' 
+                  ? "bg-blue-900/20 text-blue-200 ml-8" 
+                  : "bg-slate-700/30 text-slate-300 mr-8"
+              )}>
+                <span className="font-medium">{msg.role === 'user' ? 'אתה' : 'AI'}:</span> {msg.content}
               </div>
             ))}
           </div>
         </Card>
       )}
 
-      {/* Suggestions - Only show when not in AI mode */}
-      {showSuggestions && !isAIMode && (
-        <div className="mt-4 space-y-3 max-h-96 overflow-y-auto">
-          {suggestions.slice(0, 6).map((suggestion, index) => {
-            const IconComponent = suggestion.icon;
-            return (
-              <Card 
-                key={index}
-                className="cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-[1.02] bg-slate-800/50 border-slate-700/50 backdrop-blur-sm"
-                onClick={() => handleSuggestionClick(suggestion)}
-              >
-                <div className="p-4 flex items-center gap-4">
-                  <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center flex-shrink-0">
-                    <IconComponent className="h-5 w-5 text-blue-400" />
+      {/* Suggestions (only show when no conversation active) */}
+      {showSuggestions && !lastResponse && (
+        <Card className="mt-4 bg-slate-800/80 border-slate-700/50 shadow-xl">
+          <div className="p-4 border-b border-slate-700/50">
+            <h4 className="font-semibold text-white">פעולות מהירות</h4>
+            <p className="text-sm text-slate-400">או סתם ספר לי מה קרה...</p>
+          </div>
+          <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-3 max-h-80 overflow-y-auto">
+            {suggestions.slice(0, 6).map((suggestion, index) => {
+              const IconComponent = suggestion.icon;
+              const canAccess = suggestion.public || user;
+              
+              return (
+                <div
+                  key={index}
+                  className={cn(
+                    "flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all border",
+                    canAccess 
+                      ? "bg-slate-700/50 hover:bg-slate-600/50 border-slate-600/50 hover:border-slate-500/50" 
+                      : "bg-slate-800/50 border-slate-700/50 opacity-60"
+                  )}
+                  onClick={() => canAccess && handleSuggestionClick(suggestion)}
+                >
+                  <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500/20 to-purple-600/20 flex items-center justify-center border border-blue-500/20">
+                    <IconComponent className="h-4 w-4 text-blue-400" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-medium text-white">{suggestion.title}</h4>
-                      {!suggestion.public && (
-                        <Badge variant="outline" className="text-xs border-slate-600 text-slate-400">
-                          {user ? "Available" : "Login Required"}
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-sm text-slate-400">{suggestion.description}</p>
+                    <p className="font-medium text-white text-sm">{suggestion.title}</p>
+                    <p className="text-xs text-slate-400 truncate">{suggestion.description}</p>
                   </div>
-                  <Button variant="ghost" size="sm" className="text-slate-300 hover:text-white hover:bg-slate-700/50">
-                    {suggestion.public ? "Open" : user ? "Enter" : "Login"}
-                  </Button>
+                  {!canAccess && (
+                    <Badge variant="outline" className="text-xs border-amber-500/30 text-amber-400">
+                      נדרש חשבון
+                    </Badge>
+                  )}
                 </div>
-              </Card>
-            );
-          })}
-        </div>
-      )}
-      
-      {showSuggestions && !isAIMode && suggestions.length === 0 && input.trim() && (
-        <Card className="mt-4 p-6 text-center bg-slate-800/50 border-slate-700/50">
-          <MessageSquare className="h-8 w-8 text-slate-400 mx-auto mb-2" />
-          <p className="text-slate-400">No matching services found. Try different keywords or connect AI agents for intelligent assistance.</p>
+              );
+            })}
+          </div>
         </Card>
       )}
     </div>
