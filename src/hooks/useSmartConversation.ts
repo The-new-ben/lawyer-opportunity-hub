@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-// חוויית Lovable - המערכת קוראת את המחשבות
+// Lovable-style intelligent conversation system
 interface ConversationContext {
   sessionId: string;
   userId?: string;
@@ -64,48 +64,48 @@ export function useSmartConversation() {
     if (!autoConnectedAI) {
       setAutoConnectedAI(true);
       toast({
-        title: "🤖 AI מחובר",
-        description: "המערכת מוכנה לקרוא את המחשבות שלך",
+        title: "🤖 AI Connected",
+        description: "System ready to assist with legal matters",
         duration: 2000
       });
     }
   }, [autoConnectedAI]);
 
-  // Intent detection patterns
+  // Intent detection patterns (supporting multiple languages)
   const intentPatterns = {
-    legal_case: /(?:תביעה|תיק|משפט|בית משפט|עורך דין|חוזה|הפרה)/i,
-    employment: /(?:עבודה|מעביד|פיטורין|משכורת|זכויות עובד)/i,
-    family: /(?:גירושין|משמורת|מזונות|נישואין|ילדים)/i,
-    contract: /(?:חוזה|הסכם|התחייבות|הפרה|נזק)/i,
-    property: /(?:דירה|בית|שכירות|מכירה|נכס)/i,
-    immediate_help: /(?:דחוף|מיידי|עזרה|חירום|מה עושים)/i,
-    document_needed: /(?:מסמך|טופס|מכתב|תביעה|בקשה)/i,
+    legal_case: /(?:lawsuit|case|court|legal|attorney|lawyer|contract|breach|תביעה|תיק|משפט|בית משפט|עורך דין|חוזה|הפרה)/i,
+    employment: /(?:work|job|employer|termination|salary|employee rights|עבודה|מעביד|פיטורין|משכורת|זכויות עובד)/i,
+    family: /(?:divorce|custody|alimony|marriage|children|גירושין|משמורת|מזונות|נישואין|ילדים)/i,
+    contract: /(?:contract|agreement|obligation|breach|damage|חוזה|הסכם|התחייבות|הפרה|נזק)/i,
+    property: /(?:apartment|house|rent|sale|property|דירה|בית|שכירות|מכירה|נכס)/i,
+    immediate_help: /(?:urgent|immediate|help|emergency|what to do|דחוף|מיידי|עזרה|חירום|מה עושים)/i,
+    document_needed: /(?:document|form|letter|claim|request|מסמך|טופס|מכתב|תביעה|בקשה)/i,
   };
 
   // Progressive question patterns based on legal process
   const generateProgressiveQuestions = (intent: string, progress: number): string[] => {
     const questionSets = {
       legal_case: [
-        "בואו נתחיל: מה קרה בקצרה?",
-        "מי מעורב בסיטואציה? (שמות או תיאור)",
-        "מתי זה התרחש?",
-        "איפה זה קרה? (עיר/מקום)",
-        "מה אתה רוצה שיקרה? (הפתרון שאתה מחפש)",
-        "יש לך מסמכים או ראיות?"
+        "Let's start: What happened briefly?",
+        "Who is involved in the situation? (names or description)",
+        "When did this occur?",
+        "Where did it happen? (city/location)",
+        "What do you want to happen? (the solution you're looking for)",
+        "Do you have any documents or evidence?"
       ],
       employment: [
-        "איך התחילה הבעיה בעבודה?",
-        "מה השם של המעביד/החברה?",
-        "כמה זמן עבדת שם?",
-        "יש לך חוזה עבודה?",
-        "דיברת עם מישהו על זה?"
+        "How did the work problem start?",
+        "What's the name of the employer/company?",
+        "How long did you work there?",
+        "Do you have an employment contract?",
+        "Have you talked to anyone about this?"
       ],
       family: [
-        "מה המצב המשפחתי?",
-        "יש ילדים? (גילאים)",
-        "מה הבעיה הראשית?",
-        "ניסיתם לפתור ביניכם?",
-        "מה החשוב לך ביותר?"
+        "What's the family situation?",
+        "Are there children? (ages)",
+        "What's the main issue?",
+        "Have you tried to resolve it between yourselves?",
+        "What's most important to you?"
       ]
     };
 
@@ -188,8 +188,8 @@ export function useSmartConversation() {
       } catch (error) {
         console.error('Smart conversation error:', error);
         toast({
-          title: "שגיאה בעיבוד",
-          description: "נסה שוב בעוד רגע",
+          title: "Processing Error",
+          description: "Please try again in a moment",
           variant: "destructive"
         });
       } finally {
@@ -253,29 +253,29 @@ export function useSmartConversation() {
     // Very short, focused responses (Lovable style)
     const responseTemplates = {
       legal_case: {
-        opening: "📋 זיהיתי שמדובר בבעיה משפטית.",
-        followUp: generateProgressiveQuestions(intent, progress)[0] || "ספר לי עוד פרטים"
+        opening: "📋 I see this is a legal matter.",
+        followUp: generateProgressiveQuestions(intent, progress)[0] || "Tell me more details"
       },
       employment: {
-        opening: "💼 בעיה בעבודה - אני כאן לעזור.",
-        followUp: "מה בדיוק קרה עם המעביד?"
+        opening: "💼 Work issue - I'm here to help.",
+        followUp: "What exactly happened with your employer?"
       },
       immediate_help: {
-        opening: "🚨 אני רואה שזה דחוף!",
-        followUp: "בואו נטפל בזה מיד - מה הבעיה?"
+        opening: "🚨 I see this is urgent!",
+        followUp: "Let's handle this immediately - what's the problem?"
       }
     };
 
     const template = responseTemplates[intent as keyof typeof responseTemplates] || {
-      opening: "👋 הבנתי.",
-      followUp: "איך אני יכול לעזור?"
+      opening: "👋 I understand.",
+      followUp: "How can I help you?"
     };
 
     let responseText = template.opening;
     
     // Add extracted info acknowledgment
     if (extractedInfo.userName) {
-      responseText += ` שלום ${extractedInfo.userName}!`;
+      responseText += ` Hello ${extractedInfo.userName}!`;
     }
     
     responseText += `\n\n${template.followUp}`;
@@ -303,7 +303,7 @@ export function useSmartConversation() {
     const baseActions = [
       {
         id: 'continue_chat',
-        label: 'המשך לספר',
+        label: 'Continue telling',
         action: 'continue',
         priority: 'high' as const,
         icon: '💬'
@@ -313,7 +313,7 @@ export function useSmartConversation() {
     if (progress > 30) {
       baseActions.push({
         id: 'start_case',
-        label: 'פתח תיק',
+        label: 'Create case',
         action: 'create_case',
         priority: 'high' as const,
         icon: '📁'
@@ -323,7 +323,7 @@ export function useSmartConversation() {
     if (progress > 60) {
       baseActions.push({
         id: 'find_lawyer',
-        label: 'מצא עורך דין',
+        label: 'Find professional',
         action: 'find_professional',
         priority: 'high' as const,
         icon: '⚖️'
@@ -337,14 +337,14 @@ export function useSmartConversation() {
   const generateFormFields = (intent: string, extractedInfo: Record<string, any>) => {
     const fieldTemplates = {
       legal_case: [
-        { id: 'summary', label: 'תיאור הבעיה', type: 'textarea' as const, required: true },
-        { id: 'parties', label: 'מי מעורב', type: 'text' as const, required: true },
-        { id: 'date', label: 'מתי זה קרה', type: 'text' as const, required: false }
+        { id: 'summary', label: 'Problem description', type: 'textarea' as const, required: true },
+        { id: 'parties', label: 'Who is involved', type: 'text' as const, required: true },
+        { id: 'date', label: 'When did it happen', type: 'text' as const, required: false }
       ],
       employment: [
-        { id: 'company', label: 'שם המעביד', type: 'text' as const, required: true },
-        { id: 'issue', label: 'הבעיה', type: 'textarea' as const, required: true },
-        { id: 'duration', label: 'כמה זמן עבדת', type: 'text' as const, required: false }
+        { id: 'company', label: 'Employer name', type: 'text' as const, required: true },
+        { id: 'issue', label: 'The problem', type: 'textarea' as const, required: true },
+        { id: 'duration', label: 'How long you worked', type: 'text' as const, required: false }
       ]
     };
 

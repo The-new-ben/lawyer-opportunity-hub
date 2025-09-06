@@ -190,9 +190,9 @@ const LovableStyleInput = () => {
               <Brain className="h-4 w-4 text-white" />
             </div>
             <div>
-              <h3 className="font-semibold text-white">AI חכם מחובר</h3>
+              <h3 className="font-semibold text-white">Smart AI Connected</h3>
               <p className="text-xs text-green-400">
-                {autoConnectedAI ? "מוכן לקרוא את המחשבות שלך" : "מתחבר..."}
+                {autoConnectedAI ? "Ready to understand your thoughts" : "Connecting..."}
               </p>
             </div>
           </div>
@@ -220,9 +220,9 @@ const LovableStyleInput = () => {
               placeholder={
                 autoConnectedAI 
                   ? lastResponse
-                    ? getNextSteps()[0] || "המשך לספר..."
-                    : "ספר לי מה קרה - אני מבין ומנתח מיד..."
-                  : "טוען AI חכם..."
+                    ? getNextSteps()[0] || "Continue telling me..."
+                    : "Tell me what happened - I understand and analyze immediately..."
+                  : "Loading Smart AI..."
               }
               className={cn(
                 "min-h-[150px] max-h-[400px] text-lg border-none bg-transparent resize-none focus:ring-0 focus:outline-none text-white placeholder:text-slate-400",
@@ -239,7 +239,7 @@ const LovableStyleInput = () => {
                   <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                 </div>
                 {isProcessing && (
-                  <span className="text-xs text-blue-400 ml-2">AI מעבד...</span>
+                  <span className="text-xs text-blue-400 ml-2">AI processing...</span>
                 )}
               </div>
             )}
@@ -276,7 +276,7 @@ const LovableStyleInput = () => {
                   {/* Progress indicators */}
                   {isReadyForNextStep() && (
                     <div className="mt-3 p-2 bg-green-900/20 rounded border border-green-500/30">
-                      <p className="text-green-400 text-xs">✅ יש לנו מספיק מידע - מוכן לשלב הבא!</p>
+                      <p className="text-green-400 text-xs">✅ We have enough information - ready for next step!</p>
                     </div>
                   )}
                 </div>
@@ -293,7 +293,7 @@ const LovableStyleInput = () => {
                 className="bg-slate-700/30 border-slate-600/50 hover:bg-slate-600/50 text-white"
               >
                 <Gavel className="h-4 w-4 mr-2" />
-                סימולציית בית משפט
+                Court Simulation
               </Button>
               <Button 
                 variant="outline"
@@ -301,7 +301,7 @@ const LovableStyleInput = () => {
                 className="bg-slate-700/30 border-slate-600/50 hover:bg-slate-600/50 text-white"
               >
                 <FileText className="h-4 w-4 mr-2" />
-                פתח תיק חדש
+                Create New Case
               </Button>
             </div>
           )}
@@ -312,7 +312,7 @@ const LovableStyleInput = () => {
       {context.conversationHistory.length > 1 && (
         <Card className="mt-4 bg-slate-800/60 border-slate-700/50">
           <div className="p-3 border-b border-slate-700/50">
-            <h4 className="font-medium text-white text-sm">היסטוריית השיחה</h4>
+            <h4 className="font-medium text-white text-sm">Conversation History</h4>
           </div>
           <div className="p-3 space-y-2 max-h-60 overflow-y-auto">
             {context.conversationHistory.slice(-4).map((msg, index) => (
@@ -322,7 +322,7 @@ const LovableStyleInput = () => {
                   ? "bg-blue-900/20 text-blue-200 ml-8" 
                   : "bg-slate-700/30 text-slate-300 mr-8"
               )}>
-                <span className="font-medium">{msg.role === 'user' ? 'אתה' : 'AI'}:</span> {msg.content}
+                <span className="font-medium">{msg.role === 'user' ? 'You' : 'AI'}:</span> {msg.content}
               </div>
             ))}
           </div>
@@ -333,8 +333,8 @@ const LovableStyleInput = () => {
       {showSuggestions && !lastResponse && (
         <Card className="mt-4 bg-slate-800/80 border-slate-700/50 shadow-xl">
           <div className="p-4 border-b border-slate-700/50">
-            <h4 className="font-semibold text-white">פעולות מהירות</h4>
-            <p className="text-sm text-slate-400">או סתם ספר לי מה קרה...</p>
+            <h4 className="font-semibold text-white">Quick Actions</h4>
+            <p className="text-sm text-slate-400">Or just tell me what happened...</p>
           </div>
           <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-3 max-h-80 overflow-y-auto">
             {suggestions.slice(0, 6).map((suggestion, index) => {
@@ -361,7 +361,7 @@ const LovableStyleInput = () => {
                   </div>
                   {!canAccess && (
                     <Badge variant="outline" className="text-xs border-amber-500/30 text-amber-400">
-                      נדרש חשבון
+                      Account Required
                     </Badge>
                   )}
                 </div>
