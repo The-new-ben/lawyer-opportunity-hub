@@ -5,7 +5,6 @@ interface AIRequest {
   agents: string[];
   query: string;
   context?: any;
-  language?: 'en' | 'he';
 }
 
 interface AIResponse {
@@ -69,13 +68,13 @@ serve(async (req) => {
       try {
         switch (agent) {
           case 'gpt-4':
-            return await processOpenAI(body.query, body.context, body.language);
+            return await processOpenAI(body.query, body.context);
           case 'claude':
-            return await processAnthropic(body.query, body.context, body.language);
+            return await processAnthropic(body.query, body.context);
           case 'gemini':
-            return await processGemini(body.query, body.context, body.language);
+            return await processGemini(body.query, body.context);
           case 'custom':
-            return await processCustom(body.query, body.context, body.language);
+            return await processCustom(body.query, body.context);
           default:
             throw new Error(`Unknown agent: ${agent}`);
         }
@@ -133,30 +132,43 @@ serve(async (req) => {
   }
 });
 
-async function processOpenAI(query: string, context: any, language: 'en' | 'he' = 'en', model: string = 'gpt-4'): Promise<AIResponse> {
+async function processOpenAI(query: string, context: any, model: string = 'gpt-4'): Promise<AIResponse> {
   const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
   
   if (!openAIApiKey) {
     throw new Error('OpenAI API key not configured');
   }
 
-  // Get appropriate prompts based on language and context
+  // Detect if we're in case building mode vs general analysis
   const isLegalCaseBuilding = context?.mode === 'legal_case_building';
   
-  const systemPrompts = {
-    en: {
-      legalCaseBuilding: `You are a smart and professional AI assistant for Israeli law. Your role: 1. Analyze legal situations accurately and with empathy 2. Guide users through structured information gathering 3. Provide clear and practical steps 4. Focus on practical legal solutions. Important rules: - Keep responses short - maximum 2 sentences - Ask one focused question at the end - Be supportive but professional - Respond in English unless user uses Hebrew - Focus on immediate next step - Read between the lines - understand true intent. Current context: User is building a legal case and needs structured guidance.`,
-      general: `You are a smart legal assistant for Israeli law. Rules: - Short and focused responses - Ask clarifying questions when needed - Provide practical steps - Be empathetic but professional - Respond in English unless user uses Hebrew`
-    },
-    he: {
-      legalCaseBuilding: `אתה עוזר AI חכם ומקצועי למשפט ישראלי. התפקיד שלך: 1. לנתח מצבים משפטיים במדויק ובאמפטיה 2. להוביל משתמשים דרך איסוף מידע מובנה 3. לספק צעדים ברורים ומעשיים 4. להתמקד בפתרונות משפטיים מעשיים. כללים חשובים: - השב בקצרה - מקסימום 2 משפטים - שאל שאלה אחת ממוקדת בסוף - היה תומך אבל מקצועי - השתמש בעברית - התמקד בצעד הבא המיידי - קרא בין השורות - הבן את הכוונה האמיתית. הקשר נוכחי: המשתמש בונה תיק משפטי וצריך הדרכה מובנית.`,
-      general: `אתה עוזר משפטי חכם עבור משפט ישראלי. כללים: - תגובות קצרות וממוקדות - שאל שאלות מבהירות כשצריך - ספק צעדים מעשיים - היה אמפטי אבל מקצועי - השתמש בעברית`
-    }
-  };
-
   const systemPrompt = isLegalCaseBuilding ? 
-    systemPrompts[language].legalCaseBuilding : 
-    systemPrompts[language].general;
+    `אתה עוזר AI חכם ומקצועי למשפט ישראלי. 
+
+התפקיד שלך:
+1. לנתח מצבים משפטיים במדויק ובאמפטיה
+2. להוביל משתמשים דרך איסוף מידע מובנה
+3. לספק צעדים ברורים ומעשיים
+4. להתמקד בפתרונות משפטיים מעשיים
+
+כללים חשובים:
+- השב בקצרה - מקסימום 2 משפטים
+- שאל שאלה אחת ממוקדת בסוף
+- היה תומך אבל מקצועי
+- השתמש בעברית
+- התמקד בצעד הבא המיידי
+- קרא בין השורות - הבן את הכוונה האמיתית
+
+הקשר נוכחי: המשתמש בונה תיק משפטי וצריך הדרכה מובנית.`
+    :
+    `אתה עוזר משפטי חכם עבור משפט ישראלי.
+
+כללים:
+- תגובות קצרות וממוקדות
+- שאל שאלות מבהירות כשצריך
+- ספק צעדים מעשיים
+- היה אמפטי אבל מקצועי
+- השתמש בעברית`;
 
   const startTime = Date.now();
   
@@ -209,26 +221,20 @@ async function processOpenAI(query: string, context: any, language: 'en' | 'he' 
   }
 }
 
-async function processAnthropic(query: string, context: any, language: 'en' | 'he' = 'en'): Promise<AIResponse> {
+async function processAnthropic(query: string, context: any): Promise<AIResponse> {
   const startTime = Date.now();
   
   // Mock response for Anthropic (Claude)
   const isLegalCaseBuilding = context?.mode === 'legal_case_building';
   
-  const responses = {
-    en: {
-      legalCaseBuilding: `⚖️ I've identified that this is a complex legal matter. I suggest reviewing the relevant laws and gathering additional evidence.\n\nWhat type of case is this - civil, criminal, or family?`,
-      general: `🔍 I'm Claude, specializing in constitutional law and class action lawsuits. What legal issue are you dealing with?\n\nDo you have relevant documents that could help with the analysis?`
-    },
-    he: {
-      legalCaseBuilding: `⚖️ זיהיתי שמדובר בנושא משפטי מורכב. אני מציע לבדוק את החוקים הרלוונטיים ולאסוף ראיות נוספות.\n\nאיזה סוג של תיק זה - אזרחי, פלילי או משפחה?`,
-      general: `🔍 אני Claude, מתמחה בחוק חוקתי ותביעות ייצוגיות. מה הבעיה המשפטית שאתה מתמודד איתה?\n\nהאם יש לך מסמכים רלוונטיים שיכולים לעזור בניתוח?`
-    }
-  };
-  
   const response = isLegalCaseBuilding ? 
-    responses[language].legalCaseBuilding : 
-    responses[language].general;
+    `⚖️ זיהיתי שמדובר בנושא משפטי מורכב. אני מציע לבדוק את החוקים הרלוונטיים ולאסוף ראיות נוספות.
+
+איזה סוג של תיק זה - אזרחי, פלילי או משפחה?` :
+    
+    `🔍 אני Claude, מתמחה בחוק חוקתי ותביעות ייצוגיות. מה הבעיה המשפטית שאתה מתמודד איתה?
+
+האם יש לך מסמכים רלוונטיים שיכולים לעזור בניתוח?`;
 
   const processingTime = Date.now() - startTime;
 
@@ -242,26 +248,20 @@ async function processAnthropic(query: string, context: any, language: 'en' | 'h
   };
 }
 
-async function processGemini(query: string, context: any, language: 'en' | 'he' = 'en'): Promise<AIResponse> {
+async function processGemini(query: string, context: any): Promise<AIResponse> {
   const startTime = Date.now();
   
   // Mock response for Gemini
   const isLegalCaseBuilding = context?.mode === 'legal_case_building';
   
-  const responses = {
-    en: {
-      legalCaseBuilding: `📋 I'm Gemini, expert in court procedures and legal documentation. Based on what I see, it's worth focusing on preparing the legal arguments.\n\nWhich court will handle your case - district or magistrate?`,
-      general: `🏛️ Hello, I'm Gemini, specializing in court procedures and civil cases. How can I help you today?\n\nHave you already filed a lawsuit or are you in the preparation stage?`
-    },
-    he: {
-      legalCaseBuilding: `📋 אני Gemini, מומחה בהליכי בית משפט ותיעוד משפטי. לפי מה שאני רואה, כדאי להתמקד בהכנת הטיעונים המשפטיים.\n\nאיזה בית משפט יטפל בתיק שלך - מחוזי או שלום?`,
-      general: `🏛️ שלום, אני Gemini, מתמחה בהליכי בית משפט ותיקי אזרחיים. איך אני יכול לעזור לך היום?\n\nהאם הגשת כבר תביעה או שאתה בשלב של הכנה?`
-    }
-  };
-  
   const response = isLegalCaseBuilding ? 
-    responses[language].legalCaseBuilding : 
-    responses[language].general;
+    `📋 אני Gemini, מומחה בהליכי בית משפט ותיעוד משפטי. לפי מה שאני רואה, כדאי להתמקד בהכנת הטיעונים המשפטיים.
+
+איזה בית משפט יטפל בתיק שלך - מחוזי או שלום?` :
+    
+    `🏛️ שלום, אני Gemini, מתמחה בהליכי בית משפט ותיקי אזרחיים. איך אני יכול לעזור לך היום?
+
+האם הגשת כבר תביעה או שאתה בשלב של הכנה?`;
 
   const processingTime = Date.now() - startTime;
 
@@ -275,26 +275,20 @@ async function processGemini(query: string, context: any, language: 'en' | 'he' 
   };
 }
 
-async function processCustom(query: string, context: any, language: 'en' | 'he' = 'en'): Promise<AIResponse> {
+async function processCustom(query: string, context: any): Promise<AIResponse> {
   const startTime = Date.now();
   
   // Mock response for Custom AI
   const isLegalCaseBuilding = context?.mode === 'legal_case_building';
   
-  const responses = {
-    en: {
-      legalCaseBuilding: `🤖 I'm a custom AI system for Israeli law. Based on a database of Israeli rulings.\n\nWhen did the event occur? This is important for checking the statute of limitations.`,
-      general: `🔧 Hello, I'm a custom AI system. I specialize in analyzing complex legal situations.\n\nTell me more details about your situation so I can help accurately.`
-    },
-    he: {
-      legalCaseBuilding: `🤖 אני מערכת AI מותאמת אישית למשפט ישראלי. מבוסס על מאגר מידע של פסיקות ישראליות.\n\nמה התאריך שהאירוע קרה? זה חשוב לבדיקת תקופת ההתיישנות.`,
-      general: `🔧 שלום, אני מערכת AI מותאמת אישית. אני מתמחה בניתוח מצבים משפטיים מורכבים.\n\nספר לי יותר פרטים על המצב שלך כדי שאוכל לעזור בצורה מדויקת.`
-    }
-  };
-  
   const response = isLegalCaseBuilding ? 
-    responses[language].legalCaseBuilding : 
-    responses[language].general;
+    `🤖 אני מערכת AI מותאמת אישית למשפט ישראלי. מבוסס על מאגר מידע של פסיקות ישראליות.
+
+מה התאריך שהאירוע קרה? זה חשוב לבדיקת תקופת ההתיישנות.` :
+    
+    `🔧 שלום, אני מערכת AI מותאמת אישית. אני מתמחה בניתוח מצבים משפטיים מורכבים.
+
+ספר לי יותר פרטים על המצב שלך כדי שאוכל לעזור בצורה מדויקת.`;
 
   const processingTime = Date.now() - startTime;
 

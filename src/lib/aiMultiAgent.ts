@@ -32,8 +32,7 @@ export interface MultiAgentResponse {
 export async function queryMultipleAI(
   agents: string[], 
   query: string, 
-  context?: any,
-  language: 'en' | 'he' = 'en'
+  context?: any
 ): Promise<MultiAgentResponse> {
   try {
     console.log('Calling multi-agent AI with:', { agents, query });
@@ -42,8 +41,7 @@ export async function queryMultipleAI(
       body: { 
         agents,
         query,
-        context,
-        language
+        context
       }
     });
     

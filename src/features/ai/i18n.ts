@@ -141,19 +141,7 @@ const translations: Record<Lang, Record<string, string>> = {
     family: 'Family Law',
     criminal: 'Criminal Law',
     property: 'Real Estate Law',
-    general: 'General Field',
-    
-    // AI Agent System Prompts
-    aiSystemLegalCaseBuilding: 'You are a smart and professional AI assistant for Israeli law. Your role: 1. Analyze legal situations accurately and with empathy 2. Guide users through structured information gathering 3. Provide clear and practical steps 4. Focus on practical legal solutions. Important rules: - Keep responses short - maximum 2 sentences - Ask one focused question at the end - Be supportive but professional - Use user\'s language - Focus on immediate next step - Read between the lines - understand true intent. Current context: User is building a legal case and needs structured guidance.',
-    aiSystemGeneral: 'You are a smart legal assistant for Israeli law. Rules: - Short and focused responses - Ask clarifying questions when needed - Provide practical steps - Be empathetic but professional - Use user\'s language',
-    
-    // AI Agent Mock Responses
-    claudeLegalCaseBuilding: '⚖️ I\'ve identified that this is a complex legal matter. I suggest reviewing the relevant laws and gathering additional evidence. What type of case is this - civil, criminal, or family?',
-    claudeGeneral: '🔍 I\'m Claude, specializing in constitutional law and class action lawsuits. What legal issue are you dealing with? Do you have relevant documents that could help with the analysis?',
-    geminiLegalCaseBuilding: '📋 I\'m Gemini, expert in court procedures and legal documentation. Based on what I see, it\'s worth focusing on preparing the legal arguments. Which court will handle your case - district or magistrate?',
-    geminiGeneral: '🏛️ Hello, I\'m Gemini, specializing in court procedures and civil cases. How can I help you today? Have you already filed a lawsuit or are you in the preparation stage?',
-    customLegalCaseBuilding: '🤖 I\'m a custom AI system for Israeli law. Based on a database of Israeli rulings. When did the event occur? This is important for checking the statute of limitations.',
-    customGeneral: '🔧 Hello, I\'m a custom AI system. I specialize in analyzing complex legal situations. Tell me more details about your situation so I can help accurately.'
+    general: 'General Field'
   },
   he: {
     title: 'GPT-OSS פורטל',
@@ -281,19 +269,7 @@ const translations: Record<Lang, Record<string, string>> = {
     family: 'דיני משפחה',
     criminal: 'דין פלילי',
     property: 'דיני נדלן',
-    general: 'תחום כללי',
-    
-    // AI Agent System Prompts
-    aiSystemLegalCaseBuilding: 'אתה עוזר AI חכם ומקצועי למשפט ישראלי. התפקיד שלך: 1. לנתח מצבים משפטיים במדויק ובאמפטיה 2. להוביל משתמשים דרך איסוף מידע מובנה 3. לספק צעדים ברורים ומעשיים 4. להתמקד בפתרונות משפטיים מעשיים. כללים חשובים: - השב בקצרה - מקסימום 2 משפטים - שאל שאלה אחת ממוקדת בסוף - היה תומך אבל מקצועי - השתמש בעברית - התמקד בצעד הבא המיידי - קרא בין השורות - הבן את הכוונה האמיתית. הקשר נוכחי: המשתמש בונה תיק משפטי וצריך הדרכה מובנית.',
-    aiSystemGeneral: 'אתה עוזר משפטי חכם עבור משפט ישראלי. כללים: - תגובות קצרות וממוקדות - שאל שאלות מבהירות כשצריך - ספק צעדים מעשיים - היה אמפטי אבל מקצועי - השתמש בעברית',
-    
-    // AI Agent Mock Responses
-    claudeLegalCaseBuilding: '⚖️ זיהיתי שמדובר בנושא משפטי מורכב. אני מציע לבדוק את החוקים הרלוונטיים ולאסוף ראיות נוספות. איזה סוג של תיק זה - אזרחי, פלילי או משפחה?',
-    claudeGeneral: '🔍 אני Claude, מתמחה בחוק חוקתי ותביעות ייצוגיות. מה הבעיה המשפטית שאתה מתמודד איתה? האם יש לך מסמכים רלוונטיים שיכולים לעזור בניתוח?',
-    geminiLegalCaseBuilding: '📋 אני Gemini, מומחה בהליכי בית משפט ותיעוד משפטי. לפי מה שאני רואה, כדאי להתמקד בהכנת הטיעונים המשפטיים. איזה בית משפט יטפל בתיק שלך - מחוזי או שלום?',
-    geminiGeneral: '🏛️ שלום, אני Gemini, מתמחה בהליכי בית משפט ותיקי אזרחיים. איך אני יכול לעזור לך היום? האם הגשת כבר תביעה או שאתה בשלב של הכנה?',
-    customLegalCaseBuilding: '🤖 אני מערכת AI מותאמת אישית למשפט ישראלי. מבוסס על מאגר מידע של פסיקות ישראליות. מה התאריך שהאירוע קרה? זה חשוב לבדיקת תקופת ההתיישנות.',
-    customGeneral: '🔧 שלום, אני מערכת AI מותאמת אישית. אני מתמחה בניתוח מצבים משפטיים מורכבים. ספר לי יותר פרטים על המצב שלך כדי שאוכל לעזור בצורה מדויקת.'
+    general: 'תחום כללי'
   },
 };
 
