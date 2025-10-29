@@ -1,0 +1,53 @@
+Online Court Upgrade Plan
+
+1. Current Site Overview
+The existing landing page shows basic capabilities including case intake assistant and party summons. Additional sections hint at scheduling hearings and a simulation arena but full processes like evidence management and AI workflows are not yet implemented.
+
+2. Proposed User Journey
+1. Open case with jurisdiction and goals then answer guidance questions from AI.
+2. Summon parties through links or email invitations for judges mediators plaintiffs defendants experts and public panel members.
+3. Upload evidence as files whose hashes are stored in Supabase then AI OCR extracts summaries.
+4. Select procedure path arbitration mediation or full trial each with different rules.
+5. Manage hearings via schedules Jitsi based video chat audience questions and AI consultation.
+6. Enable public panel voting with rate limits to prevent bots.
+7. Generate decision allow appeals and provide AI feedback on success likelihood.
+8. Apply gamification through points badges leaderboards and progress paths.
+
+3. Technology Additions
+AI assistant using open models through HuggingFace Router for question prompts precedent research and draft decisions.
+OCR with pdfjs and tesseractjs to convert documents into searchable text.
+Jitsi integration via unique room keys for encrypted video sessions.
+Panel API on Supabase for creating panels joining and voting with points and badges for participation.
+Social sharing options for public hearings and notification system via web push and email.
+
+4. Architecture Guidelines
+Frontend React with Vite and TypeScript styled by Tailwind and internationalized by i18next.
+Backend Netlify Functions serving as API gateway to Supabase with endpoints for hearings evidence panels and ai chat.
+Database Supabase Postgres tables for profiles cases evidence hearings panel participants votes ai threads points events and badges.
+
+5. Team Tasks
+Complete home page with clear calls to action and multistep wizard with progress indicator.
+Implement case intake and summons components using React Hook Form saving to Supabase and generating invitation links.
+Build evidence upload using FileReader and SHA 256 signatures then send uploads to Supabase Storage.
+Provide Join Hearing button that fetches room URL from API and renders Jitsi iframe.
+Extend services module to call ai chat endpoint and allow model selection such as Llama three eight B or GPT four o.
+Develop panel management screen with realtime voting and points or badges for involvement.
+Create gamification logic using points events and badges such as Citizen Judge badge after three accurate public votes.
+Design monetization plans including premium API access and tiered features for individuals and organizations.
+Add ESLint Prettier Husky and GitHub Actions so each push runs lint typecheck and build.
+
+6. Business Model
+Freemium tier for public users with basic case tools
+Plus subscription for advanced AI models and unlimited OCR transcription
+Enterprise offering for institutional clients with custom dashboards reports and service agreements
+Marketplace connecting judges mediators arbitrators with a revenue share
+Gamification incentives enabling users to exchange reputation points for perks
+
+7. Development Checklist
+Set up environment with Supabase Netlify and GitHub secrets
+Apply schema and run database migrations
+Develop API routes for hearings evidence panels and ai chat
+Perform UI testing with Storybook or Playwright
+Document usage and legal disclaimers
+Create marketing landing pages and sharing campaigns
+Ensure compliance with privacy and data regulations
