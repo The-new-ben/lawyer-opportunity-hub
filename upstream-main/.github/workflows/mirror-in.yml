@@ -1,0 +1,91 @@
+name: sync-from-external
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 * * * *'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Add external remote and fetch
+        env:
+          MIRROR_TOKEN: ${{ secrets.MIRROR_TOKEN }}
+        run: |
+          if [ -n "$MIRROR_TOKEN" ]; then
+            REMOTE="https://x-access-token:${MIRROR_TOKEN}@github.com/The-new-ben/lawyer-opportunity-hub.git"
+          else
+            REMOTE="https://github.com/The-new-ben/lawyer-opportunity-hub.git"
+          fi
+          git remote remove external 2>/dev/null || true
+          git remote add external "$REMOTE"
+          git fetch external main
+          git rev-parse external/main
+
+      - name: Prepare sync branch
+        id: prep
+        run: |
+          BRANCH="sync/from-external-$(date +%Y%m%d%H%M%S)"
+          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
+          git switch -c "$BRANCH"
+
+      - name: Import external repo into subfolder
+        run: |
+          rm -rf upstream-main
+          mkdir -p upstream-main
+          git archive external/main | tar -x -C upstream-main
+
+      - name: Commit changes (if any)
+        id: commit
+        run: |
+          git add -A
+          if [[ -n "$(git status --porcelain)" ]]; then
+            EXT_SHA=$(git rev-parse external/main)
+            git commit -m "chore(sync): import The-new-ben/lawyer-opportunity-hub@${EXT_SHA} into upstream-main"
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "No changes to commit"
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Push branch
+        if: steps.commit.outputs.changed == 'true'
+        run: |
+          git push origin "${{ steps.prep.outputs.branch }}"
+
+      - name: Open or update PR
+        if: steps.commit.outputs.changed == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const branch = process.env.BRANCH || `${{ steps.prep.outputs.branch }}`;
+            const { data: prs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              head: `${context.repo.owner}:${branch}`,
+              base: 'main'
+            });
+             const title = 'Sync external: The-new-ben/lawyer-opportunity-hub → upstream-main';
+             const body = 'This PR imports the current state of https://github.com/The-new-ben/lawyer-opportunity-hub (branch: main) into the subfolder `upstream-main`. Review and cherry-pick as needed.';
+            if (prs && prs.length > 0) {
+              const pr = prs[0];
+              await github.rest.pulls.update({ owner: context.repo.owner, repo: context.repo.repo, pull_number: pr.number, title, body });
+            } else {
+              await github.rest.pulls.create({ owner: context.repo.owner, repo: context.repo.repo, head: branch, base: 'main', title, body });
+            }
