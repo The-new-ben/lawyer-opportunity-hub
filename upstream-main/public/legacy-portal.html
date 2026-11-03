@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>פורטאל שאלות gpt-oss</title>
+    <style>
+        :root {
+            --bg-color: #f5f5f7;
+            --accent-color: #3366cc;
+            --header-bg: #ffffff;
+            --thread-bg: #ffffff;
+            --thread-border: #ddd;
+            --user-color: #006600;
+            --assistant-color: #663399;
+        }
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Tahoma, sans-serif;
+            background: var(--bg-color);
+            color: #333;
+        }
+        header {
+            background: var(--header-bg);
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        header h1 {
+            margin: 0;
+            font-size: 1.4rem;
+            text-align: center;
+        }
+        .container {
+            max-width: 900px;
+            margin: auto;
+            padding: 1rem;
+        }
+        label {
+            display: block;
+            margin-top: 0.5rem;
+            font-weight: bold;
+        }
+        input[type="password"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 0.6rem;
+            margin-top: 0.3rem;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        button {
+            background: var(--accent-color);
+            color: #fff;
+            border: none;
+            padding: 0.7rem 1.5rem;
+            margin-top: 0.8rem;
+            font-size: 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #254b99;
+        }
+        .error {
+            margin-top: 0.5rem;
+            color: red;
+            font-weight: bold;
+        }
+        .history-controls {
+            margin-top: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .history-controls input[type="text"] {
+            flex: 1;
+            padding: 0.5rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        .threads {
+            margin-top: 1rem;
+        }
+        .thread {
+            background: var(--thread-bg);
+            border: 1px solid var(--thread-border);
+            border-radius: 4px;
+            margin-bottom: 0.8rem;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        .thread-summary {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.6rem;
+            cursor: pointer;
+            background: #f0f0f0;
+            font-weight: bold;
+        }
+        .thread-summary:hover {
+            background: #e8e8e8;
+        }
+        .thread-detail {
+            max-height: 0;
+            overflow: hidden;
+            padding: 0 0.6rem;
+            box-sizing: border-box;
+        }
+        .thread-detail.open {
+            padding: 0.6rem;
+            max-height: 1000px; /* big enough to accommodate content */
+        }
+        .msg {
+            margin-bottom: 0.4rem;
+            line-height: 1.4;
+            white-space: pre-wrap;
+        }
+        .msg.user {
+            color: var(--user-color);
+        }
+        .msg.assistant {
+            color: var(--assistant-color);
+        }
+        mark {
+            background: yellow;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>פורטאל שאלות ותשובות GPT-OSS</h1>
+</header>
+<div class="container">
+    <p>הכנס/י את טוקן Hugging Face שלך (מוסתר) כדי לאפשר גישה למודלים. הטוקן נשמר בזיכרון דפדפן ולא יוצג לאחר הזנה.</p>
+    <label for="tokenInput">HF Token:</label>
+    <input type="password" id="tokenInput" placeholder="הדבק/י כאן את ה-HF token" autocomplete="off">
+    <label for="modelSelect">בחירת מודל:</label>
+    <select id="modelSelect">
+        <option value="openai/gpt-oss-20b:fireworks-ai">gpt-oss-20b</option>
+        <option value="openai/gpt-oss-120b:cerebras">gpt-oss-120b</option>
+    </select>
+    <label for="queryInput">שאילתה:</label>
+    <textarea id="queryInput" placeholder="כתוב/י כאן שאלה מורכבת"></textarea>
+    <button id="sendBtn">שלח</button>
+    <div id="error" class="error" style="display:none"></div>
+
+    <div class="history-controls">
+        <input type="text" id="searchInput" placeholder="חיפוש בשיחות..." oninput="filterThreads()">
+        <button onclick="clearHistory()">נקה היסטוריה</button>
+    </div>
+    <div id="threads" class="threads"></div>
+</div>
+
+<script>
+// Store token in memory only
+let hfToken = null;
+
+const errorDiv = document.getElementById('error');
+const tokenInput = document.getElementById('tokenInput');
+const modelSelect = document.getElementById('modelSelect');
+const queryInput = document.getElementById('queryInput');
+const threadsDiv = document.getElementById('threads');
+
+function saveToken() {
+    const token = tokenInput.value.trim();
+    if (token) {
+        hfToken = token;
+        // clear input so it doesn't remain visible
+        tokenInput.value = '';
+    }
+}
+
+document.getElementById('sendBtn').addEventListener('click', async () => {
+    // Save token from input if provided
+    if (!hfToken && tokenInput.value.trim()) {
+        saveToken();
+    }
+    if (!hfToken) {
+        showError('יש להזין טוקן של Hugging Face.');
+        return;
+    }
+    const prompt = queryInput.value.trim();
+    if (!prompt) {
+        showError('יש להזין שאילתה.');
+        return;
+    }
+    hideError();
+    const model = modelSelect.value;
+    // Show loading indicator by disabling button
+    const sendBtn = document.getElementById('sendBtn');
+    sendBtn.disabled = true;
+    sendBtn.textContent = 'טוען...';
+    try {
+        const payload = {
+            model: model,
+            messages: [
+                { role: 'system', content: 'You are a helpful assistant.' },
+                { role: 'user', content: prompt }
+            ],
+            max_tokens: 1024,
+            temperature: 0.7
+        };
+        const res = await fetch('https://router.huggingface.co/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${hfToken}`
+            },
+            body: JSON.stringify(payload)
+        });
+        if (!res.ok) {
+            const text = await res.text();
+            throw new Error(`שגיאה מהשרת: ${res.status}\n${text}`);
+        }
+        const data = await res.json();
+        const answer = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+        if (!answer) {
+            throw new Error('לא התקבלה תשובה.');
+        }
+        addThread(prompt, answer);
+    } catch (err) {
+        showError(err.message);
+    } finally {
+        sendBtn.disabled = false;
+        sendBtn.textContent = 'שלח';
+        queryInput.value = '';
+    }
+});
+
+function showError(msg) {
+    errorDiv.textContent = msg;
+    errorDiv.style.display = 'block';
+}
+function hideError() {
+    errorDiv.style.display = 'none';
+}
+
+function sanitizeAnswer(text) {
+    // Remove asterisks and convert simple Markdown to HTML emphasises
+    // Replace *text* or **text** with <strong>text</strong>
+    let sanitized = text.replace(/\*/g, '');
+    // Additional sanitization could be added here
+    return sanitized;
+}
+
+function addThread(question, answer) {
+    // Strip asterisks in answer
+    const sanitizedAnswer = sanitizeAnswer(answer);
+    const timestamp = new Date().toLocaleString('he-IL');
+    const thread = { question, answer: sanitizedAnswer, timestamp };
+    // Save to local storage
+    const history = getHistory();
+    history.push(thread);
+    localStorage.setItem('gptoss_history', JSON.stringify(history));
+    // Render new thread
+    renderThreads(history);
+}
+
+function getHistory() {
+    const stored = localStorage.getItem('gptoss_history');
+    return stored ? JSON.parse(stored) : [];
+}
+
+function renderThreads(history) {
+    threadsDiv.innerHTML = '';
+    // Reverse order: latest first
+    history.slice().reverse().forEach((thread, index) => {
+        const threadElement = document.createElement('div');
+        threadElement.className = 'thread';
+        const summary = document.createElement('div');
+        summary.className = 'thread-summary';
+        summary.innerHTML = `<span>${thread.timestamp}</span><span style="direction:ltr;">${truncate(thread.question, 40)}</span>`;
+        const detail = document.createElement('div');
+        detail.className = 'thread-detail';
+        const userMsg = document.createElement('div');
+        userMsg.className = 'msg user';
+        userMsg.innerHTML = '<strong>שאלה:</strong> ' + escapeHtml(thread.question);
+        const assistantMsg = document.createElement('div');
+        assistantMsg.className = 'msg assistant';
+        assistantMsg.innerHTML = '<strong>תשובה:</strong> ' + escapeHtml(thread.answer);
+        detail.appendChild(userMsg);
+        detail.appendChild(assistantMsg);
+        threadElement.appendChild(summary);
+        threadElement.appendChild(detail);
+        summary.addEventListener('click', () => {
+            detail.classList.toggle('open');
+        });
+        threadsDiv.appendChild(threadElement);
+    });
+}
+
+function truncate(text, maxLength) {
+    return text.length > maxLength ? text.substring(0, maxLength) + '…' : text;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function clearHistory() {
+    if (confirm('האם למחוק את כל ההיסטוריה?')) {
+        localStorage.removeItem('gptoss_history');
+        renderThreads([]);
+    }
+}
+
+function filterThreads() {
+    const term = document.getElementById('searchInput').value.trim().toLowerCase();
+    const allThreads = getHistory();
+    let filtered = allThreads;
+    if (term) {
+        filtered = allThreads.filter((t) => {
+            return t.question.toLowerCase().includes(term) || t.answer.toLowerCase().includes(term);
+        });
+    }
+    threadsDiv.innerHTML = '';
+    filtered.slice().reverse().forEach((thread) => {
+        const threadElement = document.createElement('div');
+        threadElement.className = 'thread';
+        const summary = document.createElement('div');
+        summary.className = 'thread-summary';
+        summary.innerHTML = `<span>${thread.timestamp}</span><span style="direction:ltr;">${highlight(term, truncate(thread.question, 40))}</span>`;
+        const detail = document.createElement('div');
+        detail.className = 'thread-detail';
+        const userMsg = document.createElement('div');
+        userMsg.className = 'msg user';
+        userMsg.innerHTML = '<strong>שאלה:</strong> ' + highlight(term, escapeHtml(thread.question));
+        const assistantMsg = document.createElement('div');
+        assistantMsg.className = 'msg assistant';
+        assistantMsg.innerHTML = '<strong>תשובה:</strong> ' + highlight(term, escapeHtml(thread.answer));
+        detail.appendChild(userMsg);
+        detail.appendChild(assistantMsg);
+        threadElement.appendChild(summary);
+        threadElement.appendChild(detail);
+        summary.addEventListener('click', () => {
+            detail.classList.toggle('open');
+        });
+        threadsDiv.appendChild(threadElement);
+    });
+}
+
+function highlight(term, htmlText) {
+    if (!term) return htmlText;
+    const regex = new RegExp(term.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'gi');
+    return htmlText.replace(regex, (match) => `<mark>${match}</mark>`);
+}
+
+// On page load: load history
+renderThreads(getHistory());
+
+</script>
+</body>
+</html>
