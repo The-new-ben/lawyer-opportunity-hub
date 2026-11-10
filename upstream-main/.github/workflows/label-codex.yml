@@ -1,0 +1,15 @@
+name: label-codex
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: add codex label when branch starts with codex/
+        if: startsWith(github.head_ref, 'codex/')
+        uses: actions-ecosystem/action-add-labels@v1
+        with:
+          labels: codex
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
