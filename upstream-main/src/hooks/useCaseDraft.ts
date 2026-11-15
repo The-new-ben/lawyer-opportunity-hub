@@ -1,0 +1,73 @@
+// useCaseDraft.ts
+// Centralized case draft shared via localStorage + broadcast events
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+
+export type Party = { role: string; name: string; email?: string; phone?: string };
+export type Evidence = { title: string; url?: string; notes?: string; category?: string };
+
+export type CaseDraft = {
+  title?: string;
+  summary?: string;
+  jurisdiction?: string;
+  category?: string;
+  goal?: string;
+  parties?: Party[];
+  evidence?: Evidence[];
+  startDate?: string; // ISO string
+  hearingTitle?: string;
+  timezone?: string;
+};
+
+const STORAGE_KEY = "caseDraft";
+const draftChannel = supabase.channel("case_draft");
+
+export function readCaseDraft(): CaseDraft {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as CaseDraft) : {};
+  } catch {
+    return {};
+  }
+}
+
+export function writeCaseDraft(draft: CaseDraft) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
+  window.dispatchEvent(new CustomEvent("caseDraftUpdated", { detail: draft }));
+  draftChannel.send({ type: "broadcast", event: "caseDraftUpdated", payload: draft });
+}
+
+export function mergeCaseDraft(patch: Partial<CaseDraft>) {
+  const current = readCaseDraft();
+  const next = { ...current, ...patch } as CaseDraft;
+  writeCaseDraft(next);
+  return next;
+}
+
+export function useCaseDraft() {
+  const [draft, setDraft] = useState<CaseDraft>(() => readCaseDraft());
+
+  useEffect(() => {
+    const onUpdate = (e: Event) => {
+      // @ts-ignore detail exists
+      const next = (e as CustomEvent).detail as CaseDraft | undefined;
+      setDraft(next ?? readCaseDraft());
+    };
+    window.addEventListener("caseDraftUpdated", onUpdate);
+    draftChannel.on("broadcast", { event: "caseDraftUpdated" }, ({ payload }) => {
+      const next = payload as CaseDraft;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      window.dispatchEvent(new CustomEvent("caseDraftUpdated", { detail: next }));
+    });
+    draftChannel.subscribe();
+    return () => {
+      window.removeEventListener("caseDraftUpdated", onUpdate);
+      supabase.removeChannel(draftChannel);
+    };
+  }, []);
+
+  const update = (patch: Partial<CaseDraft>) => setDraft(mergeCaseDraft(patch));
+  const reset = () => writeCaseDraft({});
+
+  return { draft, update, reset } as const;
+}
