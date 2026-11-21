@@ -1,0 +1,32 @@
+--- a/src/pages/Leads.tsx
++++ b/src/pages/Leads.tsx
+@@
+-           <Card>
+-             <CardContent className="pt-6">
+-               <div className="flex gap-4 flex-wrap">
++           <Card>
++             <CardContent className="pt-6">
++               {/* Use flex-col on mobile and flex-row on larger screens */}
++               <div className="flex flex-col md:flex-row gap-4 flex-wrap">
+@@
+-                 <div className="flex-1 min-w-64">
++                 {/* Expand input to full width on mobile */}
++                 <div className="flex-1 min-w-full md:min-w-64">
+@@
+-                 <Select value={statusFilter} onValueChange={setStatusFilter}>
+-                   <SelectTrigger className="w-48">
+-                     <SelectValue placeholder="סטטוס" />
+-                   </SelectTrigger>
++                 <Select value={statusFilter} onValueChange={setStatusFilter}>
++                   <SelectTrigger className="w-full md:w-48">
++                     <SelectValue placeholder="סטטוס" />
++                   </SelectTrigger>
+@@
+-                 <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+-                   <SelectTrigger className="w-48">
+-                     <SelectValue placeholder="עדיפות" />
+-                   </SelectTrigger>
++                 <Select value={priorityFilter} onValueChange={setPriorityFilter}>
++                   <SelectTrigger className="w-full md:w-48">
++                     <SelectValue placeholder="עדיפות" />
++                   </SelectTrigger>
